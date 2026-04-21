@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eventi — Tutto Rifiuto</title>
+    <meta name="author" content="Tutto Rifiuto" />
+    <meta name="description" content="Eventi del collettivo Tutto Rifiuto: serate, drop notturni, proiezioni, assemblee. Appuntamenti di strada a Roma." />
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+
+    <link rel="stylesheet" href="/globals.css" />
+    <link rel="stylesheet" href="/css/preloader.css" />
+    <link rel="stylesheet" href="/css/nav.css" />
+    <link rel="stylesheet" href="/css/menu.css" />
+    <link rel="stylesheet" href="/css/work.css" />
+    <link rel="stylesheet" href="/css/footer.css" />
+
+    <script
+      type="module"
+      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
+    ></script>
+    <script
+      nomodule
+      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
+    ></script>
+  </head>
+  <body>
+    <div class="preloader">
+      <div class="preloader-grid">
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+        <div class="preloader-block"></div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-bar-indicator"></div>
+        <div class="progress-bar-copy">
+          <p class="type-mono"><span>0</span>%</p>
+          <p class="type-mono">Tutto Rifiuto — Roma</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="transition-grid">
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+      <div class="transition-block"></div>
+    </div>
+
+    <script>
+      if (sessionStorage.getItem("pageTransition") === "true") {
+        const grid = document.querySelector(".transition-grid");
+        if (grid) {
+          grid.style.backgroundColor = "var(--bg)";
+          grid.style.zIndex = "1000";
+          grid.style.pointerEvents = "auto";
+        }
+        const blocks = grid.querySelectorAll(".transition-block");
+        blocks.forEach((block) => {
+          block.style.opacity = "1";
+        });
+      }
+    </script>
+
+    <nav>
+      <div class="container">
+        <div class="nav-clock">
+          <p class="type-mono">18 <span>:</span> 25 CET</p>
+        </div>
+
+        <div class="nav-location">
+          <p class="type-mono">
+            <ion-icon name="triangle-sharp"></ion-icon> Roma, IT
+          </p>
+        </div>
+      </div>
+    </nav>
+
+    <div class="site-logo">
+      <a href="/" aria-label="Tutto Rifiuto home">
+        <svg
+          class="site-logo-svg"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="200 200 600 600"
+          preserveAspectRatio="xMidYMid meet"
+          aria-hidden="true"
+        >
+          <defs>
+            <filter
+              id="siteLogoColor"
+              color-interpolation-filters="sRGB"
+              x="0%"
+              y="0%"
+              width="100%"
+              height="100%"
+            >
+              <feColorMatrix
+                in="SourceGraphic"
+                type="matrix"
+                values="0 0 0 0 0
+                        0 0 0 0 0
+                        0 0 0 0 0
+                        -0.2125 -0.7154 -0.0721 1 0"
+                result="logoAlpha"
+              />
+              <feFlood flood-color="#ffff00" result="logoFill" />
+              <feComposite in="logoFill" in2="logoAlpha" operator="in" />
+            </filter>
+          </defs>
+          <image
+            href="/logo.png"
+            width="1000"
+            height="1000"
+            preserveAspectRatio="xMidYMid meet"
+            filter="url(#siteLogoColor)"
+          />
+        </svg>
+      </a>
+    </div>
+
+    <div class="menu-toggle-btn">
+      <div class="hamburger-bar"></div>
+      <div class="hamburger-bar"></div>
+    </div>
+
+    <div class="menu-overlay">
+      <div class="menu-bg">
+        <canvas id="menu-canvas"></canvas>
+      </div>
+
+      <div class="menu-overlay-nav">
+        <div class="close-btn">
+          <div class="close-btn-bar"></div>
+          <div class="close-btn-bar"></div>
+        </div>
+
+        <div class="menu-overlay-items">
+          <a
+            class="type-mono"
+            href="https://www.instagram.com/tuttorifiuto/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Instagram</a
+          >
+          <a
+            class="type-mono"
+            href="mailto:tuttorifiuto@gmail.com"
+            >Email</a
+          >
+        </div>
+      </div>
+
+      <div class="menu-overlay-footer">
+        <a class="type-mono" href="/">Manifesto</a>
+        <a class="type-mono" href="/contact">Rovista con noi</a>
+      </div>
+
+      <div class="circular-menu">
+        <div class="joystick">
+          <span class="center-icon center-main" aria-hidden="true"></span>
+          <ion-icon
+            name="chevron-up-sharp"
+            class="center-icon center-up"
+          ></ion-icon>
+          <ion-icon
+            name="chevron-down-sharp"
+            class="center-icon center-down"
+          ></ion-icon>
+          <ion-icon
+            name="chevron-back-sharp"
+            class="center-icon center-left"
+          ></ion-icon>
+          <ion-icon
+            name="chevron-forward-sharp"
+            class="center-icon center-right"
+          ></ion-icon>
+        </div>
+      </div>
+    </div>
+
+    <section class="work-hero">
+      <h1
+        data-animate-variant="diffuse"
+        data-animate-on-scroll="false"
+        data-animate-delay="0.1"
+      >
+        Eventi
+      </h1>
+
+      <div class="work-hero-footer">
+        <div class="container">
+          <p
+            class="type-mono"
+            data-animate-variant="flicker"
+            data-animate-on-scroll="false"
+            data-animate-delay="1"
+          >
+            [ In agenda ]
+          </p>
+          <p
+            class="type-mono"
+            data-animate-variant="flicker"
+            data-animate-on-scroll="false"
+            data-animate-delay="1"
+          >
+            / Appuntamenti di strada
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="work-items">
+      <div class="container">
+        <div class="work-item-row" id="work-item-row-1">
+          <a href="/project">
+            <div class="work-item">
+              <img src="/work/work_01.jpg" alt="" />
+              <div class="work-item-info">
+                <p>Drop Notturno</p>
+                <p>TR·E—01</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div class="work-item-row" id="work-item-row-2">
+          <a href="/project">
+            <div class="work-item">
+              <img src="/work/work_02.jpg" alt="" />
+              <div class="work-item-info">
+                <p>Serata Poesia</p>
+                <p>TR·E—02</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div class="work-item-row" id="work-item-row-3">
+          <a href="/project">
+            <div class="work-item">
+              <img src="/work/work_03.jpg" alt="" />
+              <div class="work-item-info">
+                <p>Proiezione Pellicole</p>
+                <p>TR·E—03</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div class="work-item-row" id="work-item-row-4">
+          <a href="/project">
+            <div class="work-item">
+              <img src="/work/work_04.jpg" alt="" />
+              <div class="work-item-info">
+                <p>Assemblea Aperta</p>
+                <p>TR·E—04</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <div class="work-item-row" id="work-item-row-5">
+          <a href="/project">
+            <div class="work-item">
+              <img src="/work/work_05.jpg" alt="" />
+              <div class="work-item-info">
+                <p>Zine Release</p>
+                <p>TR·E—05</p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-container">
+        <div class="footer-content">
+          <div class="footer-row">
+            <div class="footer-col">
+              <h2>Tutto Rifiuto</h2>
+            </div>
+
+            <div class="footer-col">
+              <div class="footer-sub-col">
+                <a href="/"><h3>Manifesto</h3></a>
+                <a href="/work"><h3>Archivio</h3></a>
+                <a href="/events"><h3>Eventi</h3></a>
+                <a href="/contact"><h3>Contatti</h3></a>
+              </div>
+
+              <div class="footer-sub-col">
+                <a
+                  href="https://www.instagram.com/tuttorifiuto/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Instagram</a
+                >
+                <a
+                  href="https://t.me/tuttorifiuto"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Telegram</a
+                >
+                <a
+                  href="https://tuttorifiuto.bandcamp.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Bandcamp</a
+                >
+                <a
+                  href="mailto:tuttorifiuto@gmail.com"
+                  >Email</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-row">
+            <p class="type-mono">Roma __ 2026</p>
+            <p class="type-mono">[ Vola soltanto chi non sa cadere ]</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <svg
+      viewBox="0 0 0 0"
+      aria-hidden="true"
+      style="position: absolute; width: 0; height: 0; pointer-events: none"
+    >
+      <defs>
+        <filter id="blur-matrix" x="-50%" y="-50%" width="200%" height="200%">
+          <feColorMatrix
+            in="SourceGraphic"
+            type="matrix"
+            values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 255 -140"
+          ></feColorMatrix>
+        </filter>
+      </defs>
+    </svg>
+
+    <script type="module" src="/js/preloader.js"></script>
+    <script type="module" src="/js/lenis-scroll.js"></script>
+    <script type="module" src="/js/transition.js"></script>
+    <script type="module" src="/js/nav.js"></script>
+    <script type="module" src="/js/menu.js"></script>
+    <script type="module" src="/js/animated-copy.js"></script>
+    <script type="module" src="/js/work.js"></script>
+    <script type="module" src="/js/footer.js"></script>
+  </body>
+</html>

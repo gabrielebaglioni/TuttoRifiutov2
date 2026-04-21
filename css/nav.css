@@ -1,0 +1,68 @@
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  z-index: 10;
+  mix-blend-mode: difference;
+}
+
+nav .container {
+  display: flex;
+  align-items: flex-start;
+}
+
+nav .nav-clock,
+nav .nav-location {
+  flex: 1;
+}
+
+nav .nav-clock {
+  text-align: left;
+}
+
+nav .nav-location {
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+nav .nav-location ion-icon {
+  font-size: 0.6rem;
+}
+
+nav .nav-clock p,
+nav .nav-location p {
+  color: var(--bg);
+}
+
+nav .nav-location ion-icon {
+  color: var(--bg);
+}
+
+.site-logo {
+  position: fixed;
+  top: 1.5rem;
+  left: 50.3%;
+  transform: translate(-50%, -3.6rem) ;
+  z-index: 11;
+  pointer-events: auto;
+  color: var(--bg);
+  mix-blend-mode: difference;
+  isolation: isolate;
+}
+
+.site-logo a {
+  display: inline-block;
+  width: 10rem;
+  height: 10rem;
+}
+
+.site-logo .site-logo-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}

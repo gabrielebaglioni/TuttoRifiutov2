@@ -1,0 +1,90 @@
+.preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100svh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  z-index: 10000;
+  padding: 2rem;
+}
+
+.preloader-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  z-index: -1;
+}
+
+.preloader-block {
+  background-color: var(--fg);
+  opacity: 1;
+  will-change: opacity;
+}
+
+.preloader p {
+  color: var(--bg);
+}
+
+.progress-bar {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  opacity: 0;
+}
+
+.progress-bar-indicator {
+  position: relative;
+  width: 100%;
+  height: 1.25px;
+  background-color: #1a1a1a;
+}
+
+.progress-bar-indicator::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left;
+  will-change: transform;
+}
+
+.progress-bar-copy {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-bar ion-icon {
+  position: relative;
+  transform: translateY(0.1rem);
+}
+
+@media (max-width: 1000px) {
+  .progress-bar {
+    width: calc(100% - 4rem);
+  }
+
+  .progress-bar-copy {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .progress-bar-copy p:nth-child(2) {
+    display: none;
+  }
+}
