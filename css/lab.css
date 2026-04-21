@@ -131,7 +131,7 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  background: black;
+  background-color: var(--bg);
 }
 
 .stats .stats-header {

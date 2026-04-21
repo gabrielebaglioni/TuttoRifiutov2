@@ -1,6 +1,7 @@
 import gsap from "gsap";
 import * as THREE from "three";
 import { SplitText } from "gsap/SplitText";
+import { initMenuRingGrain, resizeMenuRingGrain } from "./menu-ring-grain.js";
 import { matrixShader } from "./menuShaders";
 
 gsap.registerPlugin(SplitText);
@@ -64,6 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     menu.appendChild(segment);
   });
+
+  initMenuRingGrain(menu, responsiveConfig.menuSize);
 
   document
     .querySelector(".menu-toggle-btn")
@@ -313,6 +316,8 @@ function resizeMenu() {
   menuSegments.forEach((segment, index) => {
     updateSegment(segment, index, MENU_ITEMS.length);
   });
+
+  resizeMenuRingGrain(menu, responsiveConfig.menuSize);
 }
 
 // toggle menu - open/close with flicker animations
