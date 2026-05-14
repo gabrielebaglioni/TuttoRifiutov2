@@ -1,0 +1,40 @@
+---
+import { Image } from "astro:assets";
+
+const { event, index = 0 } = Astro.props;
+const media = event.cardMedia;
+---
+
+<div class="work-item-row" id={`work-item-row-${index + 1}`}>
+  <a href={`/eventi/${event.slug}`}>
+    <div class="work-item">
+      {media.type === "video" ? (
+        <video
+          src={media.src}
+          poster={media.poster?.src}
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          aria-label={media.alt}
+        ></video>
+      ) : (
+        <Image
+          src={media.src}
+          alt={media.alt}
+          width={1200}
+          height={1500}
+          loading={index < 2 ? "eager" : "lazy"}
+          decoding="async"
+          format="webp"
+              densities={[1, 2]}
+        />
+      )}
+      <div class="work-item-info">
+        <p>{event.title}</p>
+        <p>{event.code}</p>
+      </div>
+    </div>
+  </a>
+</div>

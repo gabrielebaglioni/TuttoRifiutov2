@@ -1,0 +1,28 @@
+---
+const {
+  title,
+  leftLabel = "",
+  rightLabel = "",
+} = Astro.props;
+---
+
+<section class="work-hero">
+  <h1
+    data-animate-variant="diffuse"
+    data-animate-on-scroll="false"
+    data-animate-delay="0.1"
+  >
+    {title}
+  </h1>
+
+  <div class="work-hero-footer">
+    <div class="container">
+      <div class="type-mono work-hero-footer-item" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
+        <slot name="left">{leftLabel}</slot>
+      </div>
+      <div class="type-mono work-hero-footer-item" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
+        <slot name="right">{rightLabel}</slot>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,41 @@
+<div class="site-logo">
+  <a href="/" aria-label="Tutto Rifiuto home">
+    <svg
+      class="site-logo-svg"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="200 200 600 600"
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+    >
+      <defs>
+        <filter
+          id="siteLogoColor"
+          color-interpolation-filters="sRGB"
+          x="0%"
+          y="0%"
+          width="100%"
+          height="100%"
+        >
+          <feColorMatrix
+            in="SourceGraphic"
+            type="matrix"
+            values="0 0 0 0 0
+                    0 0 0 0 0
+                    0 0 0 0 0
+                    -0.2125 -0.7154 -0.0721 1 0"
+            result="logoAlpha"
+          />
+          <feFlood flood-color="#ffff00" result="logoFill" />
+          <feComposite in="logoFill" in2="logoAlpha" operator="in" />
+        </filter>
+      </defs>
+      <image
+        href="/logo.png"
+        width="1000"
+        height="1000"
+        preserveAspectRatio="xMidYMid meet"
+        filter="url(#siteLogoColor)"
+      />
+    </svg>
+  </a>
+</div>

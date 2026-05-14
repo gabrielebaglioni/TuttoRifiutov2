@@ -1,0 +1,92 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import "../styles/site/lab.css";
+
+import labScript from "../scripts/lab.js?url";
+import skylineScript from "../scripts/skyline.js?url";
+import particleScript from "../scripts/particle-visual.js?url";
+import pieScript from "../scripts/pie-transition.js?url";
+import statsScript from "../scripts/stats.js?url";
+import clientsScript from "../scripts/clients.js?url";
+
+const scripts = [labScript, skylineScript, particleScript, pieScript, statsScript, clientsScript];
+---
+
+<BaseLayout
+  title="Tutto Rifiuto"
+  description="Tutto Rifiuto — collettivo romano che raccoglie parole, suoni, immagini, pellicole, fantasie, stampe. Le impacchetta e le lascia per le strade della città."
+  scripts={scripts}
+>
+  <section class="lab-hero">
+    <canvas id="skyline"></canvas>
+    <canvas id="particle-canvas"></canvas>
+    <div class="container">
+      <h1 class="h1-custom" data-animate-variant="diffuse" data-animate-on-scroll="false" data-animate-delay="0.1">
+        Nessuna spiegazione
+      </h1>
+      <p class="p-custom" data-animate-variant="slide" data-animate-type="words" data-animate-on-scroll="false" data-animate-delay="0.75">
+        Nessun rimpianto.
+      </p>
+    </div>
+    <div class="lab-about-revealer"></div>
+    <div class="lab-hero-overlay"></div>
+  </section>
+
+  <section class="lab-about">
+    <div class="container">
+      <h3 class="type-var-2" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
+        Tutto Rifiuto è un collettivo romano che raccoglie parole, suoni, immagini, pellicole, fantasie, stampe. Le impacchetta e le lancia per le strade della città, rifiuta la qualità e la proprietà dei suoi contenuti per permettere a tuttx di rovistare e di ritrovarsi.
+      </h3>
+      <h3 class="type-var-2" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
+        Tutto Rifiuto nasce e si decompone a Roma. Pacchetti di materiale artistico lasciati in giro per la città, pronti ad essere raccolti, riciclati o solo ammirati in tutta la loro sporcizia. Un luogo di incontro per chi vuole creare senza doversi piegare a un mondo veloce e mercificante.
+      </h3>
+    </div>
+  </section>
+
+  <section class="pie-transition">
+    <div class="pie-transition-outro-header">
+      <h3>Cade soltanto chi prova a volare.</h3>
+    </div>
+    <div class="pie-transition-footer">
+      <div class="container">
+        <p class="type-mono">[ Pacchetto 01 ]</p>
+        <p class="type-mono">__ Materiali in decomposizione</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stats-header">
+      <div class="stats-header-copy">
+        <h3>Come funziona</h3>
+        <p>Nessun business plan. Nessuna roadmap. Nessuna mission. Cinque punti e basta.</p>
+      </div>
+    </div>
+    <div class="stats-content">
+      {[
+        ["01", "Raccogliamo parole, suoni, immagini, pellicole, fantasie, stampe.", "Rifiuti"],
+        ["02", "Li impacchettiamo e li lasciamo per le strade della città.", "Drop"],
+        ["03", "Rifiutiamo la qualità e la proprietà: tuttx rovista, tuttx ritrova.", "No copyright"],
+        ["04", "Ci troviamo per creare senza piegarci a un mondo veloce e mercificante.", "Collettivo"],
+        ["05", "Stendiamo, telaiamo, stampiamo: copertine, immagini autoprodotte, magliette su richiesta.", "Serigrafia"],
+      ].map(([count, text, label]) => (
+        <div class="stat-item">
+          <div class="stat-count"><h1>{count}</h1></div>
+          <div class="stat-content">
+            <div class="stat-title"><h3>{text}</h3></div>
+            <div class="stat-info"><p class="type-mono">{label}</p></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="clients">
+    <div class="container">
+      <div class="clients-header">
+        <h2>Avvistati per strada</h2>
+      </div>
+      <div class="clients-list"></div>
+    </div>
+  </section>
+</BaseLayout>

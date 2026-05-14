@@ -1,0 +1,77 @@
+.work-hero-footer button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  opacity: 0.35;
+  font: inherit;
+  text-transform: inherit;
+  padding: 0;
+}
+
+.event-hero-tabs {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.event-hero-tabs-separator {
+  opacity: 0.65;
+}
+
+.work-hero-footer button.is-active {
+  opacity: 1;
+}
+
+.work-hero-footer button:disabled {
+  cursor: wait;
+}
+
+.events-panels {
+  position: relative;
+  min-height: 100svh;
+}
+
+.event-items {
+  display: none;
+}
+
+.event-items.is-active {
+  display: block;
+}
+
+.event-items.is-reversed #work-item-row-1 {
+  justify-content: flex-end;
+}
+
+.event-items.is-reversed #work-item-row-2 {
+  justify-content: flex-start;
+}
+
+.transition-grid-small {
+  position: fixed;
+  inset: 0 auto auto 0;
+  width: 100vw;
+  height: 100svh;
+  display: grid;
+  grid-template-columns: repeat(
+    var(--event-switch-cols, 24),
+    var(--event-switch-cell, 48px)
+  );
+  grid-auto-rows: var(--event-switch-cell, 48px);
+  align-content: start;
+  justify-content: start;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1000;
+  background: transparent;
+  visibility: hidden;
+}
+
+.transition-grid-small .transition-block {
+  width: var(--event-switch-cell, 48px);
+  height: var(--event-switch-cell, 48px);
+  opacity: 0;
+  background-color: var(--fg);
+}

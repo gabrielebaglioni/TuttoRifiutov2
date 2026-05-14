@@ -1,0 +1,8 @@
+---
+const { small = false } = Astro.props;
+const blocks = Array.from({ length: small ? 4096 : 12 });
+---
+
+<div class:list={["transition-grid", small && "transition-grid-small"]}>
+  {blocks.map(() => <div class="transition-block"></div>)}
+</div>

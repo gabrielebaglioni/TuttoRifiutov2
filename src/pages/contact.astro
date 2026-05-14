@@ -1,0 +1,34 @@
+---
+import ContactLayout from "../layouts/ContactLayout.astro";
+import "../styles/site/contact.css";
+import contactScript from "../scripts/contact.js?url";
+---
+
+<ContactLayout
+  title="Contatti — Tutto Rifiuto"
+  description="Contatti Tutto Rifiuto: base operativa Roma, canale diretto e collaborazioni."
+  scripts={[contactScript]}
+>
+  <section class="contact-visual">
+    <div class="contact-visual-icon">
+      <img src="/contact/tr_paper.svg" alt="" />
+    </div>
+  </section>
+
+  <section class="contact-info">
+    <div class="contact-info-row"><p>Ora romana</p><p class="contact-clock">00:00 CET</p></div>
+    <div class="contact-info-row"><p>Base operativa</p><p>Roma, IT</p></div>
+    <div class="contact-info-row"><p>Canale diretto</p><p>tuttorifiuto@gmail.com</p></div>
+    <div class="contact-info-row"><p>Collaborazioni</p><p>collabs@tuttorifiuto</p></div>
+    <div class="contact-info-row"><p>Presenza</p><p>@tuttorifiuto — Instagram</p></div>
+    <div class="contact-info-row"><p>Ingresso al collettivo</p><p>Sempre aperto</p></div>
+    <div class="contact-info-row"><p>Raccolta pacchetti</p><p>Per le strade di Roma</p></div>
+  </section>
+
+  <div class="contact-footer">
+    <div class="container">
+      <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">Roma __ 2026</p>
+      <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">[ Vola soltanto chi non sa cadere ]</p>
+    </div>
+  </div>
+</ContactLayout>

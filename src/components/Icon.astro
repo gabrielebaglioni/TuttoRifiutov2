@@ -1,0 +1,8 @@
+---
+import { getIconSvg } from "../scripts/icons.js";
+
+const { name, class: className = "" } = Astro.props;
+const svg = getIconSvg(name).replace('class="tr-icon"', `class="tr-icon ${className}"`);
+---
+
+<Fragment set:html={svg} />

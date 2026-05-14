@@ -1,0 +1,41 @@
+---
+import Icon from "./Icon.astro";
+---
+
+<div class="menu-toggle-btn">
+  <div class="hamburger-bar"></div>
+  <div class="hamburger-bar"></div>
+</div>
+
+<div class="menu-overlay">
+  <div class="menu-bg">
+    <canvas id="menu-canvas"></canvas>
+  </div>
+
+  <div class="menu-overlay-nav">
+    <div class="close-btn">
+      <div class="close-btn-bar"></div>
+      <div class="close-btn-bar"></div>
+    </div>
+
+    <div class="menu-overlay-items">
+      <a class="type-mono" href="https://www.instagram.com/tuttorifiuto/" target="_blank" rel="noopener noreferrer">Instagram</a>
+      <a class="type-mono" href="mailto:tuttorifiuto@gmail.com">Email</a>
+    </div>
+  </div>
+
+  <div class="menu-overlay-footer">
+    <a class="type-mono" href="/">Manifesto</a>
+    <a class="type-mono" href="/contact">Rovista con noi</a>
+  </div>
+
+  <div class="circular-menu">
+    <div class="joystick">
+      <span class="center-icon center-main" aria-hidden="true"></span>
+      <Icon name="chevron-up-sharp" class="center-icon center-up" />
+      <Icon name="chevron-down-sharp" class="center-icon center-down" />
+      <Icon name="chevron-back-sharp" class="center-icon center-left" />
+      <Icon name="chevron-forward-sharp" class="center-icon center-right" />
+    </div>
+  </div>
+</div>

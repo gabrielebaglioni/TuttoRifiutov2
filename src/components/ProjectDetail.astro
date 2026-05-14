@@ -1,0 +1,99 @@
+---
+import { Image } from "astro:assets";
+
+const { project } = Astro.props;
+---
+
+<section class="project-hero">
+  <div class="project-hero-img">
+    <Image src={project.hero} alt={project.title} width={1600} height={1000} loading="eager" decoding="async" format="webp"
+              densities={[1, 2]} />
+  </div>
+
+  <div class="project-hero-copy">
+    <div class="container">
+      <div class="project-hero-header">
+        <h1 data-animate-variant="diffuse" data-animate-on-scroll="false" data-animate-delay="0.1">
+          {project.title}
+        </h1>
+        <p data-animate-variant="slide" data-animate-type="words" data-animate-on-scroll="false" data-animate-delay="0.75">
+          {project.summary}
+        </p>
+      </div>
+
+      <div class="project-hero-meta">
+        <div class="project-hero-meta-col">
+          <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
+            {project.code}
+          </p>
+        </div>
+        <div class="project-hero-meta-col">
+          {project.meta.map((item, index) => (
+            <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay={index === 0 ? "1" : "1.5"}>
+              {item}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="project-info">
+  <div class="container">
+    <div class="project-info-col">
+      <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
+        {project.intro}
+      </p>
+    </div>
+
+    <div class="project-info-col">
+      {project.info.map((col) => (
+        <div class="project-info-sub-col">
+          {col.map(([label, value]) => (
+            <>
+              <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true">{label}</p>
+              <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">{value}</p>
+              <br /><br />
+            </>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="project-images">
+  <div class="container">
+    {project.images.map((image, index) => (
+      <div class="project-img">
+        <Image src={image} alt={`${project.title} immagine ${index + 1}`} width={1400} height={1000} loading="lazy" decoding="async" format="webp"
+              densities={[1, 2]} />
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="project-info project-outro">
+  <div class="container">
+    <div class="project-info-col">
+      <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
+        {project.outro}
+      </p>
+    </div>
+
+    <div class="project-info-col">
+      {project.outroInfo.map((col) => (
+        <div class="project-info-sub-col">
+          {col.map(([label, value]) => (
+            <>
+              <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true">{label}</p>
+              <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">{value}</p>
+              <br /><br />
+            </>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

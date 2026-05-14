@@ -1,0 +1,72 @@
+---
+import { Font } from "astro:assets";
+import "../styles/globals.css";
+import "../styles/site/preloader.css";
+import "../styles/site/nav.css";
+import "../styles/site/menu.css";
+import "../styles/site/footer.css";
+
+import Preloader from "../components/Preloader.astro";
+import TransitionGrid from "../components/TransitionGrid.astro";
+import Nav from "../components/Nav.astro";
+import SiteLogo from "../components/SiteLogo.astro";
+import MenuOverlay from "../components/MenuOverlay.astro";
+import Footer from "../components/Footer.astro";
+import BlurFilter from "../components/BlurFilter.astro";
+
+import preloaderScript from "../scripts/preloader.js?url";
+import lenisScript from "../scripts/lenis-scroll.js?url";
+import transitionScript from "../scripts/transition.js?url";
+import navScript from "../scripts/nav.js?url";
+import menuScript from "../scripts/menu.js?url";
+import animatedCopyScript from "../scripts/animated-copy.js?url";
+import footerScript from "../scripts/footer.js?url";
+
+const {
+  title = "Tutto Rifiuto",
+  description = "Tutto Rifiuto — collettivo romano che raccoglie parole, suoni, immagini, pellicole, fantasie, stampe.",
+  includeFooter = true,
+  bodyClass = "",
+  scripts = [],
+} = Astro.props;
+
+const commonScripts = [
+  preloaderScript,
+  lenisScript,
+  transitionScript,
+  navScript,
+  menuScript,
+  animatedCopyScript,
+  footerScript,
+];
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="author" content="Tutto Rifiuto" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#000000" />
+    <link rel="icon" type="image/png" href="/site-icon.png" />
+    <link rel="apple-touch-icon" href="/site-icon.png" />
+    <Font cssVariable="--font-de-fonte-plus" preload />
+    <Font cssVariable="--font-dm-mono" preload />
+    <Font cssVariable="--font-stylish" />
+  </head>
+  <body class={bodyClass}>
+    <Preloader />
+    <TransitionGrid />
+    <Nav />
+    <SiteLogo />
+    <MenuOverlay />
+    <slot />
+    {includeFooter && <Footer />}
+    <BlurFilter />
+    {[...commonScripts, ...scripts].map((src) => (
+      <script type="module" src={src}></script>
+    ))}
+  </body>
+</html>

@@ -1,0 +1,117 @@
+---
+import { Image } from "astro:assets";
+
+const { event } = Astro.props;
+---
+
+<section class="project-hero">
+  <div class="project-hero-img">
+    <Image src={event.heroMedia.src} alt={event.heroMedia.alt} width={1600} height={1000} loading="eager" decoding="async" format="webp"
+              densities={[1, 2]} />
+  </div>
+
+  <div class="project-hero-copy">
+    <div class="container">
+      <div class="project-hero-header">
+        <h1 data-animate-variant="diffuse" data-animate-on-scroll="false" data-animate-delay="0.1">
+          {event.title}
+        </h1>
+        <p data-animate-variant="slide" data-animate-type="words" data-animate-on-scroll="false" data-animate-delay="0.75">
+          {event.summary}
+        </p>
+      </div>
+
+      <div class="project-hero-meta">
+        <div class="project-hero-meta-col">
+          <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
+            {event.code}
+          </p>
+        </div>
+        <div class="project-hero-meta-col">
+          {event.meta.map((item, index) => (
+            <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay={index === 0 ? "1" : "1.5"}>
+              {item}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="project-info">
+  <div class="container">
+    <div class="project-info-col">
+      <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
+        {event.description}
+      </p>
+    </div>
+
+    <div class="project-info-col">
+      {event.info.map((col) => (
+        <div class="project-info-sub-col">
+          {col.map(([label, value]) => (
+            <>
+              <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true">{label}</p>
+              <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">{value}</p>
+              <br /><br />
+            </>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="project-images">
+  <div class="container">
+    {event.detailMedia.map((media, index) => (
+      <div class="project-img">
+        {media.type === "video" ? (
+          <video
+            src={media.src}
+            poster={media.poster?.src}
+            controls
+            preload="metadata"
+            playsinline
+            aria-label={media.alt}
+          ></video>
+        ) : (
+          <Image
+            src={media.src}
+            alt={media.alt}
+            width={1400}
+            height={1000}
+            loading="lazy"
+            decoding="async"
+            format="webp"
+              densities={[1, 2]}
+          />
+        )}
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="project-info project-outro">
+  <div class="container">
+    <div class="project-info-col">
+      <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
+        {event.outro}
+      </p>
+    </div>
+    <div class="project-info-col">
+      {event.outroInfo.map((col) => (
+        <div class="project-info-sub-col">
+          {col.map(([label, value]) => (
+            <>
+              <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true">{label}</p>
+              <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">{value}</p>
+              <br /><br />
+            </>
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

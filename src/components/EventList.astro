@@ -1,0 +1,15 @@
+---
+import EventCard from "./EventCard.astro";
+
+const { events, status, active = false } = Astro.props;
+---
+
+<section
+  class:list={["work-items", "event-items", status === "past" && "is-reversed", active && "is-active"]}
+  data-event-panel={status}
+  aria-hidden={active ? "false" : "true"}
+>
+  <div class="container">
+    {events.map((event, index) => <EventCard event={event} index={index} />)}
+  </div>
+</section>

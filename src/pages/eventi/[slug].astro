@@ -1,0 +1,23 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import EventDetail from "../../components/EventDetail.astro";
+import { events, getEventBySlug } from "../../data/events.js";
+import "../../styles/site/project.css";
+import projectScript from "../../scripts/project.js?url";
+
+export function getStaticPaths() {
+  return events.map((event) => ({
+    params: { slug: event.slug },
+  }));
+}
+
+const event = getEventBySlug(Astro.params.slug);
+
+if (!event) {
+  return Astro.redirect("/events");
+}
+---
+
+<BaseLayout title={event.seo.title} description={event.seo.description} scripts={[projectScript]}>
+  <EventDetail event={event} />
+</BaseLayout>

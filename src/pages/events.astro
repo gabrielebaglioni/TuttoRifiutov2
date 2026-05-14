@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import WorkHero from "../components/WorkHero.astro";
+import EventList from "../components/EventList.astro";
+import TransitionGrid from "../components/TransitionGrid.astro";
+import { eventGroups } from "../data/events.js";
+import "../styles/site/work.css";
+import "../styles/site/events.css";
+import eventsSwitchScript from "../scripts/events-switch.js?url";
+---
+
+<BaseLayout
+  title="Eventi — Tutto Rifiuto"
+  description="Tipologie di eventi Tutto Rifiuto a Roma: Giornata Tutto Rifiuto, proiezioni, musica, serigrafia e letture."
+  scripts={[eventsSwitchScript]}
+>
+  <WorkHero title="Eventi">
+    <span class="event-hero-tabs" slot="left" aria-label="Filtra eventi">
+      <span aria-hidden="true">[ </span><button class="type-mono is-active" type="button" data-event-tab="upcoming" aria-pressed="true">In agenda</button>
+      <span class="event-hero-tabs-separator" aria-hidden="true"> / </span>
+      <button class="type-mono" type="button" data-event-tab="past" aria-pressed="false">Passati</button><span aria-hidden="true"> ]</span>
+    </span>
+    <span slot="right">/ Appuntamenti di strada</span>
+  </WorkHero>
+
+  <div class="events-panels">
+    <TransitionGrid small />
+    <EventList events={eventGroups.upcoming} status="upcoming" active />
+    <EventList events={eventGroups.past} status="past" />
+  </div>
+</BaseLayout>

@@ -1,0 +1,32 @@
+---
+import { Image } from "astro:assets";
+
+const { items } = Astro.props;
+---
+
+<section class="work-items">
+  <div class="container">
+    {items.map((item, index) => (
+      <div class="work-item-row" id={`work-item-row-${index + 1}`}>
+        <a href={item.href}>
+          <div class="work-item">
+            <Image
+              src={item.image}
+              alt={item.title}
+              width={1200}
+              height={1500}
+              loading={index < 2 ? "eager" : "lazy"}
+              decoding="async"
+              format="webp"
+              densities={[1, 2]}
+            />
+            <div class="work-item-info">
+              <p>{item.title}</p>
+              <p>{item.code}</p>
+            </div>
+          </div>
+        </a>
+      </div>
+    ))}
+  </div>
+</section>

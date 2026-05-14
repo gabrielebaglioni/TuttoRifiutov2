@@ -1,0 +1,11 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ProjectDetail from "../components/ProjectDetail.astro";
+import { project } from "../data/project.js";
+import "../styles/site/project.css";
+import projectScript from "../scripts/project.js?url";
+---
+
+<BaseLayout title={project.seo.title} description={project.seo.description} scripts={[projectScript]}>
+  <ProjectDetail project={project} />
+</BaseLayout>

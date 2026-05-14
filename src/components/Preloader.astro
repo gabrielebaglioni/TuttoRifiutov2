@@ -1,0 +1,16 @@
+---
+const blocks = Array.from({ length: 12 });
+---
+
+<div class="preloader">
+  <div class="preloader-grid">
+    {blocks.map(() => <div class="preloader-block"></div>)}
+  </div>
+  <div class="progress-bar">
+    <div class="progress-bar-indicator"></div>
+    <div class="progress-bar-copy">
+      <p class="type-mono"><span>0</span>%</p>
+      <p class="type-mono">Tutto Rifiuto — Roma</p>
+    </div>
+  </div>
+</div>

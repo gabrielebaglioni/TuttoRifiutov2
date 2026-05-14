@@ -1,0 +1,15 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import WorkHero from "../components/WorkHero.astro";
+import WorkGrid from "../components/WorkGrid.astro";
+import { workItems } from "../data/work.js";
+import "../styles/site/work.css";
+---
+
+<BaseLayout
+  title="Archivio — Tutto Rifiuto"
+  description="Archivio dei pacchetti lasciati per le strade di Roma: parole, suoni, immagini, pellicole, fantasie."
+>
+  <WorkHero title="Pacchetti" leftLabel="[ In decomposizione ]" rightLabel="/ Archivio di strada" />
+  <WorkGrid items={workItems} />
+</BaseLayout>

@@ -26,6 +26,7 @@ lerna-debug.log*
 .cache/
 .parcel-cache/
 .vite/
+.astro/
 .eslintcache
 .turbo/
 
