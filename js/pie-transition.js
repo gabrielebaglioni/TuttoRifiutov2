@@ -13,7 +13,21 @@ const STATE = {
   headerSplit: null,
 };
 
-let scaleMultiplier = window.innerWidth < 1000 ? 3 : 2.5;
+let scaleMultiplier = window.innerWidth < 1000 ? 7 : 6;
+const ZOOM_ORIGIN = {
+  x: 400,
+  y: 330,
+};
+const LOGO_BOX = {
+  x: -20,
+  y: -204,
+  width: 840,
+  height: 1208,
+  path: "/work/qia.png",
+};
+const PIE_RADIUS = 604;
+const DOT_RADIUS = 600;
+const DOT_COUNT = 3500;
 
 // initialization
 document.addEventListener("DOMContentLoaded", init);
@@ -51,13 +65,14 @@ function createSVG() {
 // random dots background
 function createDots() {
   const dotsGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  dotsGroup.style.transformOrigin = "400px 400px";
+  dotsGroup.style.transformOrigin = `${ZOOM_ORIGIN.x}px ${ZOOM_ORIGIN.y}px`;
   dotsGroup.setAttribute("id", "pie-transition-dots-group");
+  dotsGroup.setAttribute("mask", "url(#pie-transition-logo-mask)");
   STATE.dotsGroup = dotsGroup;
 
-  for (let i = 0; i < 1500; i++) {
+  for (let i = 0; i < DOT_COUNT; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const distance = Math.sqrt(Math.random()) * 300;
+    const distance = Math.sqrt(Math.random()) * DOT_RADIUS;
     const x = 400 + Math.cos(angle) * distance;
     const y = 400 + Math.sin(angle) * distance;
 
@@ -78,8 +93,9 @@ function createDots() {
 // pie chart with mask
 function createPie() {
   const pieGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  pieGroup.style.transformOrigin = "400px 400px";
+  pieGroup.style.transformOrigin = `${ZOOM_ORIGIN.x}px ${ZOOM_ORIGIN.y}px`;
   pieGroup.setAttribute("id", "pie-transition-pie-group");
+  pieGroup.setAttribute("mask", "url(#pie-transition-logo-mask)");
   STATE.pieGroup = pieGroup;
 
   const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
@@ -105,17 +121,43 @@ function createPie() {
   mask.appendChild(slicePath);
   defs.appendChild(mask);
 
-  const solidCircle = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "circle",
-  );
-  solidCircle.setAttribute("cx", "400");
-  solidCircle.setAttribute("cy", "400");
-  solidCircle.setAttribute("r", "302");
-  solidCircle.setAttribute("fill", "#2444D9");
-  solidCircle.setAttribute("mask", "url(#pie-transition-mask)");
+  const logoMask = document.createElementNS("http://www.w3.org/2000/svg", "mask");
+  logoMask.setAttribute("id", "pie-transition-logo-mask");
+  logoMask.setAttribute("maskUnits", "userSpaceOnUse");
+  logoMask.setAttribute("x", "0");
+  logoMask.setAttribute("y", "0");
+  logoMask.setAttribute("width", "800");
+  logoMask.setAttribute("height", "800");
+  logoMask.setAttribute("mask-type", "alpha");
+  logoMask.style.maskType = "alpha";
 
-  pieGroup.appendChild(solidCircle);
+  const logoMaskImage = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "image",
+  );
+  logoMaskImage.setAttribute("href", LOGO_BOX.path);
+  logoMaskImage.setAttributeNS(
+    "http://www.w3.org/1999/xlink",
+    "href",
+    LOGO_BOX.path,
+  );
+  logoMaskImage.setAttribute("x", `${LOGO_BOX.x}`);
+  logoMaskImage.setAttribute("y", `${LOGO_BOX.y}`);
+  logoMaskImage.setAttribute("width", `${LOGO_BOX.width}`);
+  logoMaskImage.setAttribute("height", `${LOGO_BOX.height}`);
+  logoMaskImage.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  logoMask.appendChild(logoMaskImage);
+  defs.appendChild(logoMask);
+
+  const logoFill = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  logoFill.setAttribute("x", "0");
+  logoFill.setAttribute("y", "0");
+  logoFill.setAttribute("width", "800");
+  logoFill.setAttribute("height", "800");
+  logoFill.setAttribute("fill", "#2444D9");
+  logoFill.setAttribute("mask", "url(#pie-transition-mask)");
+
+  pieGroup.appendChild(logoFill);
   STATE.svg.appendChild(defs);
   STATE.svg.appendChild(pieGroup);
 }
@@ -200,9 +242,9 @@ function updatePieFill(progress) {
       "d",
       `
       M 400,400
-      m -302,0
-      a 302,302 0 1,0 604,0
-      a 302,302 0 1,0 -604,0
+      m -${PIE_RADIUS},0
+      a ${PIE_RADIUS},${PIE_RADIUS} 0 1,0 ${PIE_RADIUS * 2},0
+      a ${PIE_RADIUS},${PIE_RADIUS} 0 1,0 -${PIE_RADIUS * 2},0
     `,
     );
     return;
@@ -210,10 +252,10 @@ function updatePieFill(progress) {
 
   const startAngle = -90;
   const endAngle = startAngle + angle;
-  const x1 = 400 + 302 * Math.cos((startAngle * Math.PI) / 180);
-  const y1 = 400 + 302 * Math.sin((startAngle * Math.PI) / 180);
-  const x2 = 400 + 302 * Math.cos((endAngle * Math.PI) / 180);
-  const y2 = 400 + 302 * Math.sin((endAngle * Math.PI) / 180);
+  const x1 = 400 + PIE_RADIUS * Math.cos((startAngle * Math.PI) / 180);
+  const y1 = 400 + PIE_RADIUS * Math.sin((startAngle * Math.PI) / 180);
+  const x2 = 400 + PIE_RADIUS * Math.cos((endAngle * Math.PI) / 180);
+  const y2 = 400 + PIE_RADIUS * Math.sin((endAngle * Math.PI) / 180);
   const largeArc = angle > 180 ? 1 : 0;
 
   slice.setAttribute(
@@ -221,7 +263,7 @@ function updatePieFill(progress) {
     `
     M 400,400
     L ${x1},${y1}
-    A 302,302 0 ${largeArc} 1 ${x2},${y2}
+    A ${PIE_RADIUS},${PIE_RADIUS} 0 ${largeArc} 1 ${x2},${y2}
     Z
   `,
   );
@@ -229,6 +271,6 @@ function updatePieFill(progress) {
 
 // resize handler
 function handleResize() {
-  scaleMultiplier = window.innerWidth < 1000 ? 3 : 2.5;
+  scaleMultiplier = window.innerWidth < 1000 ? 7 : 6;
   ScrollTrigger.refresh();
 }
