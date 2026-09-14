@@ -1,4 +1,6 @@
 import gsap from "gsap";
+let resolvePreloader;
+export const preloaderReady = new Promise((resolve) => { resolvePreloader = resolve; });
 
 // initialization
 document.addEventListener("DOMContentLoaded", init);
@@ -7,10 +9,11 @@ function init() {
   const hasSeenPreloader = sessionStorage.getItem("preloaderSeen") === "true";
   const preloader = document.querySelector(".preloader");
 
-  if (!preloader) return;
+  if (!preloader) { resolvePreloader(); return; }
 
   if (hasSeenPreloader) {
     preloader.style.display = "none";
+    resolvePreloader();
     return;
   }
 
@@ -23,7 +26,11 @@ function startSequence() {
   const progressText = document.querySelector(".progress-bar-copy span");
   const progressBar = document.querySelector(".progress-bar");
 
-  if (!progressIndicator || !progressText || !progressBar) return;
+  if (!progressIndicator || !progressText || !progressBar) {
+    document.querySelector(".preloader")?.remove();
+    resolvePreloader();
+    return;
+  }
 
   gsap.to(progressBar, {
     opacity: 1,
@@ -140,6 +147,7 @@ function complete() {
               gsap.set(block, { opacity: 0 });
               if (index === shuffledBlocks.length - 1) {
                 preloader.style.display = "none";
+                resolvePreloader();
               }
             },
           });

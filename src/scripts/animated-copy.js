@@ -3,6 +3,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";
 import { ensureCollectionsReadiness } from "./collections-readiness.js";
+import { preloaderReady } from "./preloader.js";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -11,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const animatedElements = document.querySelectorAll("[data-animate-variant]");
   animatedElements.forEach((element) => gsap.set(element, { opacity: 0 }));
 
-  Promise.all([document.fonts.ready, contentReady, ensureCollectionsReadiness(window).promise]).then(() => {
+  Promise.all([document.fonts.ready, contentReady, ensureCollectionsReadiness(window).promise, preloaderReady]).then(() => {
     initAnimatedCopy();
     ScrollTrigger.sort();
     ScrollTrigger.refresh(true);
@@ -19,25 +20,21 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initAnimatedCopy() {
-  const preloader = document.querySelector(".preloader");
-  const hasSeenPreloader = sessionStorage.getItem("preloaderSeen") === "true";
-  const isPreloaderShowing = !!preloader && !hasSeenPreloader;
-
   const animatedElements = document.querySelectorAll("[data-animate-variant]");
 
   animatedElements.forEach((element) => {
     const variant = element.getAttribute("data-animate-variant");
 
-    if (variant === "slide") initSlideAnimation(element, isPreloaderShowing);
+    if (variant === "slide") initSlideAnimation(element);
     if (variant === "flicker")
-      initFlickerAnimation(element, isPreloaderShowing);
+      initFlickerAnimation(element);
     if (variant === "diffuse")
-      initDiffuseAnimation(element, isPreloaderShowing);
+      initDiffuseAnimation(element);
   });
 }
 
 // slide - line/word reveal with mask
-function initSlideAnimation(element, isPreloaderShowing) {
+function initSlideAnimation(element) {
   const animateOnScroll =
     element.getAttribute("data-animate-on-scroll") !== "false";
   const stagger =
@@ -45,7 +42,6 @@ function initSlideAnimation(element, isPreloaderShowing) {
   const slideType = element.getAttribute("data-animate-type") || "lines";
   let delay = parseFloat(element.getAttribute("data-animate-delay")) || 0;
 
-  if (isPreloaderShowing && !animateOnScroll) delay += 5.5;
 
   SplitText.create(element, {
     type: slideType,
@@ -84,12 +80,11 @@ function initSlideAnimation(element, isPreloaderShowing) {
 }
 
 // flicker - random character reveal
-function initFlickerAnimation(element, isPreloaderShowing) {
+function initFlickerAnimation(element) {
   const animateOnScroll =
     element.getAttribute("data-animate-on-scroll") !== "false";
   let delay = parseFloat(element.getAttribute("data-animate-delay")) || 0;
 
-  if (isPreloaderShowing && !animateOnScroll) delay += 5.5;
 
   SplitText.create(element, {
     type: "chars",
@@ -123,12 +118,11 @@ function initFlickerAnimation(element, isPreloaderShowing) {
 }
 
 // diffuse - word blur reveal
-function initDiffuseAnimation(element, isPreloaderShowing) {
+function initDiffuseAnimation(element) {
   const animateOnScroll =
     element.getAttribute("data-animate-on-scroll") !== "false";
   let delay = parseFloat(element.getAttribute("data-animate-delay")) || 0;
 
-  if (isPreloaderShowing && !animateOnScroll) delay += 5.5;
 
   SplitText.create(element, {
     type: "words",
@@ -137,12 +131,10 @@ function initDiffuseAnimation(element, isPreloaderShowing) {
     onSplit(self) {
       const words = self.words;
 
-      words.forEach((word) => {
-        word.style.filter = "blur(75px)";
-        word.style.webkitFilter = "blur(75px)";
-      });
-
-      gsap.set(words, { filter: "blur(75px)", opacity: 0 });
+      // One filter property only: prefixed and unprefixed aliases must not
+      // compete during the tween in WebKit. Bound blur by the actual type size.
+      const blur = Math.min(32, Math.max(12, parseFloat(getComputedStyle(element).fontSize) * 0.65));
+      gsap.set(words, { filter: `blur(${blur}px)`, opacity: 0, force3D: true, z: 0.01 });
       gsap.set(element, { opacity: 1 });
 
       const animation = gsap.to(words, {
@@ -153,11 +145,7 @@ function initDiffuseAnimation(element, isPreloaderShowing) {
         delay: delay,
         paused: animateOnScroll,
         onComplete: () => {
-          gsap.set(words, { filter: "blur(0px)", opacity: 1 });
-          words.forEach((word) => {
-            word.style.filter = "blur(0px)";
-            word.style.webkitFilter = "blur(0px)";
-          });
+          gsap.set(words, { opacity: 1, clearProps: "filter,transform" });
         },
       });
 

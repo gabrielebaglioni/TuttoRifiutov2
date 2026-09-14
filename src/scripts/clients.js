@@ -1,6 +1,8 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SITE_CONTENT } from "../data/site-content.js";
+import { contentReady } from "./content-hydration.js";
+import { clientMotion } from "./motion-policy.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,10 +14,11 @@ let clientTriggers = [];
 document.addEventListener("DOMContentLoaded", () => {
   generateClientsList();
 
-  setTimeout(() => {
-    ScrollTrigger.refresh();
+  Promise.all([document.fonts.ready, contentReady]).then(() => {
     initClientsAnimation();
-  }, 100);
+    ScrollTrigger.sort();
+    ScrollTrigger.refresh(true);
+  });
 });
 
 // generate client rows from data
@@ -47,8 +50,8 @@ document.addEventListener("tutto-rifiuto:content", (event) => {
   if (!Array.isArray(rows) || !rows.every((row) => Array.isArray(row) && row.length === 2 && row.every((value) => typeof value === "string"))) return;
   clientsData = rows.map(([name, project]) => ({ name, project }));
   generateClientsList();
-  ScrollTrigger.refresh();
   initClientsAnimation();
+  ScrollTrigger.refresh(true);
 });
 
 // scroll animation - gap closes and opacity fades in
@@ -60,16 +63,19 @@ function initClientsAnimation() {
   clientRows.forEach((row) => {
     const paragraphs = row.querySelectorAll("p");
 
+    let width = row.clientWidth;
+    const render = (self) => {
+      const { opacity, offset } = clientMotion(0.95 - self.progress * 0.3);
+      gsap.set(paragraphs[0], { opacity, x: -width * offset / 100 });
+      gsap.set(paragraphs[1], { opacity, x: width * offset / 100 });
+    };
     clientTriggers.push(ScrollTrigger.create({
       trigger: row,
-      start: "top 50%",
-      end: "top 35%",
+      start: "top 95%",
+      end: "top 65%",
       scrub: true,
-      onUpdate: (self) => {
-        const progress = self.progress;
-        gsap.set(row, { gap: `${29 - progress * 27}%` });
-        paragraphs.forEach((p) => gsap.set(p, { opacity: progress }));
-      },
+      onUpdate: render,
+      onRefresh: (self) => { width = row.clientWidth; render(self); },
     }));
   });
 }

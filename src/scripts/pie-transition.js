@@ -2,6 +2,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";
+import { createPieCanvas } from "./pie-canvas.js";
+import { meaningfulResize, pieFrame } from "./motion-policy.js";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -12,6 +14,7 @@ const STATE = {
   dotsGroup: null,
   headerSplit: null,
   scrollTrigger: null,
+  canvas: null,
 };
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -35,6 +38,8 @@ const PIN_LENGTH_VIEWPORTS = 5;
 const LOGO_FILL_COLOR = "#2444D9";
 
 let scaleMultiplier = window.innerWidth < 1000 ? 7 : 6;
+const mobile = window.innerWidth <= 1000 || window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+let viewport = { width: window.innerWidth, height: window.innerHeight };
 
 function createSvgElement(tagName) {
   return document.createElementNS(SVG_NS, tagName);
@@ -46,19 +51,32 @@ function init() {
   STATE.container = document.querySelector(".pie-transition");
   if (!STATE.container) return;
 
-  createSVG();
-  /** defs prima dei layer che usano url(#…‑mask): così la sagoma PNG si applica ai puntini */
-  appendMaskDefs();
-  createDots();
-  createPieGroup();
+  if (mobile) {
+    STATE.container.parentElement.style.setProperty("--pie-stage-height", STATE.container.offsetHeight + "px");
+    STATE.container.parentElement.classList.add("is-mobile-pie");
+    STATE.canvas = createPieCanvas(STATE.container, {
+      imageUrl: LOGO_BOX.path, origin: ZOOM_ORIGIN, box: LOGO_BOX, color: LOGO_FILL_COLOR,
+      onError: () => { STATE.canvas = null; buildSvg(); renderProgress(STATE.scrollTrigger?.progress ?? 0); },
+    });
+  }
+  if (!STATE.canvas) buildSvg();
   setupScrollTrigger();
   Promise.all([document.fonts.ready, contentReady]).then(() => {
     setupHeader();
+    renderProgress(STATE.scrollTrigger.progress);
     ScrollTrigger.sort();
     ScrollTrigger.refresh(true);
   });
 
   window.addEventListener("resize", handleResize);
+}
+
+function buildSvg() {
+  createSVG();
+  /** defs prima dei layer che usano url(#…‑mask): così la sagoma PNG si applica ai puntini */
+  appendMaskDefs();
+  createDots();
+  createPieGroup();
 }
 
 function createSVG() {
@@ -69,8 +87,8 @@ function createSVG() {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: min(80vw, 80vh);
-    height: min(80vw, 80vh);
+    width: min(80vw, 80svh);
+    height: min(80vw, 80svh);
     overflow: visible;
   `;
   STATE.svg = svg;
@@ -139,7 +157,7 @@ function createDots() {
   dotsGroup.setAttribute("mask", "url(#pie-transition-logo-mask)");
   STATE.dotsGroup = dotsGroup;
 
-  for (let i = 0; i < DOT_COUNT; i++) {
+  for (let i = 0; i < (mobile ? 900 : DOT_COUNT); i++) {
     const angle = Math.random() * Math.PI * 2;
     const distance = Math.sqrt(Math.random()) * DOT_RADIUS;
     const x = ZOOM_ORIGIN.x + Math.cos(angle) * distance;
@@ -192,31 +210,25 @@ function setupHeader() {
 
 function setupScrollTrigger() {
   STATE.scrollTrigger = ScrollTrigger.create({
-    trigger: STATE.container,
+    trigger: mobile ? STATE.container.parentElement : STATE.container,
     start: "top top",
     end: () => `+=${STATE.container.offsetHeight * PIN_LENGTH_VIEWPORTS}`,
     scrub: true,
-    pin: true,
+    pin: !mobile,
     anticipatePin: 1,
     pinSpacing: true,
     invalidateOnRefresh: true,
-    onUpdate: (self) => {
-      const progress = self.progress;
+    onUpdate: (self) => renderProgress(self.progress),
+  });
+}
 
-      if (progress <= 0.5) {
-        updatePieFill(progress / 0.5);
-      } else {
-        updatePieFill(1);
-      }
-
-      if (progress >= 0.5) {
-        const scaleProgress = (progress - 0.5) / 0.5;
-        const scale = 1 + scaleProgress * scaleMultiplier;
+function renderProgress(progress) {
+      const { fill, scale } = pieFrame(progress, scaleMultiplier);
+      if (STATE.canvas) STATE.canvas.draw(progress, scaleMultiplier);
+      else {
+        updatePieFill(fill);
         STATE.pieGroup.style.transform = `scale(${scale})`;
         STATE.dotsGroup.style.transform = `scale(${scale})`;
-      } else {
-        STATE.pieGroup.style.transform = "scale(1)";
-        STATE.dotsGroup.style.transform = "scale(1)";
       }
 
       if (STATE.headerSplit && STATE.headerSplit.words.length > 0) {
@@ -236,8 +248,6 @@ function setupScrollTrigger() {
           gsap.set(STATE.headerSplit.words, { opacity: 1 });
         }
       }
-    },
-  });
 }
 
 function updatePieFill(progress) {
@@ -288,6 +298,11 @@ function updatePieFill(progress) {
 }
 
 function handleResize() {
+  const next = { width: window.innerWidth, height: window.innerHeight };
+  if (!meaningfulResize(viewport, next, mobile)) return;
+  viewport = next;
+  if (mobile) STATE.container.parentElement.style.setProperty("--pie-stage-height", next.height + "px");
   scaleMultiplier = window.innerWidth < 1000 ? 7 : 6;
+  STATE.canvas?.resize();
   ScrollTrigger.refresh(true);
 }
