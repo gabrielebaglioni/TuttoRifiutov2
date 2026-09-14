@@ -6,6 +6,7 @@ import { initMenuRingGrain, resizeMenuRingGrain } from "./menu-ring-grain.js";
 import { matrixShader } from "./menuShaders.js";
 import { SITE_CONTENT } from "../data/site-content.js";
 import { isAllowedLink } from "./content-hydration.js";
+import { playMenuSound } from "./menu-audio.js";
 
 gsap.registerPlugin(SplitText);
 
@@ -73,7 +74,7 @@ function renderSegments(menu) {
   menuItems.forEach((item, index) => {
     const segment = createSegment(item, index, menuItems.length);
     segment.addEventListener("mouseenter", () => {
-      if (isOpen) new Audio("/sfx/menu-select.mp3").play().catch(() => {});
+      if (isOpen) playMenuSound("select");
     });
     segment.addEventListener("click", (event) => {
       if (isSamePage(segment.href)) {
@@ -350,7 +351,7 @@ function toggleMenu() {
 
   if (!isOpen) {
     isOpen = true;
-    new Audio("/sfx/menu-open.mp3").play();
+    playMenuSound("open");
 
     if (resetJoystick) resetJoystick();
 
@@ -408,7 +409,7 @@ function toggleMenu() {
       });
   } else {
     isOpen = false;
-    new Audio("/sfx/menu-close.mp3").play();
+    playMenuSound("close");
 
     animateMenuLinksFlicker(true);
 
@@ -493,7 +494,7 @@ function initJoystick() {
         segment.querySelector(".segment-content").style.animation =
           "contentFlickerHover 350ms ease-in-out forwards";
         segment.style.zIndex = "10";
-        if (isOpen) new Audio("/sfx/menu-select.mp3").play().catch(() => {});
+        if (isOpen) playMenuSound("select");
       }
     } else {
       if (activeSegment) {

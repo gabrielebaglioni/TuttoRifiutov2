@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { playMenuSound } from "./menu-audio.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -148,6 +149,10 @@ function setupLinkHandlers() {
 
     const link = event.target.closest("a");
     if (!link) return;
+
+    // This capture handler stops propagation: play here, before interception,
+    // so mouse, touch and keyboard activation all receive the same feedback.
+    if (link.closest(".menu-overlay")) playMenuSound("select");
 
     const href = link.getAttribute("href");
     if (!href || isExternalLink(href)) return;

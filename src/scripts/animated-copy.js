@@ -131,10 +131,10 @@ function initDiffuseAnimation(element) {
     onSplit(self) {
       const words = self.words;
 
-      // One filter property only: prefixed and unprefixed aliases must not
-      // compete during the tween in WebKit. Bound blur by the actual type size.
-      const blur = Math.min(32, Math.max(12, parseFloat(getComputedStyle(element).fontSize) * 0.65));
-      gsap.set(words, { filter: `blur(${blur}px)`, opacity: 0, force3D: true, z: 0.01 });
+      // Preserve the original diffuse reveal. Only the tween owns the hidden
+      // state; the stylesheet must remain readable after cleanup/re-splitting.
+      // Avoid competing prefixed filters and unnecessary 3D child layers.
+      gsap.set(words, { filter: "blur(75px)", opacity: 0 });
       gsap.set(element, { opacity: 1 });
 
       const animation = gsap.to(words, {
@@ -145,7 +145,7 @@ function initDiffuseAnimation(element) {
         delay: delay,
         paused: animateOnScroll,
         onComplete: () => {
-          gsap.set(words, { opacity: 1, clearProps: "filter,transform" });
+          gsap.set(words, { filter: "blur(0px)", opacity: 1 });
         },
       });
 

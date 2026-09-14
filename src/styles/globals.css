@@ -225,10 +225,10 @@ p.type-mono,
 }
 
 [data-animate-variant="diffuse"] .word {
-  filter: blur(75px);
-  -webkit-filter: blur(75px);
+  /* Visible resting state: animation cleanup must never re-hide the text. */
+  filter: blur(0px);
   will-change: filter, opacity;
-  opacity: 0;
+  opacity: 1;
 }
 
 /* split-reveal text-animation */
