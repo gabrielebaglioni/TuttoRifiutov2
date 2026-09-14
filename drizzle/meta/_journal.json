@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1789309987621,
+      "tag": "0000_admin_cms",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789320159991,
+      "tag": "0001_lying_jane_foster",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789321669744,
+      "tag": "0002_massive_meteorite",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789322548406,
+      "tag": "0003_mysterious_earthquake",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789326101015,
+      "tag": "0004_magenta_blockbuster",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789331259526,
+      "tag": "0005_needy_leopardon",
+      "breakpoints": true
+    }
+  ]
+}

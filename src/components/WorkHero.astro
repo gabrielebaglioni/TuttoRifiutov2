@@ -3,6 +3,9 @@ const {
   title,
   leftLabel = "",
   rightLabel = "",
+  titleKey = "",
+  leftLabelKey = "",
+  rightLabelKey = "",
 } = Astro.props;
 ---
 
@@ -10,7 +13,8 @@ const {
   <h1
     data-animate-variant="diffuse"
     data-animate-on-scroll="false"
-    data-animate-delay="0.1"
+  data-animate-delay="0.1"
+  data-content-key={titleKey || undefined}
   >
     {title}
   </h1>
@@ -18,10 +22,10 @@ const {
   <div class="work-hero-footer">
     <div class="container">
       <div class="type-mono work-hero-footer-item" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
-        <slot name="left">{leftLabel}</slot>
+        <slot name="left"><span data-content-key={leftLabelKey || undefined}>{leftLabel}</span></slot>
       </div>
       <div class="type-mono work-hero-footer-item" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
-        <slot name="right">{rightLabel}</slot>
+        <slot name="right"><span data-content-key={rightLabelKey || undefined}>{rightLabel}</span></slot>
       </div>
     </div>
   </div>

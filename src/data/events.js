@@ -1,16 +1,17 @@
-import bruciaRifiuti from "../assets/eventi/bruciaRifiuti.png";
-import attachinoMorto from "../assets/eventi/attachinoMorto.png";
-import saltaRifiuti from "../assets/eventi/saltaRifiuti.png";
-import storiaDiUnFallimento from "../assets/eventi/storiaDiUnFallimento.png";
-import letture from "../assets/eventi/letture.png";
-import giornataTR from "../assets/eventi/giornataTR.jpg";
-import nucleare from "../assets/eventi/nucleare.png";
-import pianetaSonoro from "../assets/eventi/pianetaSonoro.png";
-import work01 from "../assets/work/work_01.jpg";
-import work02 from "../assets/work/work_02.jpg";
-import work03 from "../assets/work/work_03.jpg";
-import work04 from "../assets/work/work_04.jpg";
-import work05 from "../assets/work/work_05.jpg";
+import bruciaRifiuti from "../assets/optimized/eventi/bruciaRifiuti.webp";
+import attachinoMorto from "../assets/optimized/eventi/attachinoMorto.webp";
+import saltaRifiuti from "../assets/optimized/eventi/saltaRifiuti.webp";
+import storiaDiUnFallimento from "../assets/optimized/eventi/storiaDiUnFallimento.webp";
+import letture from "../assets/optimized/eventi/letture.webp";
+import giornataTR from "../assets/optimized/eventi/giornataTR.webp";
+import nucleare from "../assets/optimized/eventi/nucleare.webp";
+import pianetaSonoro from "../assets/optimized/eventi/pianetaSonoro.webp";
+import work01 from "../assets/optimized/work/work_01.webp";
+import { eventsForPublicGroup } from "./event-status.js";
+import work02 from "../assets/optimized/work/work_02.webp";
+import work03 from "../assets/optimized/work/work_03.webp";
+import work04 from "../assets/optimized/work/work_04.webp";
+import work05 from "../assets/optimized/work/work_05.webp";
 
 export const events = [
   {
@@ -171,10 +172,16 @@ export const events = [
 ];
 
 export const eventGroups = {
-  upcoming: events.filter((event) => event.status === "upcoming"),
-  past: events.filter((event) => event.status === "past"),
+  upcoming: eventsForPublicGroup(events, "upcoming"),
+  past: eventsForPublicGroup(events, "past"),
 };
 
 export function getEventBySlug(slug) {
   return events.find((event) => event.slug === slug);
 }
+
+// Public API defaults are kept JSON-safe without changing the imported Astro
+// image objects used by the server-rendered fallback components.
+export const eventCollectionDefaults = events.map((event, position) =>
+  JSON.parse(JSON.stringify({ ...event, position })),
+);

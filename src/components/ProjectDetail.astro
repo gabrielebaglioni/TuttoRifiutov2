@@ -1,36 +1,35 @@
 ---
-import { Image } from "astro:assets";
+import ResponsiveMedia from "./ResponsiveMedia.astro";
 
 const { project } = Astro.props;
 ---
 
 <section class="project-hero">
-  <div class="project-hero-img">
-    <Image src={project.hero} alt={project.title} width={1600} height={1000} loading="eager" decoding="async" format="webp"
-              densities={[1, 2]} />
+  <div class="project-hero-img" data-collection-media="cover">
+    <ResponsiveMedia media={{ type: "image", src: project.hero, alt: project.title }} width={1600} height={1000} loading="eager" sizes="100vw" />
   </div>
 
   <div class="project-hero-copy">
     <div class="container">
       <div class="project-hero-header">
         <h1 data-animate-variant="diffuse" data-animate-on-scroll="false" data-animate-delay="0.1">
-          {project.title}
+          <span data-content-key="project.title" data-collection-field="title">{project.title}</span>
         </h1>
         <p data-animate-variant="slide" data-animate-type="words" data-animate-on-scroll="false" data-animate-delay="0.75">
-          {project.summary}
+          <span data-content-key="project.summary">{project.summary}</span>
         </p>
       </div>
 
       <div class="project-hero-meta">
         <div class="project-hero-meta-col">
           <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
-            {project.code}
+            <span data-content-key="project.code" data-collection-field="code">{project.code}</span>
           </p>
         </div>
-        <div class="project-hero-meta-col">
+        <div class="project-hero-meta-col" data-content-key="project.meta" data-content-render="project-meta">
           {project.meta.map((item, index) => (
             <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay={index === 0 ? "1" : "1.5"}>
-              {item}
+              <span data-content-key="project.meta" data-content-path={`${index}`}>{item}</span>
             </p>
           ))}
         </div>
@@ -43,17 +42,17 @@ const { project } = Astro.props;
   <div class="container">
     <div class="project-info-col">
       <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
-        {project.intro}
+        <span data-content-key="project.intro" data-collection-field="description">{project.intro}</span>
       </p>
     </div>
 
-    <div class="project-info-col">
-      {project.info.map((col) => (
+    <div class="project-info-col" data-content-key="project.info" data-content-render="project-columns" data-collection-render="details" data-collection-field="details">
+      {project.info.map((col, colIndex) => (
         <div class="project-info-sub-col">
-          {col.map(([label, value]) => (
+          {col.map(([label, value], rowIndex) => (
             <>
-              <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true">{label}</p>
-              <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">{value}</p>
+              <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true" data-content-key="project.info" data-content-path={`${colIndex}.${rowIndex}.0`}>{label}</p>
+              <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true" data-content-key="project.info" data-content-path={`${colIndex}.${rowIndex}.1`}>{value}</p>
               <br /><br />
             </>
           ))}
@@ -64,11 +63,10 @@ const { project } = Astro.props;
 </section>
 
 <section class="project-images">
-  <div class="container">
+  <div class="container" data-collection-media-list>
     {project.images.map((image, index) => (
-      <div class="project-img">
-        <Image src={image} alt={`${project.title} immagine ${index + 1}`} width={1400} height={1000} loading="lazy" decoding="async" format="webp"
-              densities={[1, 2]} />
+      <div class="project-img" data-collection-media-slot={`detail:${index}`}>
+        <ResponsiveMedia media={{ type: "image", src: image, alt: `${project.title} immagine ${index + 1}` }} width={1400} height={1000} sizes="(max-width: 1000px) 100vw, 75vw" />
       </div>
     ))}
   </div>
@@ -78,17 +76,17 @@ const { project } = Astro.props;
   <div class="container">
     <div class="project-info-col">
       <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
-        {project.outro}
+        <span data-content-key="project.outro" data-collection-field="outro">{project.outro}</span>
       </p>
     </div>
 
-    <div class="project-info-col">
-      {project.outroInfo.map((col) => (
+    <div class="project-info-col" data-content-key="project.outroInfo" data-content-render="project-columns">
+      {project.outroInfo.map((col, colIndex) => (
         <div class="project-info-sub-col">
-          {col.map(([label, value]) => (
+          {col.map(([label, value], rowIndex) => (
             <>
-              <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true">{label}</p>
-              <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">{value}</p>
+              <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true" data-content-key="project.outroInfo" data-content-path={`${colIndex}.${rowIndex}.0`}>{label}</p>
+              <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true" data-content-key="project.outroInfo" data-content-path={`${colIndex}.${rowIndex}.1`}>{value}</p>
               <br /><br />
             </>
           ))}

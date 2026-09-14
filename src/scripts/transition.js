@@ -92,7 +92,8 @@ function reveal() {
         gsap.set(block, { opacity: 0 });
         if (index === shuffled.length - 1) {
           if (transitionGrid) transitionGrid.style.pointerEvents = "none";
-          ScrollTrigger.refresh();
+          ScrollTrigger.sort();
+          ScrollTrigger.refresh(true);
         }
       },
     });

@@ -1,4 +1,7 @@
 import * as THREE from "three";
+import { startAfterCollectionsHydration } from "./collections-readiness.js";
+
+const PROJECT_START_EVENT = "tutto-rifiuto:project-start";
 
 // shaders
 const vertexShader = `
@@ -42,6 +45,8 @@ const fragmentShader = `
 // scroll-driven image distortion effect
 class ProjectDistortion {
   constructor() {
+    const currentStarts = Number.parseInt(document.documentElement.dataset.projectDistortionInitCount ?? "0", 10);
+    document.documentElement.dataset.projectDistortionInitCount = String(Number.isFinite(currentStarts) ? currentStarts + 1 : 1);
     this.scrollVelocity = 0;
     this.smoothVelocity = 0;
     this.mediaStore = [];
@@ -265,5 +270,52 @@ class ProjectDistortion {
   }
 }
 
-// initialization
-document.addEventListener("DOMContentLoaded", () => new ProjectDistortion());
+function projectImageSnapshot(documentRef) {
+  return Object.freeze([...documentRef.querySelectorAll(".project-img img")]
+    .map((image) => image.getAttribute("src"))
+    .filter((source) => typeof source === "string" && source.startsWith("/") && !source.startsWith("//") && !source.includes("\\")));
+}
+
+function canStartProjectEffect(windowRef, documentRef) {
+  if (!documentRef?.body || typeof windowRef?.requestAnimationFrame !== "function") return false;
+  if (windowRef.innerWidth < 1000) return true;
+  const canvas = documentRef.createElement?.("canvas");
+  if (!canvas || typeof canvas.getContext !== "function") return false;
+  try {
+    const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+    if (!context) return false;
+    context.getExtension?.("WEBGL_lose_context")?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function announceProjectStart(windowRef, images, outcome) {
+  const detail = Object.freeze({ count: images.length, images, ...outcome });
+  windowRef.dispatchEvent(new windowRef.CustomEvent(PROJECT_START_EVENT, { detail, cancelable: false }));
+}
+
+function attemptProjectStart(windowRef, documentRef) {
+  if (!canStartProjectEffect(windowRef, documentRef)) return { started: false, status: "unsupported" };
+  try {
+    new ProjectDistortion();
+    return { started: true, status: "started" };
+  } catch {
+    return { started: false, status: "error" };
+  }
+}
+
+export function startProjectEffect({ windowRef = globalThis.window, documentRef = globalThis.document } = {}) {
+  return startAfterCollectionsHydration({
+    windowRef,
+    documentRef,
+    create: () => {
+      const images = projectImageSnapshot(documentRef);
+      const outcome = attemptProjectStart(windowRef, documentRef);
+      announceProjectStart(windowRef, images, outcome);
+    },
+  });
+}
+
+if (typeof document !== "undefined" && typeof window !== "undefined") startProjectEffect();

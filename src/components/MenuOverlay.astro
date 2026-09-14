@@ -1,5 +1,6 @@
 ---
 import Icon from "./Icon.astro";
+import { SITE_CONTENT } from "../data/site-content.js";
 ---
 
 <div class="menu-toggle-btn">
@@ -19,17 +20,17 @@ import Icon from "./Icon.astro";
     </div>
 
     <div class="menu-overlay-items">
-      <a class="type-mono" href="https://www.instagram.com/tuttorifiuto/" target="_blank" rel="noopener noreferrer">Instagram</a>
-      <a class="type-mono" href="mailto:tuttorifiuto@gmail.com">Email</a>
+      <a class="type-mono" href={SITE_CONTENT["global.menu.instagram_href"]} target="_blank" rel="noopener noreferrer" data-content-key="global.menu.instagram_href"><span data-content-key="global.menu.instagram_label">{SITE_CONTENT["global.menu.instagram_label"]}</span></a>
+      <a class="type-mono" href={SITE_CONTENT["global.menu.email_href"]} data-content-key="global.menu.email_href"><span data-content-key="global.menu.email_label">{SITE_CONTENT["global.menu.email_label"]}</span></a>
     </div>
   </div>
 
   <div class="menu-overlay-footer">
-    <a class="type-mono" href="/">Manifesto</a>
-    <a class="type-mono" href="/contact">Rovista con noi</a>
+    <a class="type-mono" href={SITE_CONTENT["global.menu.manifesto_href"]} data-content-key="global.menu.manifesto_href"><span data-content-key="global.menu.manifesto_label">{SITE_CONTENT["global.menu.manifesto_label"]}</span></a>
+    <a class="type-mono" href={SITE_CONTENT["global.menu.contact_href"]} data-content-key="global.menu.contact_href"><span data-content-key="global.menu.contact_label">{SITE_CONTENT["global.menu.contact_label"]}</span></a>
   </div>
 
-  <div class="circular-menu">
+  <div class="circular-menu" data-content-key="global.menu.items" data-content-render="menu">
     <div class="joystick">
       <span class="center-icon center-main" aria-hidden="true"></span>
       <Icon name="chevron-up-sharp" class="center-icon center-up" />

@@ -7,7 +7,7 @@ const PV = {
     forceStrength: 0.05,
     maxDisplacement: 1000,
     returnForce: 0.1,
-    logoPath: "/lab/hero-visual3.png",
+    logoPath: "/lab/hero-visual3.webp",
     particleSpacing: 2,
   },
   canvas: null,
@@ -22,6 +22,7 @@ const PV = {
   isMobile: false,
   animFrame: null,
   isAnimating: false,
+  isVisible: true,
 };
 
 // initialization
@@ -30,6 +31,9 @@ document.addEventListener("DOMContentLoaded", init);
 function init() {
   PV.canvas = document.getElementById("particle-canvas");
   if (!PV.canvas) return;
+  const visibilityObserver = new IntersectionObserver(([entry]) => { PV.isVisible = entry.isIntersecting; }, { rootMargin: "200px" });
+  visibilityObserver.observe(PV.canvas);
+  window.addEventListener("pagehide", () => visibilityObserver.disconnect(), { once: true });
 
   PV.isMobile = window.innerWidth < 1000;
   const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -170,6 +174,7 @@ function createParticles(pixels) {
 // animation loop with physics
 function animate() {
   PV.animFrame = requestAnimationFrame(animate);
+  if (!PV.isVisible || document.hidden) return;
 
   if (!PV.isMobile && PV.execCount > 0) {
     PV.execCount--;

@@ -1,0 +1,52 @@
+---
+import { Image } from "astro:assets";
+import { validMediaSources } from "../data/media-source.js";
+
+const { media, width, height, loading = "lazy", sizes = "(max-width: 1000px) 100vw, 40vw", class: className = "" } = Astro.props;
+const isVideo = media?.type === "video";
+const sources = validMediaSources(media?.sources);
+---
+
+{isVideo ? (
+  <video
+    class={className}
+    src={media.src}
+    poster={media.poster?.src ?? media.poster}
+    controls={media.controls}
+    autoplay={media.autoplay}
+    muted={media.muted}
+    loop={media.loop}
+    playsinline
+    preload="metadata"
+    aria-label={media.alt}
+    width={width}
+    height={height}
+  ></video>
+) : sources.length ? (
+  <>
+  <picture class={className} data-media-remote>
+    <source type="image/webp" srcset={sources.map((source) => `${source.src} ${source.width}w`).join(", ")} sizes={sizes} />
+    <img src={sources.at(-1).src} alt={media.alt} width={width} height={height} loading={loading} decoding="async" sizes={sizes} />
+  </picture>
+  {media.src && <picture class={className} data-media-fallback="local" hidden>
+    <Image src={media.src} alt={media.alt} width={width} height={height} loading={loading} decoding="async" format="webp" densities={[1, 2]} />
+  </picture>}
+  </>
+) : (
+  <picture class={className} data-media-fallback="local">
+    <Image src={media.src} alt={media.alt} width={width} height={height} loading={loading} decoding="async" format="webp" densities={[1, 2]} />
+  </picture>
+)}
+
+<script>
+  document.addEventListener("error", (event) => {
+    const image = event.target;
+    if (!(image instanceof HTMLImageElement)) return;
+    const remote = image.closest("[data-media-remote]");
+    const fallback = remote?.nextElementSibling;
+    if (fallback?.hasAttribute("data-media-fallback")) {
+      fallback.removeAttribute("hidden");
+      remote.replaceWith(fallback);
+    }
+  }, true);
+</script>

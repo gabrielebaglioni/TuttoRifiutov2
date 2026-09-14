@@ -4,6 +4,8 @@ import { SplitText } from "gsap/SplitText";
 import { getIconSvg } from "./icons.js";
 import { initMenuRingGrain, resizeMenuRingGrain } from "./menu-ring-grain.js";
 import { matrixShader } from "./menuShaders.js";
+import { SITE_CONTENT } from "../data/site-content.js";
+import { isAllowedLink } from "./content-hydration.js";
 
 gsap.registerPlugin(SplitText);
 
@@ -12,12 +14,12 @@ const CONFIG = {
   colors: { bg: "#2444D9", fg: "#000000" },
 };
 
-const MENU_ITEMS = [
-  { label: "Archivio", icon: "cube-sharp", href: "/work" },
-  { label: "Eventi", icon: "calendar-sharp", href: "/events" },
-  { label: "Contatti", icon: "paper-plane-sharp", href: "/contact" },
-  { label: "Manifesto", icon: "flag-sharp", href: "/" },
-];
+const MENU_ICONS = ["cube-sharp", "calendar-sharp", "paper-plane-sharp", "flag-sharp"];
+let menuItems = SITE_CONTENT["global.menu.items"].map(([label, href], index) => ({
+  label,
+  icon: MENU_ICONS[index % MENU_ICONS.length],
+  href,
+}));
 
 let isOpen = false;
 let isMenuAnimating = false;
@@ -44,28 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
   gsap.set(joystick, { scale: 0, x: 0, y: 0 });
   gsap.set([menuOverlayNav, menuOverlayFooter], { opacity: 0 });
 
-  MENU_ITEMS.forEach((item, index) => {
-    const segment = createSegment(item, index, MENU_ITEMS.length);
-
-    segment.addEventListener("mouseenter", () => {
-      if (isOpen) new Audio("/sfx/menu-select.mp3").play().catch(() => {});
-    });
-
-    segment.addEventListener(
-      "click",
-      (e) => {
-        if (isSamePage(segment.href)) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          if (isOpen) toggleMenu();
-        }
-      },
-      { capture: true },
-    );
-
-    menu.appendChild(segment);
-  });
+  renderSegments(menu);
 
   initMenuRingGrain(menu, responsiveConfig.menuSize);
 
@@ -85,6 +66,33 @@ document.addEventListener("DOMContentLoaded", () => {
     resizeAtmosphere();
     resizeMenu();
   });
+});
+
+function renderSegments(menu) {
+  menu.querySelectorAll(".menu-segment").forEach((segment) => segment.remove());
+  menuItems.forEach((item, index) => {
+    const segment = createSegment(item, index, menuItems.length);
+    segment.addEventListener("mouseenter", () => {
+      if (isOpen) new Audio("/sfx/menu-select.mp3").play().catch(() => {});
+    });
+    segment.addEventListener("click", (event) => {
+      if (isSamePage(segment.href)) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (isOpen) toggleMenu();
+      }
+    }, { capture: true });
+    menu.appendChild(segment);
+  });
+}
+
+document.addEventListener("tutto-rifiuto:content", (event) => {
+  const rows = event.detail?.["global.menu.items"];
+  if (!Array.isArray(rows) || !rows.every((row) => Array.isArray(row) && row.length === 2 && typeof row[0] === "string" && isAllowedLink(row[1]))) return;
+  menuItems = rows.map(([label, href], index) => ({ label, href, icon: MENU_ICONS[index % MENU_ICONS.length] }));
+  const menu = document.querySelector(".circular-menu");
+  if (menu) renderSegments(menu);
 });
 
 // utility - check if link points to current page
@@ -281,12 +289,19 @@ function createSegment(item, index, total) {
   segment.style.width = `${menuSize}px`;
   segment.style.height = `${menuSize}px`;
 
-  segment.innerHTML = `
-    <div class="segment-content" style="left: ${contentX}px; top: ${contentY}px; transform: translate(-50%, -50%);">
-      ${getIconSvg(item.icon)}
-      <div class="label">${item.label}</div>
-    </div>
-  `;
+  const content = document.createElement("div");
+  content.className = "segment-content";
+  content.style.left = `${contentX}px`;
+  content.style.top = `${contentY}px`;
+  content.style.transform = "translate(-50%, -50%)";
+  const icon = document.createElement("span");
+  icon.className = "segment-icon";
+  icon.innerHTML = getIconSvg(item.icon);
+  const label = document.createElement("div");
+  label.className = "label";
+  label.textContent = item.label;
+  content.append(icon, label);
+  segment.appendChild(content);
 
   return segment;
 }
@@ -315,7 +330,7 @@ function resizeMenu() {
 
   const menuSegments = document.querySelectorAll(".menu-segment");
   menuSegments.forEach((segment, index) => {
-    updateSegment(segment, index, MENU_ITEMS.length);
+    updateSegment(segment, index, menuItems.length);
   });
 
   resizeMenuRingGrain(menu, responsiveConfig.menuSize);
@@ -463,8 +478,8 @@ function initJoystick() {
     ) {
       const angle = Math.atan2(currentY, currentX) * (180 / Math.PI);
       const segmentIndex =
-        Math.floor(((angle + 90 + 360) % 360) / (360 / MENU_ITEMS.length)) %
-        MENU_ITEMS.length;
+        Math.floor(((angle + 90 + 360) % 360) / (360 / menuItems.length)) %
+        menuItems.length;
       const segment = document.querySelectorAll(".menu-segment")[segmentIndex];
 
       if (segment !== activeSegment) {

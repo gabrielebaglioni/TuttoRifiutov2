@@ -4,6 +4,9 @@ import { GRAIN_FRAGMENT_SHADER, GRAIN_VERTEX_SHADER } from "./grain-yellow-shade
 // procedural trashscape — cumuli di pacchetti/sacchi abbandonati per strada
 // (Tutto Rifiuto: pacchetti lasciati per le strade della città)
 const canvas = document.getElementById("skyline");
+let isVisible = true;
+const visibilityObserver = new IntersectionObserver(([entry]) => { isVisible = entry.isIntersecting; }, { rootMargin: "200px" });
+visibilityObserver.observe(canvas);
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const pixelRatioLimit = isMobile ? 1.0 : 1.25;
 
@@ -50,12 +53,14 @@ function handleResize() {
 // animation loop
 function animate(currentTime) {
   requestAnimationFrame(animate);
+  if (!isVisible || document.hidden) return;
   material.uniforms.iTime.value = currentTime * 0.001;
   renderer.render(scene, camera);
 }
 
 // cleanup on page unload
 function cleanup() {
+  visibilityObserver.disconnect();
   geometry.dispose();
   material.dispose();
   renderer.dispose();

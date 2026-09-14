@@ -5,11 +5,18 @@ const { events, status, active = false } = Astro.props;
 ---
 
 <section
+  id={`events-${status}`}
   class:list={["work-items", "event-items", status === "past" && "is-reversed", active && "is-active"]}
   data-event-panel={status}
   aria-hidden={active ? "false" : "true"}
 >
-  <div class="container">
+  <div class="container" data-public-events={status}>
     {events.map((event, index) => <EventCard event={event} index={index} />)}
+  </div>
+  <div class="container event-empty" role="status">
+    <div class="event-empty-card">
+      <div class="work-item-media-placeholder" aria-hidden="true"></div>
+      <p>{status === "past" ? "Gli eventi del passato appariranno qui." : "I prossimi appuntamenti appariranno qui."}</p>
+    </div>
   </div>
 </section>

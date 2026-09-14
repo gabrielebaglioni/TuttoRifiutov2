@@ -1,25 +1,16 @@
 ---
-import { Image } from "astro:assets";
+import ResponsiveMedia from "./ResponsiveMedia.astro";
 
-const { items } = Astro.props;
+const { items, publicArchive = false } = Astro.props;
 ---
 
 <section class="work-items">
-  <div class="container">
+  <div class="container" data-public-archive={publicArchive ? "" : undefined}>
     {items.map((item, index) => (
-      <div class="work-item-row" id={`work-item-row-${index + 1}`}>
+      <div class="work-item-row" id={`work-item-row-${index + 1}`} data-collection-slug={item.slug}>
         <a href={item.href}>
           <div class="work-item">
-            <Image
-              src={item.image}
-              alt={item.title}
-              width={1200}
-              height={1500}
-              loading={index < 2 ? "eager" : "lazy"}
-              decoding="async"
-              format="webp"
-              densities={[1, 2]}
-            />
+            <ResponsiveMedia media={{ type: "image", src: item.image, alt: item.title }} width={1200} height={1500} loading={index < 2 ? "eager" : "lazy"} />
             <div class="work-item-info">
               <p>{item.title}</p>
               <p>{item.code}</p>

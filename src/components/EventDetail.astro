@@ -1,33 +1,32 @@
 ---
-import { Image } from "astro:assets";
+import ResponsiveMedia from "./ResponsiveMedia.astro";
 
 const { event } = Astro.props;
 ---
 
 <section class="project-hero">
-  <div class="project-hero-img">
-    <Image src={event.heroMedia.src} alt={event.heroMedia.alt} width={1600} height={1000} loading="eager" decoding="async" format="webp"
-              densities={[1, 2]} />
+  <div class="project-hero-img" data-collection-media="cover">
+    <ResponsiveMedia media={event.heroMedia} width={1600} height={1000} loading="eager" sizes="100vw" />
   </div>
 
   <div class="project-hero-copy">
     <div class="container">
       <div class="project-hero-header">
         <h1 data-animate-variant="diffuse" data-animate-on-scroll="false" data-animate-delay="0.1">
-          {event.title}
+          <span data-collection-field="title">{event.title}</span>
         </h1>
         <p data-animate-variant="slide" data-animate-type="words" data-animate-on-scroll="false" data-animate-delay="0.75">
-          {event.summary}
+          <span data-collection-field="summary">{event.summary}</span>
         </p>
       </div>
 
       <div class="project-hero-meta">
         <div class="project-hero-meta-col">
           <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
-            {event.code}
+            <span data-collection-field="code">{event.code}</span>
           </p>
         </div>
-        <div class="project-hero-meta-col">
+        <div class="project-hero-meta-col" data-collection-render="meta" data-collection-field="meta">
           {event.meta.map((item, index) => (
             <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay={index === 0 ? "1" : "1.5"}>
               {item}
@@ -43,11 +42,11 @@ const { event } = Astro.props;
   <div class="container">
     <div class="project-info-col">
       <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
-        {event.description}
+        <span data-collection-field="description">{event.description}</span>
       </p>
     </div>
 
-    <div class="project-info-col">
+    <div class="project-info-col" data-collection-render="columns" data-collection-field="info">
       {event.info.map((col) => (
         <div class="project-info-sub-col">
           {col.map(([label, value]) => (
@@ -64,9 +63,9 @@ const { event } = Astro.props;
 </section>
 
 <section class="project-images">
-  <div class="container">
+  <div class="container" data-collection-media-list>
     {event.detailMedia.map((media, index) => (
-      <div class="project-img">
+      <div class="project-img" data-collection-media-slot={`detail:${index}`}>
         {media.type === "video" ? (
           <video
             src={media.src}
@@ -77,16 +76,7 @@ const { event } = Astro.props;
             aria-label={media.alt}
           ></video>
         ) : (
-          <Image
-            src={media.src}
-            alt={media.alt}
-            width={1400}
-            height={1000}
-            loading="lazy"
-            decoding="async"
-            format="webp"
-              densities={[1, 2]}
-          />
+          <ResponsiveMedia media={media} width={1400} height={1000} sizes="(max-width: 1000px) 100vw, 75vw" />
         )}
       </div>
     ))}
@@ -97,10 +87,10 @@ const { event } = Astro.props;
   <div class="container">
     <div class="project-info-col">
       <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
-        {event.outro}
+        <span data-collection-field="outro">{event.outro}</span>
       </p>
     </div>
-    <div class="project-info-col">
+    <div class="project-info-col" data-collection-render="columns" data-collection-field="outroInfo">
       {event.outroInfo.map((col) => (
         <div class="project-info-sub-col">
           {col.map(([label, value]) => (

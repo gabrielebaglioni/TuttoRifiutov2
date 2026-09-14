@@ -1,0 +1,85 @@
+---
+import ResponsiveMedia from "./ResponsiveMedia.astro";
+import { SITE_CONTENT } from "../data/site-content.js";
+
+const { item } = Astro.props;
+---
+
+<section class="project-hero">
+  <div class="project-hero-img" data-collection-media="cover">
+    <ResponsiveMedia media={item.coverMedia} width={1600} height={1000} loading="eager" sizes="100vw" />
+  </div>
+
+  <div class="project-hero-copy">
+    <div class="container">
+      <div class="project-hero-header">
+        <h1 data-animate-variant="diffuse" data-animate-on-scroll="false" data-animate-delay="0.1">
+          <span data-collection-field="title">{item.title}</span>
+        </h1>
+        <p data-animate-variant="slide" data-animate-type="words" data-animate-on-scroll="false" data-animate-delay="0.75">
+          <span data-collection-field="description">{item.description}</span>
+        </p>
+      </div>
+
+      <div class="project-hero-meta">
+        <div class="project-hero-meta-col">
+          <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1">
+            <span data-collection-field="code">{item.code}</span>
+          </p>
+        </div>
+        <div class="project-hero-meta-col">
+          <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="false" data-animate-delay="1.5" data-content-key="archive.detail.context_label">
+            {SITE_CONTENT["archive.detail.context_label"]}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="project-info">
+  <div class="container">
+    <div class="project-info-col">
+      <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
+        <span data-collection-field="description">{item.description}</span>
+      </p>
+    </div>
+    <div class="project-info-col" data-collection-render="details" data-collection-field="details">
+      <div class="project-info-sub-col">
+        {item.details.map(([label, value]) => (
+          <>
+            <p class="type-mono" data-animate-variant="flicker" data-animate-on-scroll="true">{label}</p>
+            <p data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">{value}</p>
+            <br /><br />
+          </>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="project-images">
+  <div class="container" data-collection-media-list>
+    {item.detailMedia.map((media, index) => (
+      <div class="project-img" data-collection-media-slot={`detail:${index}`}>
+        <ResponsiveMedia media={media} width={1400} height={1000} sizes="(max-width: 1000px) 100vw, 75vw" />
+      </div>
+    ))}
+  </div>
+</section>
+
+<section class="project-info project-outro">
+  <div class="container">
+    <div class="project-info-col">
+      <p class="lg" data-animate-variant="slide" data-animate-type="lines" data-animate-on-scroll="true">
+        <span data-collection-field="outro">{item.outro}</span>
+      </p>
+    </div>
+    <div class="project-info-col">
+      <div class="project-info-sub-col">
+        <p class="type-mono" data-content-key="archive.detail.status_label">{SITE_CONTENT["archive.detail.status_label"]}</p>
+        <p data-content-key="archive.detail.status_value">{SITE_CONTENT["archive.detail.status_value"]}</p>
+      </div>
+    </div>
+  </div>
+</section>

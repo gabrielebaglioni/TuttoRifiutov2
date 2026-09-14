@@ -1,0 +1,24 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ArchiveDetail from "../../components/ArchiveDetail.astro";
+import fallbackCover from "../../assets/optimized/work/work_01.webp";
+import fallbackDetail from "../../assets/optimized/project/project_1.webp";
+import "../../styles/site/project.css";
+
+const fallback = {
+  slug: "template",
+  title: "Archivio Tutto Rifiuto",
+  code: "TR—00",
+  description: "Il contenuto aggiornato di questo elemento viene caricato dall'archivio pubblico.",
+  details: [["Collettivo", "Tutto Rifiuto"], ["Stato", "In caricamento"]],
+  outro: "Torna all'archivio per scoprire tutti i pacchetti del collettivo.",
+  seo: { title: "Archivio — Tutto Rifiuto", description: "Dettaglio dell'archivio Tutto Rifiuto." },
+  coverMedia: { type: "image", src: fallbackCover, alt: "Segnaposto archivio Tutto Rifiuto" },
+  detailMedia: [{ type: "image", src: fallbackDetail, alt: "Segnaposto dettaglio archivio" }],
+};
+---
+
+<BaseLayout title={fallback.seo.title} description={fallback.seo.description}>
+  <div data-public-detail-template="archive"><ArchiveDetail item={fallback} /></div>
+  <script src="../../scripts/project.js"></script>
+</BaseLayout>

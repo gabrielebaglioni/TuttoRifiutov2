@@ -3,7 +3,6 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import EventDetail from "../../components/EventDetail.astro";
 import { events, getEventBySlug } from "../../data/events.js";
 import "../../styles/site/project.css";
-import projectScript from "../../scripts/project.js?url";
 
 export function getStaticPaths() {
   return events.map((event) => ({
@@ -18,6 +17,7 @@ if (!event) {
 }
 ---
 
-<BaseLayout title={event.seo.title} description={event.seo.description} scripts={[projectScript]}>
-  <EventDetail event={event} />
+<BaseLayout title={event.seo.title} description={event.seo.description}>
+  <div data-public-detail-kind="events" data-public-detail-slug={event.slug}><EventDetail event={event} /></div>
+  <script src="../../scripts/project.js"></script>
 </BaseLayout>

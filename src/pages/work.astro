@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE_CONTENT } from "../data/site-content.js";
 import WorkHero from "../components/WorkHero.astro";
 import WorkGrid from "../components/WorkGrid.astro";
 import { workItems } from "../data/work.js";
@@ -7,9 +8,9 @@ import "../styles/site/work.css";
 ---
 
 <BaseLayout
-  title="Archivio — Tutto Rifiuto"
-  description="Archivio dei pacchetti lasciati per le strade di Roma: parole, suoni, immagini, pellicole, fantasie."
+  title={SITE_CONTENT["seo.archive.title"]}
+  description={SITE_CONTENT["seo.archive.description"]}
 >
-  <WorkHero title="Pacchetti" leftLabel="[ In decomposizione ]" rightLabel="/ Archivio di strada" />
-  <WorkGrid items={workItems} />
+  <WorkHero title={SITE_CONTENT["archive.hero.title"]} leftLabel={SITE_CONTENT["archive.hero.left_label"]} rightLabel={SITE_CONTENT["archive.hero.right_label"]} titleKey="archive.hero.title" leftLabelKey="archive.hero.left_label" rightLabelKey="archive.hero.right_label" />
+  <WorkGrid items={workItems} publicArchive />
 </BaseLayout>

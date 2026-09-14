@@ -1,29 +1,12 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SITE_CONTENT } from "../data/site-content.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
 // pacchetti lasciati per le strade — nome & luogo del drop
-const clientsData = [
-  { name: "Parole Rotte", project: "Trastevere" },
-  { name: "Suoni Sporchi", project: "Pigneto" },
-  { name: "Pellicole in Scadenza", project: "San Lorenzo" },
-  { name: "Fantasie Usate", project: "Centocelle" },
-  { name: "Immagini Trovate", project: "Testaccio" },
-  { name: "Zine n°03", project: "Garbatella" },
-  { name: "Poesia Fotocopiata", project: "Quadraro" },
-  { name: "Cassetta Rumore", project: "Ostiense" },
-  { name: "Super 8 Scartato", project: "Esquilino" },
-  { name: "Manifesto Strappato", project: "Tiburtino" },
-  { name: "Collage Anonimo", project: "Prenestino" },
-  { name: "Lettere Perdute", project: "Tuscolano" },
-  { name: "Frammenti", project: "Appio" },
-  { name: "Scarti Sonori", project: "Monteverde" },
-  { name: "Residui", project: "Flaminio" },
-  { name: "Pacchetto #12", project: "Aventino" },
-  { name: "Rovistare / Ritrovarsi", project: "Celio" },
-  { name: "Nessuna Spiegazione", project: "Nomentano" },
-];
+let clientsData = SITE_CONTENT["home.clients.rows"].map(([name, project]) => ({ name, project }));
+let clientTriggers = [];
 
 // initialization
 document.addEventListener("DOMContentLoaded", () => {
@@ -39,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function generateClientsList() {
   const clientsList = document.querySelector(".clients-list");
   if (!clientsList) return;
+  clientsList.replaceChildren();
 
   clientsData.forEach((client) => {
     const row = document.createElement("div");
@@ -58,14 +42,25 @@ function generateClientsList() {
   });
 }
 
+document.addEventListener("tutto-rifiuto:content", (event) => {
+  const rows = event.detail?.["home.clients.rows"];
+  if (!Array.isArray(rows) || !rows.every((row) => Array.isArray(row) && row.length === 2 && row.every((value) => typeof value === "string"))) return;
+  clientsData = rows.map(([name, project]) => ({ name, project }));
+  generateClientsList();
+  ScrollTrigger.refresh();
+  initClientsAnimation();
+});
+
 // scroll animation - gap closes and opacity fades in
 function initClientsAnimation() {
+  clientTriggers.forEach((trigger) => trigger.kill());
+  clientTriggers = [];
   const clientRows = document.querySelectorAll(".client-row");
 
   clientRows.forEach((row) => {
     const paragraphs = row.querySelectorAll("p");
 
-    ScrollTrigger.create({
+    clientTriggers.push(ScrollTrigger.create({
       trigger: row,
       start: "top 50%",
       end: "top 35%",
@@ -75,6 +70,6 @@ function initClientsAnimation() {
         gsap.set(row, { gap: `${29 - progress * 27}%` });
         paragraphs.forEach((p) => gsap.set(p, { opacity: progress }));
       },
-    });
+    }));
   });
 }

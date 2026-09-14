@@ -1,5 +1,6 @@
 ---
 const blocks = Array.from({ length: 12 });
+import { SITE_CONTENT } from "../data/site-content.js";
 ---
 
 <div class="preloader">
@@ -10,7 +11,7 @@ const blocks = Array.from({ length: 12 });
     <div class="progress-bar-indicator"></div>
     <div class="progress-bar-copy">
       <p class="type-mono"><span>0</span>%</p>
-      <p class="type-mono">Tutto Rifiuto — Roma</p>
+      <p class="type-mono" data-content-key="global.preloader.location_label">{SITE_CONTENT["global.preloader.location_label"]}</p>
     </div>
   </div>
 </div>

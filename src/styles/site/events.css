@@ -1,4 +1,4 @@
-.work-hero-footer button {
+.event-hero-tabs button {
   appearance: none;
   border: 0;
   background: transparent;
@@ -7,24 +7,37 @@
   opacity: 0.35;
   font: inherit;
   text-transform: inherit;
-  padding: 0;
+  padding: 1rem 0;
+  min-height: 44px;
 }
 
 .event-hero-tabs {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.25rem;
+  mix-blend-mode: normal;
+  font-family: var(--type-3);
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  background: var(--bg);
+  padding-block: 0.5rem;
+  font-size: 0.875rem;
 }
+.event-hero-tabs button:first-child { text-align: left; }
+.event-hero-tabs button:last-child { text-align: right; }
+.event-hero-tabs button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 
 .event-hero-tabs-separator {
   opacity: 0.65;
 }
 
-.work-hero-footer button.is-active {
+.event-hero-tabs button.is-active {
   opacity: 1;
 }
 
-.work-hero-footer button:disabled {
+.event-hero-tabs button:disabled {
   cursor: wait;
 }
 
@@ -60,6 +73,7 @@
     var(--event-switch-cell, 48px)
   );
   grid-auto-rows: var(--event-switch-cell, 48px);
+  grid-template-rows: none;
   align-content: start;
   justify-content: start;
   overflow: hidden;
@@ -67,6 +81,19 @@
   z-index: 1000;
   background: transparent;
   visibility: hidden;
+}
+
+.event-items .work-item-row:nth-child(odd) { justify-content: flex-start; }
+.event-items .work-item-row:nth-child(even) { justify-content: flex-end; }
+.event-items.is-reversed .work-item-row:nth-child(odd) { justify-content: flex-end; }
+.event-items.is-reversed .work-item-row:nth-child(even) { justify-content: flex-start; }
+.event-items .event-empty { display: none; }
+.event-items:has([data-public-events]:empty) .event-empty { display: flex; }
+.event-items.is-reversed .event-empty { align-items: flex-end; }
+.event-empty-card { width: 40%; }
+.event-empty-card p { margin-top: 1rem; }
+@media (max-width: 1000px) {
+  .event-items .work-item-row a, .event-empty-card { width: 82%; }
 }
 
 .transition-grid-small .transition-block {

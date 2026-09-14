@@ -1,6 +1,9 @@
 // navigation clock with blinking colon
 const clockEl = document.querySelector(".nav-clock p");
-const colonEl = clockEl.querySelector("span");
+const hoursEl = clockEl.querySelector('[data-content-key="global.nav.clock_hours"]');
+const minutesEl = clockEl.querySelector('[data-content-key="global.nav.clock_minutes"]');
+const timeZoneEl = clockEl.querySelector('[data-content-key="global.nav.clock_timezone"]');
+const colonEl = clockEl.querySelector("[data-clock-colon]");
 
 function getTimeParts() {
   const now = new Date();
@@ -16,8 +19,9 @@ function getTimeParts() {
 
 function updateClock() {
   const { hours, minutes, timeZone } = getTimeParts();
-  clockEl.childNodes[0].textContent = `${hours} `;
-  clockEl.childNodes[2].textContent = ` ${minutes} ${timeZone}`;
+  hoursEl.textContent = hours;
+  minutesEl.textContent = minutes;
+  timeZoneEl.textContent = timeZone;
 }
 
 function blinkColon() {

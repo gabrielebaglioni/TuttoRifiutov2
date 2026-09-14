@@ -1,6 +1,6 @@
 ---
 const { small = false } = Astro.props;
-const blocks = Array.from({ length: small ? 4096 : 12 });
+const blocks = Array.from({ length: small ? 0 : 12 });
 ---
 
 <div class:list={["transition-grid", small && "transition-grid-small"]}>

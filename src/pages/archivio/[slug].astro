@@ -1,0 +1,9 @@
+---
+// Runtime archive details are gated by the Worker and served from
+// `/archivio/template/`. Keeping an empty Astro dynamic route documents the
+// public URL contract without emitting wildcard/default artifacts that could
+// compete with the long-standing `/project` page.
+export function getStaticPaths() {
+  return [];
+}
+---

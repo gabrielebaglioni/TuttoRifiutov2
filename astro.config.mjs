@@ -1,6 +1,7 @@
 import { defineConfig, fontProviders } from "astro/config";
 
 export default defineConfig({
+  site: "https://tutto-rifiuto.clear-shrew-1686.chatgpt.site",
   output: "static",
   build: {
     format: "directory",

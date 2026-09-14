@@ -1,16 +1,17 @@
 ---
 import Icon from "./Icon.astro";
+import { SITE_CONTENT } from "../data/site-content.js";
 ---
 
 <nav>
   <div class="container">
     <div class="nav-clock">
-      <p class="type-mono">18 <span>:</span> 25 CET</p>
+      <p class="type-mono"><span data-content-key="global.nav.clock_hours">{SITE_CONTENT["global.nav.clock_hours"]}</span> <span data-clock-colon>:</span> <span data-content-key="global.nav.clock_minutes">{SITE_CONTENT["global.nav.clock_minutes"]}</span> <span data-content-key="global.nav.clock_timezone">{SITE_CONTENT["global.nav.clock_timezone"]}</span></p>
     </div>
 
     <div class="nav-location">
       <p class="type-mono">
-        <Icon name="triangle-sharp" /> Roma, IT
+        <Icon name="triangle-sharp" /> <span data-content-key="global.nav.location">{SITE_CONTENT["global.nav.location"]}</span>
       </p>
     </div>
   </div>

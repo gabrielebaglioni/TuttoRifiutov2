@@ -1,6 +1,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import { contentReady } from "./content-hydration.js";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -23,7 +24,7 @@ const LOGO_BOX = {
   width: 840,
   height: 1208,
   /** Asset raw: evita pipeline che può alterare l’alpha della maschera */
-  path: new URL("../assets/work/qia.png", import.meta.url).href,
+  path: new URL("../assets/optimized/work/qia.webp", import.meta.url).href,
 };
 
 const PIE_RADIUS = 604;
@@ -50,8 +51,12 @@ function init() {
   appendMaskDefs();
   createDots();
   createPieGroup();
-  setupHeader();
   setupScrollTrigger();
+  Promise.all([document.fonts.ready, contentReady]).then(() => {
+    setupHeader();
+    ScrollTrigger.sort();
+    ScrollTrigger.refresh(true);
+  });
 
   window.addEventListener("resize", handleResize);
 }
@@ -122,7 +127,7 @@ function appendMaskDefs() {
   STATE.svg.appendChild(defs);
 
   if (typeof logoMaskImage.decode === "function") {
-    logoMaskImage.decode().then(() => ScrollTrigger.refresh()).catch(() => {});
+    logoMaskImage.decode().catch(() => {});
   }
 }
 
@@ -189,9 +194,10 @@ function setupScrollTrigger() {
   STATE.scrollTrigger = ScrollTrigger.create({
     trigger: STATE.container,
     start: "top top",
-    end: () => `+=${window.innerHeight * PIN_LENGTH_VIEWPORTS}`,
+    end: () => `+=${STATE.container.offsetHeight * PIN_LENGTH_VIEWPORTS}`,
     scrub: true,
     pin: true,
+    anticipatePin: 1,
     pinSpacing: true,
     invalidateOnRefresh: true,
     onUpdate: (self) => {
@@ -283,5 +289,5 @@ function updatePieFill(progress) {
 
 function handleResize() {
   scaleMultiplier = window.innerWidth < 1000 ? 7 : 6;
-  ScrollTrigger.refresh();
+  ScrollTrigger.refresh(true);
 }

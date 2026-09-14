@@ -15,7 +15,7 @@ function initLenisScroll() {
     duration: isMobile ? 0.8 : 1.2,
     lerp: isMobile ? 0.075 : 0.1,
     smoothWheel: true,
-    syncTouch: true,
+    syncTouch: false,
     touchMultiplier: isMobile ? 1.5 : 2,
   });
 

@@ -1,31 +1,31 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE_CONTENT } from "../data/site-content.js";
 import WorkHero from "../components/WorkHero.astro";
 import EventList from "../components/EventList.astro";
 import TransitionGrid from "../components/TransitionGrid.astro";
 import { eventGroups } from "../data/events.js";
 import "../styles/site/work.css";
 import "../styles/site/events.css";
-import eventsSwitchScript from "../scripts/events-switch.js?url";
 ---
 
 <BaseLayout
-  title="Eventi — Tutto Rifiuto"
-  description="Tipologie di eventi Tutto Rifiuto a Roma: Giornata Tutto Rifiuto, proiezioni, musica, serigrafia e letture."
-  scripts={[eventsSwitchScript]}
+  title={SITE_CONTENT["seo.events.title"]}
+  description={SITE_CONTENT["seo.events.description"]}
 >
-  <WorkHero title="Eventi">
-    <span class="event-hero-tabs" slot="left" aria-label="Filtra eventi">
-      <span aria-hidden="true">[ </span><button class="type-mono is-active" type="button" data-event-tab="upcoming" aria-pressed="true">In agenda</button>
-      <span class="event-hero-tabs-separator" aria-hidden="true"> / </span>
-      <button class="type-mono" type="button" data-event-tab="past" aria-pressed="false">Passati</button><span aria-hidden="true"> ]</span>
-    </span>
-    <span slot="right">/ Appuntamenti di strada</span>
-  </WorkHero>
+  <WorkHero title={SITE_CONTENT["events.hero.title"]} titleKey="events.hero.title" />
 
-  <div class="events-panels">
+  <div class="events-browser">
+    <nav class="event-hero-tabs container" aria-label="Filtra eventi">
+      <button class="type-mono is-active" type="button" data-event-tab="upcoming" aria-pressed="true" aria-controls="events-upcoming"><span aria-hidden="true" data-content-key="events.hero.tab_prefix">{SITE_CONTENT["events.hero.tab_prefix"]}</span><span data-content-key="events.hero.upcoming_label">{SITE_CONTENT["events.hero.upcoming_label"]}</span></button>
+      <span class="event-hero-tabs-separator type-mono" aria-hidden="true" data-content-key="events.hero.tab_separator">{SITE_CONTENT["events.hero.tab_separator"]}</span>
+      <button class="type-mono" type="button" data-event-tab="past" aria-pressed="false" aria-controls="events-past"><span data-content-key="events.hero.past_label">{SITE_CONTENT["events.hero.past_label"]}</span><span aria-hidden="true" data-content-key="events.hero.tab_suffix">{SITE_CONTENT["events.hero.tab_suffix"]}</span></button>
+    </nav>
+    <div class="events-panels">
     <TransitionGrid small />
     <EventList events={eventGroups.upcoming} status="upcoming" active />
     <EventList events={eventGroups.past} status="past" />
+    </div>
   </div>
+  <script src="../scripts/events-switch.js"></script>
 </BaseLayout>

@@ -1,31 +1,35 @@
+---
+import { SITE_CONTENT } from "../data/site-content.js";
+---
+
 <footer>
   <div class="footer-container">
     <div class="footer-content">
       <div class="footer-row">
         <div class="footer-col">
-          <h2>Tutto Rifiuto</h2>
+          <h2 data-content-key="site.name">{SITE_CONTENT["site.name"]}</h2>
         </div>
 
         <div class="footer-col">
           <div class="footer-sub-col">
-            <a href="/"><h3>Manifesto</h3></a>
-            <a href="/work"><h3>Archivio</h3></a>
-            <a href="/events"><h3>Eventi</h3></a>
-            <a href="/contact"><h3>Contatti</h3></a>
+            <a href={SITE_CONTENT["global.footer.manifesto_href"]} data-content-key="global.footer.manifesto_href"><h3 data-content-key="global.footer.manifesto_label">{SITE_CONTENT["global.footer.manifesto_label"]}</h3></a>
+            <a href={SITE_CONTENT["global.footer.archive_href"]} data-content-key="global.footer.archive_href"><h3 data-content-key="global.footer.archive_label">{SITE_CONTENT["global.footer.archive_label"]}</h3></a>
+            <a href={SITE_CONTENT["global.footer.events_href"]} data-content-key="global.footer.events_href"><h3 data-content-key="global.footer.events_label">{SITE_CONTENT["global.footer.events_label"]}</h3></a>
+            <a href={SITE_CONTENT["global.footer.contact_href"]} data-content-key="global.footer.contact_href"><h3 data-content-key="global.footer.contact_label">{SITE_CONTENT["global.footer.contact_label"]}</h3></a>
           </div>
 
           <div class="footer-sub-col">
-            <a href="https://www.instagram.com/tuttorifiuto/" target="_blank" rel="noopener noreferrer">Instagram</a>
-            <a href="https://t.me/tuttorifiuto" target="_blank" rel="noopener noreferrer">Telegram</a>
-            <a href="https://tuttorifiuto.bandcamp.com" target="_blank" rel="noopener noreferrer">Bandcamp</a>
-            <a href="mailto:tuttorifiuto@gmail.com">Email</a>
+            <a href={SITE_CONTENT["global.footer.instagram_href"]} target="_blank" rel="noopener noreferrer" data-content-key="global.footer.instagram_href" data-content-path=""><span data-content-key="global.footer.instagram_label">{SITE_CONTENT["global.footer.instagram_label"]}</span></a>
+            <a href={SITE_CONTENT["global.footer.telegram_href"]} target="_blank" rel="noopener noreferrer" data-content-key="global.footer.telegram_href"><span data-content-key="global.footer.telegram_label">{SITE_CONTENT["global.footer.telegram_label"]}</span></a>
+            <a href={SITE_CONTENT["global.footer.bandcamp_href"]} target="_blank" rel="noopener noreferrer" data-content-key="global.footer.bandcamp_href"><span data-content-key="global.footer.bandcamp_label">{SITE_CONTENT["global.footer.bandcamp_label"]}</span></a>
+            <a href={SITE_CONTENT["global.footer.email_href"]} data-content-key="global.footer.email_href"><span data-content-key="global.footer.email_label">{SITE_CONTENT["global.footer.email_label"]}</span></a>
           </div>
         </div>
       </div>
 
       <div class="footer-row">
-        <p class="type-mono">Roma __ 2026</p>
-        <p class="type-mono">[ Vola soltanto chi non sa cadere ]</p>
+        <p class="type-mono" data-content-key="global.footer.location">{SITE_CONTENT["global.footer.location"]}</p>
+        <p class="type-mono" data-content-key="global.footer.quote">{SITE_CONTENT["global.footer.quote"]}</p>
       </div>
     </div>
   </div>

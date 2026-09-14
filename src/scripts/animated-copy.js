@@ -1,6 +1,8 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import { contentReady } from "./content-hydration.js";
+import { ensureCollectionsReadiness } from "./collections-readiness.js";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -9,7 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const animatedElements = document.querySelectorAll("[data-animate-variant]");
   animatedElements.forEach((element) => gsap.set(element, { opacity: 0 }));
 
-  document.fonts.ready.then(() => initAnimatedCopy());
+  Promise.all([document.fonts.ready, contentReady, ensureCollectionsReadiness(window).promise]).then(() => {
+    initAnimatedCopy();
+    ScrollTrigger.sort();
+    ScrollTrigger.refresh(true);
+  });
 });
 
 function initAnimatedCopy() {
@@ -72,6 +78,7 @@ function initSlideAnimation(element, isPreloaderShowing) {
       } else {
         animation.play();
       }
+      return animation;
     },
   });
 }
@@ -110,6 +117,7 @@ function initFlickerAnimation(element, isPreloaderShowing) {
       } else {
         animation.play();
       }
+      return animation;
     },
   });
 }
@@ -163,6 +171,7 @@ function initDiffuseAnimation(element, isPreloaderShowing) {
       } else {
         animation.play();
       }
+      return animation;
     },
   });
 }

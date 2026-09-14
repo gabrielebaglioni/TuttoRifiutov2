@@ -1,5 +1,6 @@
 ---
 import { Font } from "astro:assets";
+import { SITE_CONTENT } from "../data/site-content.js";
 import "../styles/globals.css";
 import "../styles/site/preloader.css";
 import "../styles/site/nav.css";
@@ -14,31 +15,15 @@ import MenuOverlay from "../components/MenuOverlay.astro";
 import Footer from "../components/Footer.astro";
 import BlurFilter from "../components/BlurFilter.astro";
 
-import preloaderScript from "../scripts/preloader.js?url";
-import lenisScript from "../scripts/lenis-scroll.js?url";
-import transitionScript from "../scripts/transition.js?url";
-import navScript from "../scripts/nav.js?url";
-import menuScript from "../scripts/menu.js?url";
-import animatedCopyScript from "../scripts/animated-copy.js?url";
-import footerScript from "../scripts/footer.js?url";
-
 const {
-  title = "Tutto Rifiuto",
-  description = "Tutto Rifiuto — collettivo romano che raccoglie parole, suoni, immagini, pellicole, fantasie, stampe.",
+  title = SITE_CONTENT["seo.default.title"],
+  description = SITE_CONTENT["seo.default.description"],
   includeFooter = true,
   bodyClass = "",
-  scripts = [],
 } = Astro.props;
 
-const commonScripts = [
-  preloaderScript,
-  lenisScript,
-  transitionScript,
-  navScript,
-  menuScript,
-  animatedCopyScript,
-  footerScript,
-];
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
+const socialImageUrl = new URL("/og.webp", Astro.site ?? Astro.url);
 ---
 
 <!doctype html>
@@ -47,9 +32,22 @@ const commonScripts = [
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
-    <meta name="author" content="Tutto Rifiuto" />
+    <meta name="author" content={SITE_CONTENT["site.name"]} />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#000000" />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:site_name" content={SITE_CONTENT["site.name"]} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={socialImageUrl} />
+    <meta property="og:image:alt" content={SITE_CONTENT["seo.social.image_alt"]} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImageUrl} />
     <link rel="icon" type="image/png" href="/site-icon.png" />
     <link rel="apple-touch-icon" href="/site-icon.png" />
     <Font cssVariable="--font-de-fonte-plus" preload />
@@ -65,8 +63,6 @@ const commonScripts = [
     <slot />
     {includeFooter && <Footer />}
     <BlurFilter />
-    {[...commonScripts, ...scripts].map((src) => (
-      <script type="module" src={src}></script>
-    ))}
+    <script src="../scripts/common.js"></script>
   </body>
 </html>

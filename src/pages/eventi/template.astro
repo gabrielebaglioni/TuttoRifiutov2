@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import EventDetail from "../../components/EventDetail.astro";
+import fallbackCover from "../../assets/optimized/work/work_01.webp";
+import fallbackDetail from "../../assets/optimized/work/work_02.webp";
+import "../../styles/site/project.css";
+
+const fallback = {
+  slug: "template",
+  title: "Evento Tutto Rifiuto",
+  code: "TR·E",
+  status: "published",
+  summary: "Dettaglio dell'evento in caricamento.",
+  seo: { title: "Evento — Tutto Rifiuto", description: "Evento del collettivo Tutto Rifiuto." },
+  heroMedia: { type: "image", src: fallbackCover, alt: "Segnaposto evento Tutto Rifiuto" },
+  meta: ["Evento", "Tutto Rifiuto"],
+  description: "Il contenuto aggiornato di questo evento viene caricato dall'archivio pubblico.",
+  info: [[ ["Collettivo", "Tutto Rifiuto"], ["Stato", "In caricamento"] ]],
+  detailMedia: [{ type: "image", src: fallbackDetail, alt: "Segnaposto dettaglio evento" }],
+  outro: "Torna alla pagina Eventi per scoprire tutti gli appuntamenti del collettivo.",
+  outroInfo: [[ ["Archivio", "Evento pubblico"], ["Sito", "Tutto Rifiuto"] ]],
+};
+---
+
+<BaseLayout title={fallback.seo.title} description={fallback.seo.description}>
+  <div data-public-detail-template="events"><EventDetail event={fallback} /></div>
+  <script src="../../scripts/project.js"></script>
+</BaseLayout>
