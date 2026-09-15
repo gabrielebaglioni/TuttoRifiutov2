@@ -41,6 +41,17 @@
   z-index: 1;
 }
 
+.particle-touch-region {
+  position: absolute;
+  z-index: 2;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .particle-touch-region { pointer-events: none; }
+}
+
 /* The original wordmark remains present when WebGL is unavailable. */
 .lab-hero .particle-fallback {
   position: absolute;
