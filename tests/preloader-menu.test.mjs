@@ -33,7 +33,7 @@ test('menu footer contrast transitions only colors, leaving geometry and clicks 
   const { document } = parseHTML(`<style>${css}</style><div class="menu-toggle-btn"><div class="hamburger-bar"></div></div>`);
   for (const element of document.querySelectorAll('.menu-toggle-btn, .hamburger-bar')) {
     const transition = [...document.querySelector('style').sheet.cssRules]
-      .filter(rule => rule.selectorText && !rule.selectorText.includes('::') && element.matches(rule.selectorText))
+      .filter(rule => rule.selectorText && !rule.selectorText.includes(':') && element.matches(rule.selectorText))
       .map(rule => rule.style.getPropertyValue('transition')).filter(Boolean).at(-1);
     assert.ok(transition, 'contrast must not switch abruptly');
     assert.match(transition, /background-color/);

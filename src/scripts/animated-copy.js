@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { prefersReducedMotion } from './motion-policy.js';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";
@@ -9,6 +10,7 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 
 // initialization
 document.addEventListener("DOMContentLoaded", () => {
+  if (prefersReducedMotion()) return;
   const animatedElements = document.querySelectorAll("[data-animate-variant]");
   animatedElements.forEach((element) => gsap.set(element, { opacity: 0 }));
 

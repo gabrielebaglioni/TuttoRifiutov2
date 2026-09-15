@@ -2,7 +2,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SITE_CONTENT } from "../data/site-content.js";
 import { contentReady } from "./content-hydration.js";
-import { clientMotion } from "./motion-policy.js";
+import { clientMotion, prefersReducedMotion } from "./motion-policy.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -59,6 +59,10 @@ function initClientsAnimation() {
   clientTriggers.forEach((trigger) => trigger.kill());
   clientTriggers = [];
   const clientRows = document.querySelectorAll(".client-row");
+  if (prefersReducedMotion()) {
+    gsap.set(document.querySelectorAll('.client-row p'), { opacity: 1, x: 0 });
+    return;
+  }
 
   clientRows.forEach((row) => {
     const paragraphs = row.querySelectorAll("p");

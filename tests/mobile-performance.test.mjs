@@ -8,7 +8,8 @@ import { usesTouchLayout } from '../src/scripts/motion-policy.js';
 
 function functions(file, names) {
   const source = readFileSync(new URL(`../src/scripts/${file}`, import.meta.url), 'utf8');
-  return parse(source, { ecmaVersion: 'latest', sourceType: 'module' }).body
+  const body = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }).body;
+  return body.flatMap(node => node.type === 'FunctionDeclaration' && node.id.name === 'initSkyline' ? node.body.body : [node])
     .filter(n => n.type === 'FunctionDeclaration' && names.includes(n.id.name))
     .map(n => source.slice(n.start, n.end)).join('\n');
 }
@@ -22,7 +23,7 @@ test('mobile hero rasterization does not allocate a nine-million-pixel readback'
   let sampledPixels;
   const PV = { isMobile: true, config: { logoSize: 3000, logoPath: '/hero.webp' } };
   vm.runInNewContext(functions('particle-visual.js', ['loadImage']) + '\nloadImage();', {
-    PV, Image: class { set src(value) { this.onload(); } },
+    PV, showParticleFallback(){assert.fail('unexpected fallback');}, Image: class { set src(value) { this.onload(); } },
     createParticles() {}, document: { createElement: () => ({ getContext: () => ({ drawImage() {}, getImageData(x,y,w,h) { sampledPixels=w*h; return {data:[]}; } }) }) },
   });
   assert.ok(sampledPixels <= 800 * 800, `sampled ${sampledPixels} pixels`);
@@ -40,7 +41,7 @@ test('static mobile particles render once instead of repainting forever', () => 
 test('closed menu does not render its full-screen WebGL atmosphere', () => {
   let draws=0;
   vm.runInNewContext(functions('menu.js', ['animateAtmosphere']) + '\nanimateAtmosphere();', {
-    isOpen:false,isMenuAnimating:false,document:{hidden:false},requestAnimationFrame(){},
+    atmosphereFailed:false,isOpen:false,isMenuAnimating:false,document:{hidden:false},requestAnimationFrame(){},
     atmosphereMaterial:{uniforms:{iTime:{value:0}}},atmosphereRenderer:{render:()=>draws++},atmosphereScene:{},atmosphereCamera:{},
   });
   assert.equal(draws,0);
@@ -70,7 +71,7 @@ test('home and contacts settle collections without unrelated API requests', asyn
 test('mobile page cover does not impose a long delay before navigation can begin', async () => {
   const jobs=[]; let now=0;
   const blocks=Array.from({length:12},()=>({element:{}}));
-  const context=vm.createContext({blocks,usesTouchLayout:()=>usesTouchLayout({innerWidth:390}),window:{innerWidth:390,matchMedia:()=>({matches:true})},Math,
+  const context=vm.createContext({prefersReducedMotion:()=>false,blocks,usesTouchLayout:()=>usesTouchLayout({innerWidth:390}),window:{innerWidth:390,matchMedia:()=>({matches:true})},Math,
     document:{querySelector:()=>({style:{}})},
     setTimeout:(fn,delay)=>jobs.push({fn,at:now+delay}),
     gsap:{set(){},to(target,options){jobs.push({fn:options.onComplete,at:now+1000*((options.delay||0)+options.duration*(1+(options.repeat||0)))});}},
@@ -84,7 +85,7 @@ test('mobile page cover does not impose a long delay before navigation can begin
 
 test('grain only redraws when its five-Hz shader changes appearance', () => {
   let draws=0;
-  const context=vm.createContext({requestAnimationFrame(){},isVisible:true,document:{hidden:false},lastNoiseFrame:-1,
+  const context=vm.createContext({stopped:false,requestAnimationFrame(){},isVisible:true,document:{hidden:false},lastNoiseFrame:-1,
     material:{uniforms:{iTime:{value:0}}},renderer:{render:()=>draws++},scene:{},camera:{}});
   vm.runInContext(functions('skyline.js',['animate'])+'\n[0,10,30,199,200,201].forEach(animate);',context);
   assert.equal(draws,2);
@@ -93,7 +94,7 @@ test('grain only redraws when its five-Hz shader changes appearance', () => {
 test('Safari address-bar height changes do not reallocate the hero canvas', () => {
   let allocations=0;
   vm.runInNewContext(functions('skyline.js',['handleResize'])+'\nhandleResize();',{
-    skylineViewport:{width:390,height:844},isMobile:true,window:{innerWidth:390,innerHeight:740,devicePixelRatio:3},
+    stopped:false,skylineViewport:{width:390,height:844},isMobile:true,window:{innerWidth:390,innerHeight:740,devicePixelRatio:3},
     resizeTimeout:0,clearTimeout(){},setTimeout:fn=>fn(),pixelRatioLimit:1,lastNoiseFrame:-1,
     meaningfulResize:(old,next,touch)=>old.width!==next.width||(!touch&&old.height!==next.height),
     renderer:{setSize:()=>allocations++,setPixelRatio(){}},material:{uniforms:{iResolution:{value:{set(){}}}}},
@@ -104,7 +105,7 @@ test('Safari address-bar height changes do not reallocate the hero canvas', () =
 test('mobile pie reserves its sticky scroll track before JavaScript starts', () => {
   const css=readFileSync(new URL('../src/styles/site/lab.css',import.meta.url),'utf8');
   const {document}=parseHTML(`<style>${css}</style><div class="pie-scroll-track"><section class="pie-transition"></section></div>`);
-  const rules=[...document.querySelector('style').sheet.cssRules].flatMap(r=>r.cssRules?[...r.cssRules]:[r]);
+  const rules=[...document.querySelector('style').sheet.cssRules].filter(r=>!r.media?.mediaText?.includes('prefers-reduced-motion')).flatMap(r=>r.cssRules?[...r.cssRules]:[r]);
   const styleFor=selector=>{
     const node=document.querySelector(selector), values={};
     for(const rule of rules) if(rule.selectorText&&node.matches(rule.selectorText)) {
@@ -118,7 +119,7 @@ test('mobile pie reserves its sticky scroll track before JavaScript starts', () 
 
 test('mobile about reveal animates a composited transform rather than repainting its polygon', () => {
   let animation;
-  const context={appleHeroScrollMode:()=> 'standard',usesTouchLayout:()=>usesTouchLayout({innerWidth:390}),window:{innerWidth:390},ScrollTrigger:{},gsap:{registerPlugin(){},
+  const context={prefersReducedMotion:()=>false,appleHeroScrollMode:()=> 'standard',usesTouchLayout:()=>usesTouchLayout({innerWidth:390}),window:{innerWidth:390},ScrollTrigger:{},gsap:{registerPlugin(){},
     to(target,options){if(target==='.lab-about-revealer')animation=options;},
     fromTo(target,from,options){if(target==='.lab-about-revealer')animation=options;},
   }};

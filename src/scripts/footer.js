@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { prefersReducedMotion } from './motion-policy.js';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -37,6 +38,11 @@ function initFooterParallax() {
   window.addEventListener('scroll', queueContrast, { passive: true });
   window.addEventListener('resize', queueContrast, { passive: true });
   updateContrast();
+
+  if (prefersReducedMotion()) {
+    gsap.set(footerContainer, { y: 0 });
+    return;
+  }
 
   ScrollTrigger.create({
     trigger: "footer",

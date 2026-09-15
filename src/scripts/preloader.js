@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { prefersReducedMotion } from './motion-policy.js';
 let resolvePreloader;
 export const preloaderReady = new Promise((resolve) => { resolvePreloader = resolve; });
 
@@ -6,12 +7,14 @@ export const preloaderReady = new Promise((resolve) => { resolvePreloader = reso
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  const hasSeenPreloader = sessionStorage.getItem("preloaderSeen") === "true";
+  let hasSeenPreloader = false;
+  try { hasSeenPreloader = sessionStorage.getItem("preloaderSeen") === "true"; }
+  catch { /* Storage is optional in private/embedded browser contexts. */ }
   const preloader = document.querySelector(".preloader");
 
   if (!preloader) { resolvePreloader(); return; }
 
-  if (hasSeenPreloader) {
+  if (hasSeenPreloader || prefersReducedMotion()) {
     preloader.style.display = "none";
     resolvePreloader();
     return;
@@ -117,9 +120,14 @@ function complete() {
   const progressBar = document.querySelector(".progress-bar");
   const preloaderBlocks = document.querySelectorAll(".preloader-block");
 
-  if (!preloader) return;
+  if (!preloader) { resolvePreloader(); return; }
 
-  sessionStorage.setItem("preloaderSeen", "true");
+  try { sessionStorage.setItem("preloaderSeen", "true"); } catch { /* Continue revealing. */ }
+  if (!preloaderBlocks.length) {
+    preloader.style.display = "none";
+    resolvePreloader();
+    return;
+  }
 
   gsap.to(progressBar, {
     opacity: 0,

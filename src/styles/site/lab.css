@@ -41,6 +41,29 @@
   z-index: 1;
 }
 
+/* The original wordmark remains present when WebGL is unavailable. */
+.lab-hero .particle-fallback {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(95%, 75svh);
+  height: min(95vw, 75svh);
+  object-fit: contain;
+  filter: url(#theme-ink);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 1;
+}
+.lab-hero.has-grain-fallback {
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--fg) 0.6px, transparent 0.8px);
+  background-size: 4px 4px;
+}
+@media (max-width: 1000px), (any-pointer: coarse) {
+  .lab-hero .particle-fallback { opacity: 0.9; }
+}
+
 .lab-hero .container {
   position: relative;
   z-index: 2;
@@ -307,4 +330,13 @@
 @keyframes apple-hero-shade {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+.pie-scroll-track.is-static-pie-track { height: auto; }
+.pie-scroll-track > .pie-transition.is-static-pie { position: relative; height: auto; min-height: 60svh; background: var(--accent); }
+.is-static-pie .pie-transition-outro-header { position: relative; top: auto; left: auto; transform: none; margin: auto; padding: 6rem 2rem; }
+.is-static-pie .pie-transition-footer { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .lab-about-revealer, .lab-hero-overlay { display: none; }
+  .client-row p { opacity: 1; transform: none; }
 }

@@ -1,4 +1,6 @@
 .menu-toggle-btn {
+  border: 0;
+  appearance: none;
   position: fixed;
   bottom: calc(-6rem + env(safe-area-inset-bottom, 0px));
   left: 50%;
@@ -111,6 +113,11 @@
 }
 
 .close-btn {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--bg);
+  appearance: none;
   position: relative;
   transform: translate(-0.25rem, -0.5rem);
   width: 1.5rem;
@@ -120,6 +127,33 @@
   align-items: center;
   cursor: pointer;
   border-radius: 0.15rem;
+}
+
+.menu-toggle-btn:focus-visible, .close-btn:focus-visible,
+.menu-overlay a:focus-visible .segment-content,
+.menu-overlay-items a:focus-visible, .menu-overlay-footer a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+/* Static TR signature when the GPU is denied/lost or motion is reduced. */
+.has-atmosphere-fallback .menu-bg::after {
+  content: 'TR';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--type-1);
+  font-size: min(75vw, 90vh);
+  line-height: 1;
+  color: var(--fg);
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-segment, .segment-content { animation: none !important; transition: none !important; }
+  .menu-segment:hover, .menu-segment:focus-visible { background: var(--fg); }
+  .menu-segment:hover .segment-content, .menu-segment:focus-visible .segment-content { color: var(--bg); }
 }
 
 .close-btn .close-btn-bar {
@@ -161,6 +195,9 @@
   border-radius: 50%;
   background: var(--bg);
   pointer-events: none;
+}
+.circular-menu.has-ring-fallback::before {
+  background: radial-gradient(var(--fg) 0.6px, transparent 0.8px) 0 0 / 4px 4px, var(--bg);
 }
 
 @media (max-width: 1000px), (any-pointer: coarse) {

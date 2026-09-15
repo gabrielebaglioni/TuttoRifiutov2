@@ -1,4 +1,7 @@
 const clamp = (value) => Math.min(1, Math.max(0, value));
+export function prefersReducedMotion(view = window) {
+  return Boolean(view.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+}
 // Device detection also covers Chrome/Firefox on iOS and iPad desktop-mode UA.
 // Feature detection, not an OS version guess, chooses the native scroll timeline.
 export function appleHeroScrollMode(view = window) {

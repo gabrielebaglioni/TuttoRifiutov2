@@ -1,8 +1,8 @@
 // Shared, pure schema for the CMS, initial HTML, CSS and GPU adapters.
 export const THEME_KEY = 'global.theme.palette';
 export const THEME_TOKENS = Object.freeze({
-  background: { color: '#ffff00', label: 'Fondo / giallo', uses: 'Superfici, logo, grana skyline e anello; testo del menu invertito', properties: ['--bg', '--menu-inverse-fg'] },
-  foreground: { color: '#000000', label: 'Inchiostro', uses: 'Testi, icone, transizioni, grana; fondo del menu invertito e bordo esterno', properties: ['--fg', '--menu-inverse-bg'] },
+  background: { color: '#ffff00', label: 'Fondo / giallo', uses: 'Superfici, logo, grana skyline e anello; link del menu aperto; barre del pulsante su superfici chiare e fondo del pulsante su superfici scure', properties: ['--bg', '--menu-inverse-fg'] },
+  foreground: { color: '#000000', label: 'Inchiostro', uses: 'Testi, icone, transizioni, grana, bordo esterno; fondo del pulsante menu su superfici chiare e barre su superfici scure', properties: ['--fg', '--menu-inverse-bg'] },
   accent: { color: '#2444d9', label: 'Accento / blu', uses: 'Atmosfera menu e sagoma animata (SVG e Canvas)', properties: ['--accent'] },
   loading: { color: '#1a1a1a', label: 'Traccia caricamento', uses: 'Fondo della barra di caricamento', properties: ['--loading'] },
   highlight: { color: '#ffffff', label: 'Riflessi del marchio', uses: 'Riflessi delle particelle nel marchio iniziale; ombre collegate all’inchiostro', properties: ['--highlight'] },

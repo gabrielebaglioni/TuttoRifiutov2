@@ -1,4 +1,4 @@
-import { meaningfulResize, usesTouchLayout, particleScale } from "./motion-policy.js";
+import { meaningfulResize, usesTouchLayout, particleScale, prefersReducedMotion } from "./motion-policy.js";
 import { publicTheme } from './theme.js';
 let particleViewport = { width: window.innerWidth, height: window.innerHeight };
 // webgl particle system with mouse distortion
@@ -25,6 +25,7 @@ const PV = {
   animFrame: null,
   isAnimating: false,
   isVisible: true,
+  failed: false,
 };
 
 // initialization
@@ -33,12 +34,14 @@ document.addEventListener("DOMContentLoaded", init);
 function init() {
   PV.canvas = document.getElementById("particle-canvas");
   if (!PV.canvas) return;
+  if (prefersReducedMotion()) { showParticleFallback(); return; }
+  PV.canvas.addEventListener('webglcontextlost', showParticleFallback);
   const visibilityObserver = new IntersectionObserver(([entry]) => {
     PV.isVisible = entry.isIntersecting;
     if (PV.isMobile && PV.isVisible && PV.geometry) render();
   }, { rootMargin: "200px" });
   visibilityObserver.observe(PV.canvas);
-  window.addEventListener("pagehide", () => visibilityObserver.disconnect(), { once: true });
+  window.addEventListener("pagehide", (event) => { if (!event.persisted) visibilityObserver.disconnect(); });
 
   PV.isMobile = usesTouchLayout();
   const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -48,32 +51,47 @@ function init() {
   PV.canvas.style.width = innerWidth + "px";
   PV.canvas.style.height = innerHeight + "px";
 
-  PV.gl = PV.canvas.getContext("webgl", {
+  try { PV.gl = PV.canvas.getContext("webgl", {
     alpha: true,
     antialias: false,
     powerPreference: "high-performance",
     desynchronized: true,
-  });
+  }); } catch { showParticleFallback(); return; }
 
-  if (!PV.gl) return;
+  if (!PV.gl) { showParticleFallback(); return; }
 
   PV.gl.enable(PV.gl.BLEND);
   PV.gl.blendFunc(PV.gl.SRC_ALPHA, PV.gl.ONE_MINUS_SRC_ALPHA);
 
-  setupShaders();
+  try {
+    if (!setupShaders()) { showParticleFallback(); return; }
+  } catch { showParticleFallback(); return; }
   const unbindTheme = publicTheme().subscribe(({rgb}) => {
+    if (PV.failed) return;
     PV.gl.useProgram(PV.program);
     PV.gl.uniform3fv(PV.gl.getUniformLocation(PV.program, 'uInk'), rgb.foreground);
     PV.gl.uniform3fv(PV.gl.getUniformLocation(PV.program, 'uHighlight'), rgb.highlight);
     if (PV.geometry) render();
   });
-  window.addEventListener('pagehide', unbindTheme, {once:true});
+  window.addEventListener('pagehide', (event) => { if (!event.persisted) unbindTheme(); });
   loadImage();
 
   if (!PV.isMobile) {
     document.addEventListener("mousemove", handleMouseMove, { passive: true });
   }
   window.addEventListener("resize", handleResize);
+}
+
+function showParticleFallback() {
+  PV.failed = true;
+  cancelAnimationFrame(PV.animFrame);
+  PV.canvas.style.display = 'none';
+  if (PV.canvas.parentElement.querySelector('.particle-fallback')) return;
+  const image = document.createElement('img');
+  image.className = 'particle-fallback';
+  image.src = PV.config.logoPath;
+  image.alt = 'Tutto Rifiuto';
+  PV.canvas.after(image);
 }
 
 // shader setup
@@ -107,15 +125,18 @@ function setupShaders() {
   const vShader = PV.gl.createShader(PV.gl.VERTEX_SHADER);
   PV.gl.shaderSource(vShader, vs);
   PV.gl.compileShader(vShader);
+  if (!PV.gl.getShaderParameter(vShader, PV.gl.COMPILE_STATUS)) return false;
 
   const fShader = PV.gl.createShader(PV.gl.FRAGMENT_SHADER);
   PV.gl.shaderSource(fShader, fs);
   PV.gl.compileShader(fShader);
+  if (!PV.gl.getShaderParameter(fShader, PV.gl.COMPILE_STATUS)) return false;
 
   PV.program = PV.gl.createProgram();
   PV.gl.attachShader(PV.program, vShader);
   PV.gl.attachShader(PV.program, fShader);
   PV.gl.linkProgram(PV.program);
+  return PV.gl.getProgramParameter(PV.program, PV.gl.LINK_STATUS);
 }
 
 // image loading and particle creation
@@ -123,8 +144,10 @@ function loadImage() {
   const img = new Image();
   img.crossOrigin = "anonymous";
   img.onload = () => {
+    if (PV.failed) return;
     const temp = document.createElement("canvas");
     const ctx = temp.getContext("2d", { willReadFrequently: true });
+    if (!ctx) { showParticleFallback(); return; }
     // Touch has no mouse physics. Sample at display scale rather than reading
     // nine million pixels and constructing millions of invisible particles.
     PV.rasterSize = PV.isMobile ? 640 : PV.config.logoSize;
@@ -138,6 +161,7 @@ function loadImage() {
       ctx.getImageData(0, 0, PV.rasterSize, PV.rasterSize).data,
     );
   };
+  img.onerror = showParticleFallback;
   img.src = PV.config.logoPath;
 }
 
@@ -191,6 +215,7 @@ function createParticles(pixels) {
 
 // animation loop with physics
 function animate() {
+  if (PV.failed) return;
   if (PV.isMobile) {
     if (PV.isVisible && !document.hidden) render();
     return;
@@ -260,6 +285,7 @@ function animate() {
 
 // webgl render
 function render() {
+  if (PV.failed) return;
   PV.gl.viewport(0, 0, PV.canvas.width, PV.canvas.height);
   PV.gl.clearColor(0, 0, 0, 0);
   PV.gl.clear(PV.gl.COLOR_BUFFER_BIT);
@@ -295,6 +321,7 @@ function handleMouseMove(e) {
 }
 
 function handleResize() {
+  if (PV.failed) return;
   const next = { width: innerWidth, height: innerHeight };
   if (!meaningfulResize(particleViewport, next, PV.isMobile)) return;
   particleViewport = next;

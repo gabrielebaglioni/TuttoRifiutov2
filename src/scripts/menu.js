@@ -8,7 +8,7 @@ import { matrixShader } from "./menuShaders.js";
 import { SITE_CONTENT } from "../data/site-content.js";
 import { isAllowedLink } from "./content-hydration.js";
 import { playMenuSound } from "./menu-audio.js";
-import { meaningfulResize, usesTouchLayout } from "./motion-policy.js";
+import { meaningfulResize, usesTouchLayout, prefersReducedMotion } from "./motion-policy.js";
 let menuViewport = { width: window.innerWidth, height: window.innerHeight };
 
 gsap.registerPlugin(SplitText);
@@ -26,11 +26,17 @@ let responsiveConfig = {};
 let resetJoystick = null;
 let menuLinkSplits = [];
 let menuLinkAnimations = [];
+let returnFocus = null;
+let backgroundAccess = [];
+let previousOverflow = '';
+let resumeScroll = false;
 
 let atmosphereScene, atmosphereCamera, atmosphereRenderer;
 let atmosphereMaterial, atmosphereMesh;
 let lastAtmosphereFrame = null;
 let atmosphereAttempted = false;
+let atmosphereFailed = false;
+let atmosphereFrame;
 
 // initialization
 document.addEventListener("DOMContentLoaded", () => {
@@ -48,9 +54,11 @@ document.addEventListener("DOMContentLoaded", () => {
   gsap.set([menuOverlayNav, menuOverlayFooter], { opacity: 0 });
 
   renderSegments(menu);
+  setMenuAccess(false);
+  document.addEventListener('keydown', handleMenuKeydown);
 
   // CSS provides the same readable ring even when WebGL is unavailable.
-  if (!usesTouchLayout()) {
+  if (!usesTouchLayout() && !prefersReducedMotion()) {
     try { initMenuRingGrain(menu, responsiveConfig.menuSize, () => isOpen || isMenuAnimating); }
     catch { /* Keep the CSS ring and working navigation on limited GPUs. */ }
   }
@@ -175,17 +183,28 @@ function getResponsiveConfig() {
 }
 
 function ensureAtmosphere() {
+  if (prefersReducedMotion()) { showAtmosphereFallback(); return; }
   if (atmosphereAttempted || (usesTouchLayout() && !isOpen)) return;
   atmosphereAttempted = true;
   try { initAtmosphere(); }
   catch {
     atmosphereRenderer?.dispose();
     atmosphereRenderer = null;
+    showAtmosphereFallback();
   }
+}
+
+function showAtmosphereFallback() {
+  atmosphereFailed = true;
+  cancelAnimationFrame(atmosphereFrame);
+  document.querySelector('.menu-overlay')?.classList.add('has-atmosphere-fallback');
+  const canvas = document.getElementById('menu-canvas');
+  if (canvas) canvas.style.display = 'none';
 }
 
 function initAtmosphere() {
   const canvas = document.getElementById("menu-canvas");
+  canvas.addEventListener('webglcontextlost', showAtmosphereFallback);
 
   atmosphereScene = new THREE.Scene();
   atmosphereCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -210,15 +229,17 @@ function initAtmosphere() {
 
   atmosphereMesh = new THREE.Mesh(geometry, atmosphereMaterial);
   atmosphereScene.add(atmosphereMesh);
-  const unbindTheme = bindThemeUniforms(atmosphereMaterial.uniforms, {uColorBg:'accent', uColorFg:'foreground'}, () => atmosphereRenderer.render(atmosphereScene, atmosphereCamera));
-  window.addEventListener('pagehide', unbindTheme, {once:true});
+  const unbindTheme = bindThemeUniforms(atmosphereMaterial.uniforms, {uColorBg:'accent', uColorFg:'foreground'}, () => {
+    if (!atmosphereFailed) atmosphereRenderer.render(atmosphereScene, atmosphereCamera);
+  });
+  window.addEventListener('pagehide', (event) => { if (!event.persisted) unbindTheme(); });
 
   resizeAtmosphere();
   animateAtmosphere();
 }
 
 function resizeAtmosphere() {
-  if (!atmosphereRenderer) return;
+  if (!atmosphereRenderer || atmosphereFailed) return;
   const ratio = usesTouchLayout() ? Math.min(1, 720 / Math.max(window.innerWidth, window.innerHeight)) : 1;
   const width = Math.max(1, Math.round(window.innerWidth * ratio));
   const height = Math.max(1, Math.round(window.innerHeight * ratio));
@@ -228,7 +249,8 @@ function resizeAtmosphere() {
 }
 
 function animateAtmosphere(time = 0) {
-  requestAnimationFrame(animateAtmosphere);
+  if (atmosphereFailed) return;
+  atmosphereFrame = requestAnimationFrame(animateAtmosphere);
   if ((!isOpen && !isMenuAnimating) || document.hidden) { lastAtmosphereFrame = null; return; }
   const touch = usesTouchLayout();
   const elapsed = lastAtmosphereFrame === null ? 34 : time - lastAtmosphereFrame;
@@ -236,6 +258,49 @@ function animateAtmosphere(time = 0) {
   lastAtmosphereFrame = time;
   atmosphereMaterial.uniforms.iTime.value += touch ? Math.min(elapsed, 100) / 1000 : 0.016;
   atmosphereRenderer.render(atmosphereScene, atmosphereCamera);
+}
+
+// Keep the invisible overlay out of keyboard/accessibility navigation; while
+// open, native buttons and a focus loop provide the same routes as the joystick.
+function setMenuAccess(open) {
+  const overlay = document.querySelector('.menu-overlay');
+  const toggle = document.querySelector('.menu-toggle-btn');
+  if (open) {
+    returnFocus = document.activeElement;
+    backgroundAccess = [...document.body.children].filter(node => node !== overlay && !node.contains(overlay)).map(node => [node, Boolean(node.inert)]);
+    backgroundAccess.forEach(([node]) => { node.inert = true; });
+    previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    resumeScroll = Boolean(window.lenis && !window.lenis.isStopped);
+    if (resumeScroll) window.lenis.stop();
+    overlay.inert = false;
+    overlay.setAttribute('aria-hidden', 'false');
+    document.querySelector('.close-btn').focus({ preventScroll: true });
+  } else {
+    backgroundAccess.forEach(([node, inert]) => { node.inert = inert; });
+    if (backgroundAccess.length) document.body.style.overflow = previousOverflow;
+    backgroundAccess = [];
+    if (resumeScroll) window.lenis?.start();
+    resumeScroll = false;
+    if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+    returnFocus = null;
+    overlay.inert = true;
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+  toggle.setAttribute('aria-expanded', String(open));
+  toggle.setAttribute('aria-label', open ? 'Chiudi menu' : 'Apri menu');
+}
+
+function handleMenuKeydown(event) {
+  if (!isOpen) return;
+  if (event.key === 'Escape') { event.preventDefault(); toggleMenu(); return; }
+  if (event.key !== 'Tab') return;
+  const links = [...document.querySelector('.menu-overlay').querySelectorAll('button, a[href]')];
+  const first = links[0], last = links[links.length - 1];
+  if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last) || !links.includes(document.activeElement)) {
+    event.preventDefault();
+    (event.shiftKey ? last : first)?.focus();
+  }
 }
 
 // segment geometry - calculates SVG path for pie slice segments
@@ -356,10 +421,22 @@ function toggleMenu() {
   const menuOverlayNav = document.querySelector(".menu-overlay-nav");
   const menuOverlayFooter = document.querySelector(".menu-overlay-footer");
 
+  if (prefersReducedMotion()) {
+    isOpen = !isOpen;
+    setMenuAccess(isOpen);
+    playMenuSound(isOpen ? 'open' : 'close');
+    if (isOpen) ensureAtmosphere();
+    gsap.set([menuOverlay, menuOverlayNav, menuOverlayFooter, ...menuSegments], { opacity: isOpen ? 1 : 0 });
+    gsap.set(joystick, { scale: isOpen ? 1 : 0, x: 0, y: 0 });
+    menuOverlay.style.pointerEvents = isOpen ? 'all' : 'none';
+    return;
+  }
+
   isMenuAnimating = true;
 
   if (!isOpen) {
     isOpen = true;
+    setMenuAccess(true);
     playMenuSound("open");
     // Allocate the mobile shader only on first open, never during hero startup.
     ensureAtmosphere();
@@ -420,6 +497,7 @@ function toggleMenu() {
       });
   } else {
     isOpen = false;
+    setMenuAccess(false);
     playMenuSound("close");
 
     animateMenuLinksFlicker(true);

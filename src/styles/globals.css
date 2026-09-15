@@ -260,3 +260,7 @@ p.type-mono,
   will-change: opacity;
   opacity: 0;
 }
+@media (prefers-reduced-motion: reduce) {
+  [data-animate-variant="diffuse"] { filter: none; -webkit-filter: none; }
+  .preloader, .transition-grid { display: none; }
+}

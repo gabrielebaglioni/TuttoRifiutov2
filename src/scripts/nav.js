@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from './motion-policy.js';
 // navigation clock with blinking colon
 const clockEl = document.querySelector(".nav-clock p");
 const hoursEl = clockEl.querySelector('[data-content-key="global.nav.clock_hours"]');
@@ -25,6 +26,7 @@ function updateClock() {
 }
 
 function blinkColon() {
+  if (prefersReducedMotion()) { colonEl.style.visibility = 'visible'; return; }
   colonEl.style.visibility =
     colonEl.style.visibility === "hidden" ? "visible" : "hidden";
 }

@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { usesTouchLayout } from "./motion-policy.js";
+import { usesTouchLayout, prefersReducedMotion } from "./motion-policy.js";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { playMenuSound } from "./menu-audio.js";
 
@@ -14,14 +14,16 @@ function init() {
   const transitionGrid = document.querySelector(".transition-grid");
   if (!transitionGrid) return;
 
-  const isPageNavigation = sessionStorage.getItem("pageTransition") === "true";
+  let isPageNavigation = false;
+  try { isPageNavigation = sessionStorage.getItem("pageTransition") === "true"; }
+  catch { /* Navigation does not require storage. */ }
   const blockElements = Array.from(
     transitionGrid.querySelectorAll(".transition-block"),
   );
   blocks = blockElements.map((block) => ({ element: block }));
 
   if (isPageNavigation) {
-    sessionStorage.removeItem("pageTransition");
+    try { sessionStorage.removeItem("pageTransition"); } catch { /* Optional hint. */ }
     const style = document.querySelector("style[data-transition]");
     if (style) style.remove();
 
@@ -39,6 +41,7 @@ function init() {
 
 // animate blocks to cover screen before navigation
 function animateOut() {
+  if (prefersReducedMotion()) return Promise.resolve();
   const mobile = usesTouchLayout();
   return new Promise((resolve) => {
     const blockElements = blocks.map((b) => b.element);
@@ -83,6 +86,11 @@ function reveal() {
   if (blockElements.length === 0) return;
 
   const transitionGrid = document.querySelector(".transition-grid");
+  if (prefersReducedMotion()) {
+    gsap.set(blockElements, { opacity: 0 });
+    if (transitionGrid) transitionGrid.style.pointerEvents = "none";
+    return;
+  }
   const shuffled = [...blockElements].sort(() => Math.random() - 0.5);
 
   shuffled.forEach((block, index) => {
@@ -143,8 +151,18 @@ function isSamePage(href) {
 // click handler for internal navigation
 function setupLinkHandlers() {
   let isTransitioning = false;
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    isTransitioning = false;
+    const grid = document.querySelector('.transition-grid');
+    gsap.killTweensOf?.(blocks.map(block => block.element));
+    gsap.set(blocks.map(block => block.element), { opacity: 0 });
+    if (grid) { grid.style.pointerEvents = 'none'; grid.style.backgroundColor = ''; }
+    try { sessionStorage.removeItem('pageTransition'); } catch { /* Optional hint. */ }
+  });
 
   const handleLinkClick = (event) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (event.button != null && event.button !== 0)) return;
     if (isTransitioning) {
       event.preventDefault();
       event.stopPropagation();
@@ -153,6 +171,7 @@ function setupLinkHandlers() {
 
     const link = event.target.closest("a");
     if (!link) return;
+    if (link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
 
     // This capture handler stops propagation: play here, before interception,
     // so mouse, touch and keyboard activation all receive the same feedback.
@@ -181,7 +200,7 @@ function setupLinkHandlers() {
     const transitionGrid = document.querySelector(".transition-grid");
     if (transitionGrid) transitionGrid.style.pointerEvents = "auto";
 
-    sessionStorage.setItem("pageTransition", "true");
+    try { sessionStorage.setItem("pageTransition", "true"); } catch { /* Still navigate. */ }
 
     animateOut()
       .then(() => {

@@ -25,6 +25,9 @@ footer ::selection {
   transform: translateY(-35%);
   will-change: transform;
 }
+@media (prefers-reduced-motion: reduce) {
+  .footer-container { transform: none !important; }
+}
 
 .footer-content {
   position: relative;

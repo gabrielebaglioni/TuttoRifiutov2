@@ -1,5 +1,5 @@
 import Lenis from "lenis";
-import { usesTouchLayout, appleHeroScrollMode } from "./motion-policy.js";
+import { usesTouchLayout, appleHeroScrollMode, prefersReducedMotion } from "./motion-policy.js";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => initLenisScroll());
 
 // smooth scroll setup with responsive config
 function initLenisScroll() {
+  if (prefersReducedMotion()) return;
   const appleMode = document.querySelector('.lab-hero') ? appleHeroScrollMode() : 'standard';
   if (appleMode !== 'standard') {
     // One scroll owner only: do not combine Lenis with iOS normalization.

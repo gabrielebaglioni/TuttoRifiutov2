@@ -14,6 +14,7 @@ let mesh;
 let geometry;
 let scene;
 let camera;
+let stopped = false;
 
 function outerRadiusPx(menuSize) {
   return menuSize * 0.42;
@@ -27,11 +28,19 @@ export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
   canvas.className = "menu-ring-grain-canvas";
   canvas.setAttribute("aria-hidden", "true");
   menuEl.prepend(canvas);
+  let animationFrame;
+  function fallback() {
+    stopped = true;
+    cancelAnimationFrame(animationFrame);
+    canvas.style.display = 'none';
+    menuEl.classList.add('has-ring-fallback');
+  }
+  canvas.addEventListener('webglcontextlost', fallback);
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const pixelRatioLimit = isMobile ? 1.0 : 1.25;
 
-  renderer = new THREE.WebGLRenderer({
+  try { renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: false,
     powerPreference: "high-performance",
@@ -39,7 +48,7 @@ export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
     depth: false,
     alpha: true,
     premultipliedAlpha: false,
-  });
+  }); } catch { fallback(); return; }
   renderer.setClearColor(0x000000, 0);
 
   scene = new THREE.Scene();
@@ -63,9 +72,10 @@ export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
 
   mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
-  const unbindTheme = bindThemeUniforms(material.uniforms, {uColorBg:'background', uColorFg:'foreground'}, () => renderer.render(scene, camera));
+  const unbindTheme = bindThemeUniforms(material.uniforms, {uColorBg:'background', uColorFg:'foreground'}, () => { if (!stopped) renderer.render(scene, camera); });
 
   function layout() {
+    if (stopped) return;
     const w = Math.max(1, Math.floor(menuEl.offsetWidth));
     const h = Math.max(1, Math.floor(menuEl.offsetHeight));
     const side = Math.min(w, h);
@@ -84,26 +94,30 @@ export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
   }
 
   function animate(t) {
-    requestAnimationFrame(animate);
+    if (stopped) return;
+    animationFrame = requestAnimationFrame(animate);
     if (!isActive() || document.hidden) return;
     material.uniforms.iTime.value = t * 0.001;
     renderer.render(scene, camera);
   }
-  requestAnimationFrame(animate);
+  animationFrame = requestAnimationFrame(animate);
 
-  function cleanup() {
+  function cleanup(event) {
+    if (event.persisted) return;
+    stopped = true;
+    cancelAnimationFrame(animationFrame);
     unbindTheme();
     if (ro) ro.disconnect();
     geometry.dispose();
     material.dispose();
     renderer.dispose();
-    window.removeEventListener("beforeunload", cleanup);
+    window.removeEventListener("pagehide", cleanup);
   }
-  window.addEventListener("beforeunload", cleanup);
+  window.addEventListener("pagehide", cleanup);
 }
 
 export function resizeMenuRingGrain(menuEl, menuSize) {
-  if (!material || !renderer || !menuEl) return;
+  if (stopped || !material || !renderer || !menuEl) return;
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const pixelRatioLimit = isMobile ? 1.0 : 1.25;
   const w = Math.max(1, Math.floor(menuEl.offsetWidth));

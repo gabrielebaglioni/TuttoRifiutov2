@@ -19,7 +19,7 @@ test('landscape tablet menu fits between navigation and footer links',()=>{
 test('wide touch tablet gets transform-based homepage reveal; desktop keeps its polygon',()=>{
  for(const touch of [true,false]) {
   let animation;
-  vm.runInNewContext(source('lab.js'),{window:{innerWidth:1180},appleHeroScrollMode:()=> 'standard',usesTouchLayout:()=>touch,ScrollTrigger:{},gsap:{registerPlugin(){},to(t,v){if(t==='.lab-about-revealer')animation=v;},fromTo(t,f,v){if(t==='.lab-about-revealer')animation=v;}}});
+  vm.runInNewContext(source('lab.js'),{prefersReducedMotion:()=>false,window:{innerWidth:1180},appleHeroScrollMode:()=> 'standard',usesTouchLayout:()=>touch,ScrollTrigger:{},gsap:{registerPlugin(){},to(t,v){if(t==='.lab-about-revealer')animation=v;},fromTo(t,f,v){if(t==='.lab-about-revealer')animation=v;}}});
   assert.equal(animation.scaleY===1,touch);
  }
 });
@@ -27,7 +27,7 @@ test('page hero starts while collection API is pending without accelerating its 
  const {document}=parseHTML('<html><body><section class="work-hero"><h1 data-animate-variant="diffuse" data-animate-on-scroll="false">Eventi</h1></section></body></html>');
  document.fonts={ready:Promise.resolve()};
  let ready;const collections=new Promise(r=>ready=r);let starts=0,duration;
- vm.runInNewContext(source('animated-copy.js'),{document,window:{},contentReady:Promise.resolve(),preloaderReady:Promise.resolve(),ensureCollectionsReadiness:()=>({promise:collections}),ScrollTrigger:{sort(){},refresh(){}},SplitText:{create:(e,o)=>o.onSplit({words:[e]})},gsap:{registerPlugin(){},set(){},to(t,o){duration=o.duration;return {play(){starts++;}};}}});
+ vm.runInNewContext(source('animated-copy.js'),{prefersReducedMotion:()=>false,document,window:{},contentReady:Promise.resolve(),preloaderReady:Promise.resolve(),ensureCollectionsReadiness:()=>({promise:collections}),ScrollTrigger:{sort(){},refresh(){}},SplitText:{create:(e,o)=>o.onSplit({words:[e]})},gsap:{registerPlugin(){},set(){},to(t,o){duration=o.duration;return {play(){starts++;}};}}});
  document.dispatchEvent(new document.defaultView.Event('DOMContentLoaded'));
  await new Promise(r=>setImmediate(r));
  assert.equal(starts,1);assert.equal(duration,2);
@@ -35,7 +35,7 @@ test('page hero starts while collection API is pending without accelerating its 
 });
 test('touch menu defers GPU allocation until open and survives a failed GPU without repeated allocations',()=>{
  let attempted=0;
- const c=vm.createContext({usesTouchLayout:()=>true,isOpen:false,atmosphereAttempted:false,atmosphereRenderer:null,initAtmosphere(){attempted++;throw new Error('GPU unavailable');}});
+ const c=vm.createContext({prefersReducedMotion:()=>false,showAtmosphereFallback(){},usesTouchLayout:()=>true,isOpen:false,atmosphereAttempted:false,atmosphereRenderer:null,initAtmosphere(){attempted++;throw new Error('GPU unavailable');}});
  vm.runInContext(source('menu.js',['ensureAtmosphere'])+';ensureAtmosphere();',c);
  assert.equal(attempted,0);
  c.isOpen=true;vm.runInContext('ensureAtmosphere();ensureAtmosphere();',c);
@@ -56,7 +56,7 @@ test('menu contrast uses the area behind its visible cap, including the black ho
  document.querySelector('footer').getBoundingClientRect=()=>({top:2000,bottom:2600});
  document.querySelector('.lab-about').getBoundingClientRect=()=>({top,bottom:1300});
  const listeners={};
- vm.runInNewContext(source('footer.js',['initFooterParallax'])+';initFooterParallax();',{document,window:{innerHeight:800,addEventListener:(n,f)=>listeners[n]=f},requestAnimationFrame:f=>f(),ScrollTrigger:{create(){}},gsap:{set(){}}});
+ vm.runInNewContext(source('footer.js',['initFooterParallax'])+';initFooterParallax();',{prefersReducedMotion:()=>false,document,window:{innerHeight:800,addEventListener:(n,f)=>listeners[n]=f},requestAnimationFrame:f=>f(),ScrollTrigger:{create(){}},gsap:{set(){}}});
  assert.equal(menu.classList.contains('is-over-footer'),true);
  top=790;listeners.scroll();assert.equal(menu.classList.contains('is-over-footer'),false,'footer entering viewport below the button must not invert it early');
 });

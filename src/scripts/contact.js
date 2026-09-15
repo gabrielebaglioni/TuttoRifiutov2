@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { prefersReducedMotion } from './motion-policy.js';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -39,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   updateClocks();
   setInterval(updateClocks, 1000);
+  if (prefersReducedMotion()) return;
 
   createClones(contactInfo);
 

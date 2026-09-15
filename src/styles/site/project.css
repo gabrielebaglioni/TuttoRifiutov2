@@ -83,6 +83,8 @@
 
 .project-info .container .project-info-col:nth-child(2) .project-info-sub-col {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .project-info
@@ -159,6 +161,8 @@
     width: 100%;
     flex-direction: column-reverse;
   }
+  .project-info .project-info-col:nth-child(2) { flex-wrap: wrap; gap: 2rem; }
+  .project-info .container .project-info-col:nth-child(2) .project-info-sub-col { flex: 1 1 8rem; }
 
   .project-images .container {
     gap: 4rem;

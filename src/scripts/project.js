@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { usesTouchLayout } from "./motion-policy.js";
+import { usesTouchLayout, prefersReducedMotion } from "./motion-policy.js";
 import { startAfterCollectionsHydration } from "./collections-readiness.js";
 import { loadGalleryImage, galleryTexture, galleryVelocity } from "./gallery-media.js";
 
@@ -296,6 +296,7 @@ function projectImageSnapshot(documentRef) {
 }
 
 function canStartProjectEffect(windowRef, documentRef) {
+  if (prefersReducedMotion(windowRef)) return false;
   if (!documentRef?.body || typeof windowRef?.requestAnimationFrame !== "function") return false;
   if (usesTouchLayout(windowRef)) return true;
   const canvas = documentRef.createElement?.("canvas");

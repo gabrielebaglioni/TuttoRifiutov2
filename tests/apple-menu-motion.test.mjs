@@ -17,7 +17,7 @@ test('Apple scroll policy includes Chrome iPhone and iPad, excludes Android and 
 test('Apple homepage has one scroll owner: native timeline or normalizer, never Lenis too',()=>{
  for(const mode of ['native','normalized','standard']) {
   let lenisStarts=0,normalized=0;
-  const context={window:{},document:{querySelector:()=>({})},appleHeroScrollMode:()=>mode,usesTouchLayout:()=>true,lenis:null,
+  const context={window:{},document:{querySelector:()=>({})},prefersReducedMotion:()=>false,appleHeroScrollMode:()=>mode,usesTouchLayout:()=>true,lenis:null,
    Lenis:class{constructor(){lenisStarts++;}on(){}},gsap:{ticker:{add(){},lagSmoothing(){}}},ScrollTrigger:{normalizeScroll:()=>normalized++,update(){}}};
   vm.runInNewContext(functions('lenis-scroll.js',['initLenisScroll'])+';initLenisScroll();',context);
   assert.equal(lenisStarts,mode==='standard'?1:0);assert.equal(normalized,mode==='normalized'?1:0);
@@ -26,20 +26,20 @@ test('Apple homepage has one scroll owner: native timeline or normalizer, never 
 test('mobile menu uses the original shader rather than an empty blue background',()=>{
  let started=0;
  const {document}=parseHTML('<html><body><canvas id="menu-canvas"></canvas></body></html>'); document.defaultView.getComputedStyle=element=>element.style;
- const context={usesTouchLayout:()=>true,document,window:{devicePixelRatio:3,addEventListener(){}},bindThemeUniforms:(uniforms,mapping,draw)=>bindThemeUniforms(uniforms,mapping,draw,document),matrixShader:{vertexShader:'original',fragmentShader:'TR'},
+ const context={atmosphereFailed:false,showAtmosphereFallback(){},usesTouchLayout:()=>true,document,window:{devicePixelRatio:3,addEventListener(){}},bindThemeUniforms:(uniforms,mapping,draw)=>bindThemeUniforms(uniforms,mapping,draw,document),matrixShader:{vertexShader:'original',fragmentShader:'TR'},
  THREE:{Scene:class{add(){}},OrthographicCamera:class{},WebGLRenderer:class{constructor(){started++;}setPixelRatio(){}render(){}},PlaneGeometry:class{},ShaderMaterial:class{constructor(options){this.uniforms=options.uniforms;}},Vector2:class{},Vector3:class{},Mesh:class{}},resizeAtmosphere(){},animateAtmosphere(){}};
  vm.runInNewContext(functions('menu.js',['initAtmosphere'])+';initAtmosphere();',context);assert.equal(started,1);
 });
 test('touch shader allocation is capped while keeping the viewport aspect ratio',()=>{
  let allocated;
- vm.runInNewContext(functions('menu.js',['resizeAtmosphere'])+';resizeAtmosphere();',{usesTouchLayout:()=>true,window:{innerWidth:1180,innerHeight:820},atmosphereRenderer:{setSize:(w,h)=>allocated=[w,h]},atmosphereMaterial:{uniforms:{iResolution:{value:{set(){}}}}}});
+ vm.runInNewContext(functions('menu.js',['resizeAtmosphere'])+';resizeAtmosphere();',{atmosphereFailed:false,usesTouchLayout:()=>true,window:{innerWidth:1180,innerHeight:820},atmosphereRenderer:{setSize:(w,h)=>allocated=[w,h]},atmosphereMaterial:{uniforms:{iResolution:{value:{set(){}}}}}});
  assert.ok(allocated[0]*allocated[1]<=720*720);assert.ok(Math.abs(allocated[0]/allocated[1]-1180/820)<.01);
 });
 test('native Apple reveal delegates both layers to CSS without competing GSAP writes',()=>{
  const {document}=parseHTML('<section class="lab-hero"></section>');let tweens=0;
  const s=readFileSync(new URL('../src/scripts/lab.js',import.meta.url),'utf8');
  const executable=parse(s,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type!=='ImportDeclaration').map(n=>s.slice(n.start,n.end)).join('\n');
- vm.runInNewContext(executable,{document,lockHeroViewport(){},appleHeroScrollMode:()=> 'native',usesTouchLayout:()=>true,ScrollTrigger:{},gsap:{registerPlugin(){},to(){tweens++;},fromTo(){tweens++;}}});
+ vm.runInNewContext(executable,{document,prefersReducedMotion:()=>false,lockHeroViewport(){},appleHeroScrollMode:()=> 'native',usesTouchLayout:()=>true,ScrollTrigger:{},gsap:{registerPlugin(){},to(){tweens++;},fromTo(){tweens++;}}});
  assert.equal(tweens,0);assert.ok(document.querySelector('.lab-hero').classList.contains('has-native-hero-scroll'));
 });
 test('Apple hero geometry remains fixed when browser bars resize during reverse scroll',()=>{
@@ -58,7 +58,7 @@ test('Apple hero geometry remains fixed when browser bars resize during reverse 
 test('phone menu cap fits a small fixed overlay without extending below the viewport',()=>{
  const css=readFileSync(new URL('../src/styles/site/menu.css',import.meta.url),'utf8');
  const {document}=parseHTML(`<style>${css}</style><div class="menu-toggle-btn"></div>`);const node=document.querySelector('div');const values={};
- function read(rules){for(const rule of rules){if(rule.media){if(rule.conditionText?.includes('600px')||rule.media.mediaText?.includes('600px'))read(rule.cssRules);}else if(rule.selectorText&&!rule.selectorText.includes('::')&&node.matches(rule.selectorText))for(const p of ['width','height','bottom','position'])if(rule.style.getPropertyValue(p))values[p]=rule.style.getPropertyValue(p);}}
+ function read(rules){for(const rule of rules){if(rule.media){if(rule.conditionText?.includes('600px')||rule.media.mediaText?.includes('600px'))read(rule.cssRules);}else if(rule.selectorText&&!rule.selectorText.includes(':')&&node.matches(rule.selectorText))for(const p of ['width','height','bottom','position'])if(rule.style.getPropertyValue(p))values[p]=rule.style.getPropertyValue(p);}}
  read(document.querySelector('style').sheet.cssRules);
  assert.equal(values.position,'fixed');assert.equal(values.bottom,'0');
  assert.ok(parseFloat(values.width)<=12,'phone cap should not occupy almost the full screen width');
@@ -74,7 +74,7 @@ test('pie orientation resize measures the CSS stage, not a smaller browser-bar v
  assert.equal(container.parentElement.style.getPropertyValue('--pie-stage-height'),'900px');
 });
 test('touch menu shader caps frame rate without slowing its animation clock',()=>{
- let draws=0;const c=vm.createContext({isOpen:true,isMenuAnimating:false,document:{hidden:false},usesTouchLayout:()=>true,requestAnimationFrame(){},lastAtmosphereFrame:null,atmosphereMaterial:{uniforms:{iTime:{value:0}}},atmosphereRenderer:{render:()=>draws++},atmosphereScene:{},atmosphereCamera:{}});
+ let draws=0;const c=vm.createContext({atmosphereFailed:false,isOpen:true,isMenuAnimating:false,document:{hidden:false},usesTouchLayout:()=>true,requestAnimationFrame(){},lastAtmosphereFrame:null,atmosphereMaterial:{uniforms:{iTime:{value:0}}},atmosphereRenderer:{render:()=>draws++},atmosphereScene:{},atmosphereCamera:{}});
  vm.runInContext(functions('menu.js',['animateAtmosphere'])+';[0,16,34,50,68].forEach(animateAtmosphere);',c);
  assert.equal(draws,3);assert.ok(c.atmosphereMaterial.uniforms.iTime.value>=.064);
 });

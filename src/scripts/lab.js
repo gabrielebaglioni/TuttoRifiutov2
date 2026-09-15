@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { usesTouchLayout, appleHeroScrollMode, lockHeroViewport } from "./motion-policy.js";
+import { usesTouchLayout, appleHeroScrollMode, lockHeroViewport, prefersReducedMotion } from "./motion-policy.js";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -14,6 +14,7 @@ const scrollTriggerConfig = {
 // Preserve the slanted reveal using a fixed polygon scaled from its bottom,
 // without changing/rasterizing clip-path on every touch frame.
 const appleMode = appleHeroScrollMode();
+if (!prefersReducedMotion()) {
 if (appleMode !== 'standard') lockHeroViewport(document.querySelector('.lab-hero'));
 const nativeHero = appleMode === 'native';
 if (nativeHero) {
@@ -37,3 +38,4 @@ if (!nativeHero) gsap.to(".lab-hero-overlay", {
   ease: "none",
   scrollTrigger: scrollTriggerConfig,
 });
+}

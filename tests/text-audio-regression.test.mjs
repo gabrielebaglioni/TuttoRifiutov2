@@ -65,7 +65,7 @@ test("menu navigation plays selection synchronously before capture stops propaga
     let handler;
     const context = vm.createContext({
       document: { addEventListener: (_, callback) => { handler = callback; }, querySelector: () => null },
-      window: { toggleMenu() {}, location: { href: "" } },
+      window: { addEventListener() {}, toggleMenu() {}, location: { href: "" } },
       sessionStorage: { setItem() {} },
       isExternalLink: (value) => value.startsWith("mailto:"),
       isSamePage: (value) => value === "/",

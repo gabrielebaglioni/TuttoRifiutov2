@@ -1,26 +1,39 @@
 import * as THREE from "three";
 import { bindThemeUniforms } from './theme.js';
 import { GRAIN_FRAGMENT_SHADER, GRAIN_VERTEX_SHADER } from "./grain-yellow-shader.js";
-import { meaningfulResize, usesTouchLayout } from "./motion-policy.js";
+import { meaningfulResize, usesTouchLayout, prefersReducedMotion } from "./motion-policy.js";
 let skylineViewport = { width: window.innerWidth, height: window.innerHeight };
 let lastNoiseFrame = -1;
 
 // procedural trashscape — cumuli di pacchetti/sacchi abbandonati per strada
 // (Tutto Rifiuto: pacchetti lasciati per le strade della città)
 const canvas = document.getElementById("skyline");
+if (canvas) initSkyline();
+
+function initSkyline() {
+const fallback = () => {
+  canvas.style.display = 'none';
+  canvas.parentElement.classList.add('has-grain-fallback');
+};
+if (prefersReducedMotion()) { fallback(); return; }
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({
+    canvas, antialias: false, powerPreference: 'high-performance', stencil: false, depth: false,
+  });
+} catch { fallback(); return; }
+let stopped = false;
+let animationFrame;
+canvas.addEventListener('webglcontextlost', () => {
+  stopped = true;
+  cancelAnimationFrame(animationFrame);
+  fallback();
+});
 let isVisible = true;
 const visibilityObserver = new IntersectionObserver(([entry]) => { isVisible = entry.isIntersecting; }, { rootMargin: "200px" });
 visibilityObserver.observe(canvas);
 const isMobile = usesTouchLayout();
 const pixelRatioLimit = isMobile ? 1.0 : 1.25;
-
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: false,
-  powerPreference: "high-performance",
-  stencil: false,
-  depth: false,
-});
 
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -50,6 +63,7 @@ function handleResize(force = false) {
   skylineViewport = next;
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
+    if (stopped) return;
     const width = window.innerWidth;
     const height = window.innerHeight;
     renderer.setSize(width, height);
@@ -61,7 +75,8 @@ function handleResize(force = false) {
 
 // animation loop
 function animate(currentTime) {
-  requestAnimationFrame(animate);
+  if (stopped) return;
+  animationFrame = requestAnimationFrame(animate);
   if (!isVisible || document.hidden) return;
   // The shader itself changes only at floor(iTime * 5).
   const noiseFrame = Math.floor(currentTime / 200);
@@ -72,18 +87,23 @@ function animate(currentTime) {
 }
 
 // cleanup on page unload
-function cleanup() {
+function cleanup(event) {
+  if (event.persisted) return;
+  stopped = true;
+  cancelAnimationFrame(animationFrame);
+  clearTimeout(resizeTimeout);
   unbindTheme();
   visibilityObserver.disconnect();
   geometry.dispose();
   material.dispose();
   renderer.dispose();
   window.removeEventListener("resize", handleResize);
-  window.removeEventListener("beforeunload", cleanup);
+  window.removeEventListener("pagehide", cleanup);
 }
 
 // initialize
 handleResize(true);
 window.addEventListener("resize", handleResize);
-window.addEventListener("beforeunload", cleanup);
-requestAnimationFrame(animate);
+window.addEventListener("pagehide", cleanup);
+animationFrame = requestAnimationFrame(animate);
+}

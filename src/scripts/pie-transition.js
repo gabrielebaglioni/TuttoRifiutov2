@@ -4,7 +4,7 @@ import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";
 import { createPieCanvas } from "./pie-canvas.js";
 import { publicTheme } from './theme.js';
-import { meaningfulResize, pieFrame, usesTouchLayout } from "./motion-policy.js";
+import { meaningfulResize, pieFrame, usesTouchLayout, prefersReducedMotion } from "./motion-policy.js";
 import { ZOOM_ORIGIN, MASK_BOX, maskZoomMultiplier } from "./pie-geometry.js";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -46,6 +46,11 @@ document.addEventListener("DOMContentLoaded", init);
 function init() {
   STATE.container = document.querySelector(".pie-transition");
   if (!STATE.container) return;
+  if (prefersReducedMotion()) {
+    STATE.container.classList.add('is-static-pie');
+    STATE.container.parentElement.classList.add('is-static-pie-track');
+    return;
+  }
 
   if (mobile) {
     STATE.container.parentElement.style.setProperty("--pie-stage-height", STATE.container.offsetHeight + "px");
@@ -57,7 +62,7 @@ function init() {
   }
   if (!STATE.canvas) buildSvg();
   const unbindTheme = publicTheme().subscribe(({palette}) => STATE.canvas?.setColor(palette.accent));
-  window.addEventListener('pagehide', unbindTheme, {once:true});
+  window.addEventListener('pagehide', (event) => { if (!event.persisted) unbindTheme(); });
   updateZoomTarget();
   setupScrollTrigger();
   Promise.all([document.fonts.ready, contentReady]).then(() => {
