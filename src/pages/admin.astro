@@ -38,8 +38,16 @@ import "../styles/site/admin.css";
         </nav>
         <p class="admin-status" id="admin-status" role="alert" aria-live="assertive"></p><p id="admin-dirty" aria-live="polite"></p>
         <div id="admin-panels"></div>
+        <details class="admin-card">
+          <summary>Pubblicazione e copia locale</summary>
+          <p>I testi salvati e gli elementi pubblicati vengono letti dal sito al caricamento della pagina, senza una nuova build.</p>
+          <p>Il sincronizzatore sul Mac controlla i contenuti ogni minuto quando sei connesso. Commit e push su GitHub restano manuali. Questa pagina non può conoscere lo stato del Mac o del push.</p>
+          <button type="button" id="published-check">Verifica la versione online</button>
+          <p id="published-version" role="status" aria-live="polite"></p>
+        </details>
       </section>
     </main>
     <script src="../scripts/admin.js"></script>
+    <script src="../scripts/admin-published-version.js"></script>
   </body>
 </html>

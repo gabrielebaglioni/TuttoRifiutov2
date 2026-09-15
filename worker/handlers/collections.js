@@ -223,7 +223,7 @@ async function adminItems(env, kind) {
     .filter((item) => !deletingSlugs.has(item.slug));
 }
 
-async function publicItems(env, kind) {
+export async function publicItems(env, kind) {
   return (await adminItems(env, kind))
     .filter((item) => kind !== "events" || isPublicEventStatus(item.status));
 }

@@ -8,7 +8,8 @@
     "preview": "astro preview",
     "host": "astro dev --host",
     "test": "node --test tests/*.test.mjs",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "content:sync": "node scripts/local-content-sync.mjs"
   },
   "repository": {
     "type": "git",

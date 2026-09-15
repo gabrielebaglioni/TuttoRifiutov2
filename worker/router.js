@@ -214,6 +214,11 @@ async function fetchAsset(env, request) {
 
 async function routeRequestInternal(request, env, ctx) {
   const url = new URL(request.url);
+  if (url.pathname === '/api/published-snapshot') {
+    if (request.method !== 'GET') return methodNotAllowed('GET');
+    const { publishedSnapshot } = await import('./published-snapshot.js');
+    return publishedSnapshot(env);
+  }
   if (url.pathname === "/api/health") {
     return jsonResponse({ ok: true });
   }

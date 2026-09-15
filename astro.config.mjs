@@ -59,7 +59,7 @@ export default defineConfig({
       options: {
         variants: [
           {
-            src: ["./src/assets/fonts/stylish.ttf"],
+            src: ["./src/assets/fonts/stylish.woff2"],
             weight: "400",
             style: "normal",
           },
