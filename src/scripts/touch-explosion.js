@@ -7,14 +7,14 @@ export function createTouchGesture() {
       if(mode==='active')return true;
       if(mode!=='pending')return false;
       const dx=Math.abs(nextX-x),dy=Math.abs(nextY-y);
-      if(dx>=14 && dx>=dy*1.6){mode='active';return true;}
-      if(dy>=10 || Math.max(dx,dy)>=24)mode='rejected';
+      if(dx>=10 && dy<=dx*1.25){mode='active';return true;}
+      if(dy>=10 && dy>dx*1.25)mode='rejected';
       return false;
     },
   };
 }
 
-// A bounded 30fps pulse updates only GPU uniforms, not the particle buffers.
+// A bounded ~60fps pulse updates only GPU uniforms, not the particle buffers.
 export function installTouchExplosion({canvas,bounds,enabled,onFrame,view=window,doc=document}) {
   if(!view.PointerEvent)return {layout(){},destroy(){}};
   const hit=doc.createElement('div');
@@ -28,7 +28,7 @@ export function installTouchExplosion({canvas,bounds,enabled,onFrame,view=window
     if(!active)return;
     if(!enabled() || doc.hidden){cancel();return;}
     const strength=Math.max(0,1-(now-lastMove)/650);
-    if(now-lastDraw>=1000/30 || strength===0){lastDraw=now;onFrame(x,y,strength*strength);}
+    if(now-lastDraw>=1000/60-1 || strength===0){lastDraw=now;onFrame(x,y,strength*strength);}
     if(strength>0)frame=view.requestAnimationFrame(tick);
     else active=false;
   }
@@ -64,8 +64,9 @@ export function installTouchExplosion({canvas,bounds,enabled,onFrame,view=window
     const rect=canvas.getBoundingClientRect(),box=bounds();
     if(!box || !rect.width || !rect.height)return;
     const sx=rect.width/canvas.width,sy=rect.height/canvas.height;
-    const left=Math.max(24,box.left*sx),right=Math.min(rect.width-24,box.right*sx);
-    Object.assign(hit.style,{left:left+'px',top:box.top*sy+'px',width:Math.max(0,right-left)+'px',height:(box.bottom-box.top)*sy+'px'});
+    const left=Math.max(24,box.left*sx-12),right=Math.min(rect.width-24,box.right*sx+12);
+    const top=Math.max(0,box.top*sy-12),bottom=Math.min(rect.height,box.bottom*sy+12);
+    Object.assign(hit.style,{left:left+'px',top:top+'px',width:Math.max(0,right-left)+'px',height:Math.max(0,bottom-top)+'px'});
   }
   function visibilityChange(){
     // The OS may swallow pointerup while switching apps; discard stale contacts.

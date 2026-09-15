@@ -83,6 +83,19 @@ test('mobile page cover does not impose a long delay before navigation can begin
   assert.ok(now <= 300, `cover took ${now}ms before starting the request`);
 });
 
+test('mobile page reveal remains visible long enough and releases navigation', () => {
+ const jobs=[], grid={style:{pointerEvents:'auto'}};
+ const blocks=Array.from({length:12},()=>({element:{}}));
+ const context={blocks,prefersReducedMotion:()=>false,usesTouchLayout:()=>true,Math,
+ document:{querySelector:()=>grid},ScrollTrigger:{sort(){},refresh(){}},
+ gsap:{set(){},to(target,options){jobs.push(options);}}};
+ vm.runInNewContext(functions('transition.js',['reveal'])+';reveal();',context);
+ const duration=Math.max(...jobs.map(o=>1000*((o.delay||0)+o.duration*(1+(o.repeat||0)))));
+ assert.ok(duration>=450 && duration<=1000,`reveal duration ${duration}ms`);
+ jobs.forEach(o=>o.onComplete());
+ assert.equal(grid.style.pointerEvents,'none');
+});
+
 test('grain only redraws when its five-Hz shader changes appearance', () => {
   let draws=0;
   const context=vm.createContext({stopped:false,requestAnimationFrame(){},isVisible:true,document:{hidden:false},lastNoiseFrame:-1,

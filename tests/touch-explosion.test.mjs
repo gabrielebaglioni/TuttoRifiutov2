@@ -17,10 +17,12 @@ test('only horizontal intent activates; vertical starts stay rejected',()=>{
  g.start(100,100);
  assert.equal(g.move(84,102),true);
 });
-test('ambiguous diagonal movement and taps do not explode',()=>{
+test('diagonal drags activate but initial vertical intent and taps stay reserved',()=>{
  const g=createTouchGesture();
- g.start(100,100);assert.equal(g.move(114,112),false);
- assert.equal(g.move(180,112),false);
+ g.start(100,100);assert.equal(g.move(114,112),true);
+ assert.equal(g.move(180,112),true);
+ g.start(100,100);assert.equal(g.move(102,112),false);
+ assert.equal(g.move(160,115),false);
  g.start(100,100);g.reset();assert.equal(g.move(120,100),false);
 });
 
@@ -47,7 +49,7 @@ test('touch pulse stays idle for taps/vertical scroll and stops completely after
  assert.deepEqual(t.draws.at(-1),[280,608,1]);
  for(let time=16;time<=672;time+=16)t.frame(time);
  assert.equal(t.draws.at(-1)[2],0);assert.equal(t.queue.size,0);
- assert.ok(t.draws.length<=22,'30fps cap bounds GPU draws');
+ assert.ok(t.draws.length>=35 && t.draws.length<=44,'smooth frames remain bounded and stop at rest');
  t.controller.destroy();assert.equal(t.doc.querySelector('.particle-touch-region'),null);
 });
 test('returning from a background interruption accepts a fresh touch',()=>{

@@ -38,6 +38,20 @@ for(const denied of ['read','write']) test(`preloader resolves and uncovers cont
  assert.equal(c.document.querySelector('.preloader').style.display,'none');
  assert.equal(c.document.querySelector('h1').textContent,'Content');
 });
+test('touch navigation paints the covered grid before starting its reveal',()=>{
+ const c=harness('<div class="transition-grid"><div class="transition-block"></div></div>');
+ const frames=[];let reveals=0;
+ c.sessionStorage={getItem:()=> 'true',removeItem(){}};
+ c.ScrollTrigger={sort(){},refresh(){}};
+ c.requestAnimationFrame=fn=>frames.push(fn);
+ c.gsap.to=()=>reveals++;
+ vm.runInNewContext(script('transition.js'),c);
+ c.document.dispatchEvent(new c.Event('DOMContentLoaded'));
+ assert.equal(c.document.querySelector('.transition-block').style.opacity,'1');
+ assert.equal(reveals,0);
+ frames.shift()();assert.equal(reveals,0);
+ frames.shift()();assert.equal(reveals,1);
+});
 test('denied storage still follows internal navigation and bfcache restores clickable content',async()=>{
  const c=harness('<div class="transition-grid"><div class="transition-block"></div></div><a href="/events">Eventi</a>');
  c.sessionStorage={getItem(){throw new Error('SecurityError');},setItem(){throw new Error('SecurityError');}};

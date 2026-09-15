@@ -28,10 +28,13 @@ function init() {
     if (style) style.remove();
 
     gsap.set(blockElements, { opacity: 1 });
-    setTimeout(() => {
+    const startReveal = () => {
       transitionGrid.style.backgroundColor = "";
       reveal();
-    }, usesTouchLayout() ? 0 : 300);
+    };
+    // Let the destination paint its covered state before dissolving it.
+    if (usesTouchLayout()) requestAnimationFrame(() => requestAnimationFrame(startReveal));
+    else setTimeout(startReveal, 300);
   } else {
     gsap.set(blockElements, { opacity: 0 });
   }
@@ -96,9 +99,9 @@ function reveal() {
   shuffled.forEach((block, index) => {
     gsap.to(block, {
       opacity: 0,
-      duration: mobile ? 0.04 : 0.075,
+      duration: mobile ? 0.12 : 0.075,
       ease: "power2.inOut",
-      delay: index * (mobile ? 0.008 : 0.025),
+      delay: index * (mobile ? 0.035 : 0.025),
       repeat: 1,
       yoyo: true,
       onComplete: () => {
