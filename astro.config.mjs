@@ -13,6 +13,9 @@ export default defineConfig({
   security: {
     csp: {
       algorithm: "SHA-512",
+      // Runtime palettes/geometry need style attributes, not inline scripts.
+      // Style elements retain Astro's hash-based policy.
+      styleDirective: { resources: [{ resource: "'unsafe-inline'", kind: "attribute" }] },
       directives: [
         "default-src 'self'",
         "base-uri 'self'",
