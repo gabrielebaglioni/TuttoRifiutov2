@@ -1,6 +1,4 @@
 :root {
-  --bg: yellow;
-  --fg: #000;
   --type-1: var(--font-de-fonte-plus), sans-serif;
   --type-2: var(--font-stylish), var(--font-stylish-extended), sans-serif;
   --type-3: var(--font-dm-mono), monospace;
@@ -13,7 +11,7 @@
 }
 
 /* Paint outside the document (overscroll / Android navigation inset) black. */
-html { background-color: #000; }
+html { background-color: var(--fg); }
 
 body {
   background-color: var(--bg);

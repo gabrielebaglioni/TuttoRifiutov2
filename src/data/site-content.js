@@ -1,6 +1,8 @@
 // Values in this object are the static-site fallback and the complete editable
 // copy schema for the public pages. Keep keys stable: D1 overrides use them.
+import { THEME_KEY, DEFAULT_PALETTE } from './theme.js';
 export const SITE_CONTENT = {
+  [THEME_KEY]: DEFAULT_PALETTE,
   "site.name": "Tutto Rifiuto",
   "seo.default.title": "Tutto Rifiuto",
   "seo.default.description": "Tutto Rifiuto — collettivo romano che raccoglie parole, suoni, immagini, pellicole, fantasie, stampe.",

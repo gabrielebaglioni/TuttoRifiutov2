@@ -14,6 +14,7 @@ import { isSlug } from "./slug.js";
 import { getContentOverridesForKeys } from "./db.js";
 import { mergeContent } from "./handlers/content.js";
 import { SITE_CONTENT } from "./content-defaults.js";
+import { THEME_KEY, themeCss } from '../src/data/theme.js';
 import { rewriteMetadata } from "./html-metadata.js";
 import { isPublicEventStatus } from "../src/data/event-status.js";
 import { embeddedHtmlResponse } from "./static-html.js";
@@ -91,7 +92,7 @@ async function rewriteStaticMetadata(request, env, response, dynamic = null) {
   let values = SITE_CONTENT;
   try {
     values = mergeContent(SITE_CONTENT, rowsFrom(await getContentOverridesForKeys(env.DB, [
-      ...(page ? [`seo.${page}.title`, `seo.${page}.description`] : []), "site.name", "seo.social.image_alt",
+      ...(page ? [`seo.${page}.title`, `seo.${page}.description`] : []), "site.name", "seo.social.image_alt", THEME_KEY,
     ])));
   } catch {
     if (!dynamic) return response;
@@ -101,10 +102,12 @@ async function rewriteStaticMetadata(request, env, response, dynamic = null) {
     let description = dynamic?.seo?.description ?? (page ? values[`seo.${page}.description`] : null);
     if (typeof title !== "string" || typeof description !== "string") return response;
     const canonical = new URL(url.pathname, url.origin).href;
-    const body = rewriteMetadata(await response.text(), {
+    let body = rewriteMetadata(await response.text(), {
       title, description, canonical, url: canonical,
       siteName: values["site.name"], author: values["site.name"], imageAlt: values["seo.social.image_alt"],
     });
+    body = body.replace(/<html\b[^>]*>/i, (tag) => tag.replace(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*')/i, '').replace(/>$/, ` style="${themeCss(values[THEME_KEY])}">`));
+    body = body.replace(/(<meta\b[^>]*name="theme-color"[^>]*content=")[^"]*(")/i, `$1${values[THEME_KEY].foreground}$2`);
     const headers = freshRepresentationHeaders(response.headers);
     return new Response(body, { status: response.status, statusText: response.statusText, headers });
   } catch {

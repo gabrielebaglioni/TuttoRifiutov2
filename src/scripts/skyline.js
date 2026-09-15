@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { bindThemeUniforms } from './theme.js';
 import { GRAIN_FRAGMENT_SHADER, GRAIN_VERTEX_SHADER } from "./grain-yellow-shader.js";
 import { meaningfulResize, usesTouchLayout } from "./motion-policy.js";
 let skylineViewport = { width: window.innerWidth, height: window.innerHeight };
@@ -37,6 +38,7 @@ const material = new THREE.ShaderMaterial({
 });
 
 const mesh = new THREE.Mesh(geometry, material);
+const unbindTheme = bindThemeUniforms(material.uniforms, {uColorBg:'background', uColorFg:'foreground'}, () => { lastNoiseFrame = -1; });
 scene.add(mesh);
 
 // resize handler with debounce
@@ -71,6 +73,7 @@ function animate(currentTime) {
 
 // cleanup on page unload
 function cleanup() {
+  unbindTheme();
   visibilityObserver.disconnect();
   geometry.dispose();
   material.dispose();

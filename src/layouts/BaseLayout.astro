@@ -1,6 +1,7 @@
 ---
 import { Font } from "astro:assets";
 import { SITE_CONTENT } from "../data/site-content.js";
+import { THEME_KEY, themeCss } from '../data/theme.js';
 import "../styles/globals.css";
 import "../styles/site/preloader.css";
 import "../styles/site/nav.css";
@@ -27,14 +28,14 @@ const socialImageUrl = new URL("/og.webp", Astro.site ?? Astro.url);
 ---
 
 <!doctype html>
-<html lang="it">
+<html lang="it" style={themeCss(SITE_CONTENT[THEME_KEY])}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="author" content={SITE_CONTENT["site.name"]} />
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content={SITE_CONTENT[THEME_KEY].foreground} />
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="it_IT" />
@@ -56,6 +57,7 @@ const socialImageUrl = new URL("/og.webp", Astro.site ?? Astro.url);
     <Font cssVariable="--font-stylish-extended" />
   </head>
   <body class={bodyClass}>
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs><filter id="theme-ink" color-interpolation-filters="sRGB"><feFlood style="flood-color:var(--fg)" /><feComposite in2="SourceAlpha" operator="in" /></filter></defs></svg>
     <Preloader />
     <TransitionGrid />
     <Nav />

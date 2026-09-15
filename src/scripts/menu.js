@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import * as THREE from "three";
+import { bindThemeUniforms } from './theme.js';
 import { SplitText } from "gsap/SplitText";
 import { getIconSvg } from "./icons.js";
 import { initMenuRingGrain, resizeMenuRingGrain } from "./menu-ring-grain.js";
@@ -11,11 +12,6 @@ import { meaningfulResize, usesTouchLayout } from "./motion-policy.js";
 let menuViewport = { width: window.innerWidth, height: window.innerHeight };
 
 gsap.registerPlugin(SplitText);
-
-// configuration
-const CONFIG = {
-  colors: { bg: "#2444D9", fg: "#000000" },
-};
 
 const MENU_ICONS = ["cube-sharp", "calendar-sharp", "paper-plane-sharp", "flag-sharp"];
 let menuItems = SITE_CONTENT["global.menu.items"].map(([label, href], index) => ({
@@ -178,18 +174,6 @@ function getResponsiveConfig() {
   };
 }
 
-// three.js atmosphere background
-function hexToRgb(hex) {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? {
-        r: parseInt(result[1], 16) / 255,
-        g: parseInt(result[2], 16) / 255,
-        b: parseInt(result[3], 16) / 255,
-      }
-    : { r: 0, g: 0, b: 0 };
-}
-
 function ensureAtmosphere() {
   if (atmosphereAttempted || (usesTouchLayout() && !isOpen)) return;
   atmosphereAttempted = true;
@@ -214,8 +198,6 @@ function initAtmosphere() {
   atmosphereRenderer.setPixelRatio(usesTouchLayout() ? 1 : Math.min(window.devicePixelRatio, 2));
 
   const geometry = new THREE.PlaneGeometry(2, 2);
-  const bgColor = hexToRgb(CONFIG.colors.bg);
-  const fgColor = hexToRgb(CONFIG.colors.fg);
 
   atmosphereMaterial = new THREE.ShaderMaterial({
     vertexShader: matrixShader.vertexShader,
@@ -223,13 +205,13 @@ function initAtmosphere() {
     uniforms: {
       iTime: { value: 0 },
       iResolution: { value: new THREE.Vector2() },
-      uColorBg: { value: new THREE.Vector3(bgColor.r, bgColor.g, bgColor.b) },
-      uColorFg: { value: new THREE.Vector3(fgColor.r, fgColor.g, fgColor.b) },
     },
   });
 
   atmosphereMesh = new THREE.Mesh(geometry, atmosphereMaterial);
   atmosphereScene.add(atmosphereMesh);
+  const unbindTheme = bindThemeUniforms(atmosphereMaterial.uniforms, {uColorBg:'accent', uColorFg:'foreground'}, () => atmosphereRenderer.render(atmosphereScene, atmosphereCamera));
+  window.addEventListener('pagehide', unbindTheme, {once:true});
 
   resizeAtmosphere();
   animateAtmosphere();

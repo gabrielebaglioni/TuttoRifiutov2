@@ -3,6 +3,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";
 import { createPieCanvas } from "./pie-canvas.js";
+import { publicTheme } from './theme.js';
 import { meaningfulResize, pieFrame, usesTouchLayout } from "./motion-policy.js";
 import { ZOOM_ORIGIN, MASK_BOX, maskZoomMultiplier } from "./pie-geometry.js";
 
@@ -32,8 +33,6 @@ const DOT_RADIUS = 600;
 const DOT_COUNT = 3500;
 const PIN_LENGTH_VIEWPORTS = 5;
 
-const LOGO_FILL_COLOR = "#2444D9";
-
 let scaleMultiplier = 7;
 const mobile = usesTouchLayout();
 let viewport = { width: window.innerWidth, height: window.innerHeight };
@@ -52,11 +51,13 @@ function init() {
     STATE.container.parentElement.style.setProperty("--pie-stage-height", STATE.container.offsetHeight + "px");
     STATE.container.parentElement.classList.add("is-mobile-pie");
     STATE.canvas = createPieCanvas(STATE.container, {
-      imageUrl: LOGO_BOX.path, origin: ZOOM_ORIGIN, box: LOGO_BOX, color: LOGO_FILL_COLOR,
+      imageUrl: LOGO_BOX.path, origin: ZOOM_ORIGIN, box: LOGO_BOX, color: publicTheme().current().palette.accent,
       onError: () => { STATE.canvas = null; buildSvg(); renderProgress(STATE.scrollTrigger?.progress ?? 0); },
     });
   }
   if (!STATE.canvas) buildSvg();
+  const unbindTheme = publicTheme().subscribe(({palette}) => STATE.canvas?.setColor(palette.accent));
+  window.addEventListener('pagehide', unbindTheme, {once:true});
   updateZoomTarget();
   setupScrollTrigger();
   Promise.all([document.fonts.ready, contentReady]).then(() => {
@@ -165,7 +166,7 @@ function createDots() {
     dot.setAttribute("cx", String(x));
     dot.setAttribute("cy", String(y));
     dot.setAttribute("r", "1");
-    dot.setAttribute("fill", LOGO_FILL_COLOR);
+    dot.style.fill = 'var(--accent)';
     dotsGroup.appendChild(dot);
   }
 
@@ -185,7 +186,7 @@ function createPieGroup() {
   logoFill.setAttribute("y", "0");
   logoFill.setAttribute("width", "800");
   logoFill.setAttribute("height", "800");
-  logoFill.setAttribute("fill", LOGO_FILL_COLOR);
+  logoFill.style.fill = 'var(--accent)';
   logoFill.setAttribute("mask", "url(#pie-transition-mask)");
 
   pieGroup.appendChild(logoFill);

@@ -29,7 +29,7 @@ import { SITE_CONTENT } from "../data/site-content.js";
                     -0.2125 -0.7154 -0.0721 1 0"
             result="logoAlpha"
           />
-          <feFlood flood-color="#ffff00" result="logoFill" />
+          <feFlood style="flood-color:var(--bg)" result="logoFill" />
           <feComposite in="logoFill" in2="logoAlpha" operator="in" />
         </filter>
       </defs>

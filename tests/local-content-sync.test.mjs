@@ -8,6 +8,7 @@ import { publishedSnapshot } from '../worker/published-snapshot.js';
 import { DatabaseSync } from 'node:sqlite';
 import { readdirSync, readFileSync } from 'node:fs';
 import sharp from 'sharp';
+import { THEME_KEY, DEFAULT_PALETTE } from '../src/data/theme.js';
 
 test('only canonical uploaded WebP paths are eligible for download', () => {
   assert.throws(() => mediaPaths({ events: [{ media: [{ sources: [{ src: '/media/../../.git/config' }] }] }], archive: [] }));
@@ -58,6 +59,13 @@ test('real database export reflects published labels and excludes draft text and
   const text = await response.text();
   assert.equal(JSON.parse(text).content['home.hero.title'], 'Titolo pubblicato');
   assert.ok(!text.includes('TESTO PRIVATO') && !text.includes('SEGRETO'));
+  const palette = {...DEFAULT_PALETTE,accent:'#123456'};
+  db.prepare('INSERT INTO content_entries (key,value_json,updated_at) VALUES (?,?,1)').run(THEME_KEY,JSON.stringify(palette));
+  const themed = await (await publishedSnapshot({DB})).json();
+  assert.deepEqual(themed.content[THEME_KEY],palette);
+  const root = await mkdtemp(join(tmpdir(), 'tutto-sync-theme-'));
+  await syncOnce(root,async()=>Response.json(themed));
+  assert.deepEqual(JSON.parse(await readFile(join(root,'content/published/snapshot.json'),'utf8')).content[THEME_KEY],palette);
   db.close();
 });
 

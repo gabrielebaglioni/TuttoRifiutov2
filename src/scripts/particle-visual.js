@@ -1,9 +1,9 @@
 import { meaningfulResize, usesTouchLayout, particleScale } from "./motion-policy.js";
+import { publicTheme } from './theme.js';
 let particleViewport = { width: window.innerWidth, height: window.innerHeight };
 // webgl particle system with mouse distortion
 const PV = {
   config: {
-    canvasBg: "#e30613",
     logoSize: 3000,
     distortionRadius: 2000,
     forceStrength: 0.05,
@@ -61,6 +61,13 @@ function init() {
   PV.gl.blendFunc(PV.gl.SRC_ALPHA, PV.gl.ONE_MINUS_SRC_ALPHA);
 
   setupShaders();
+  const unbindTheme = publicTheme().subscribe(({rgb}) => {
+    PV.gl.useProgram(PV.program);
+    PV.gl.uniform3fv(PV.gl.getUniformLocation(PV.program, 'uInk'), rgb.foreground);
+    PV.gl.uniform3fv(PV.gl.getUniformLocation(PV.program, 'uHighlight'), rgb.highlight);
+    if (PV.geometry) render();
+  });
+  window.addEventListener('pagehide', unbindTheme, {once:true});
   loadImage();
 
   if (!PV.isMobile) {
@@ -87,12 +94,14 @@ function setupShaders() {
 
   const fs = `
     precision mediump float;
+    uniform vec3 uInk;
+    uniform vec3 uHighlight;
     varying vec4 v_color;
     void main() {
       if (v_color.a < 0.01) discard;
       float dist = length(gl_PointCoord - 0.5);
       float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-      gl_FragColor = vec4(v_color.rgb, v_color.a * alpha);
+      gl_FragColor = vec4(mix(uInk, uHighlight, v_color.rgb), v_color.a * alpha);
     }`;
 
   const vShader = PV.gl.createShader(PV.gl.VERTEX_SHADER);

@@ -6,6 +6,23 @@ import { mergeContent } from "../worker/handlers/content.js";
 import { routeRequest } from "../worker/router.js";
 import { SITE_CONTENT } from "../src/data/site-content.js";
 import { validateContentValue } from "../worker/validation.js";
+import { THEME_KEY, DEFAULT_PALETTE } from '../src/data/theme.js';
+
+test('palette content writes reject invalid and CSRF-less values before persistence and save one complete object', async () => {
+  const env = await environmentWithSession();
+  const put = (value, csrf=true) => routeRequest(new Request(`https://site.test/api/admin/content/${THEME_KEY}`, {
+    method:'PUT', headers:{'content-type':'application/json',cookie:env.cookie,origin:'https://site.test',...(csrf?{'x-csrf-token':env.csrfToken}:{})}, body:JSON.stringify({value}),
+  }),env,{});
+  assert.equal((await put(DEFAULT_PALETTE,false)).status,403); assert.equal(env.DB.content.size,0);
+  for (const invalid of [{foreground:'#123456'}, {...DEFAULT_PALETTE,accent:'url(https://evil.test)'}, {...DEFAULT_PALETTE, extra:'#000000'}]) {
+    assert.equal((await put(invalid)).status,400); assert.equal(env.DB.content.size,0);
+  }
+  const next = {...DEFAULT_PALETTE,accent:'#abcdef'};
+  assert.equal((await put(next)).status,200); assert.equal(env.DB.content.size,1);
+  assert.deepEqual(JSON.parse(env.DB.content.get(THEME_KEY)),next);
+  const reload=await routeRequest(new Request('https://site.test/api/content'),env,{});
+  assert.deepEqual((await reload.json())[THEME_KEY],next);
+});
 
 test("stored overrides replace only matching default keys", () => {
   const defaults = {

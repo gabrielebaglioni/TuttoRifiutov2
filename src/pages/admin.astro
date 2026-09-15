@@ -1,6 +1,7 @@
 ---
 import "../styles/globals.css";
 import "../styles/site/admin.css";
+import { adminThemeCss } from '../data/theme.js';
 ---
 
 <!doctype html>
@@ -11,7 +12,7 @@ import "../styles/site/admin.css";
     <meta name="robots" content="noindex, nofollow" />
     <title>Area privata</title>
   </head>
-  <body class="admin-body">
+  <body class="admin-body" style={adminThemeCss()}>
     <main class="admin-shell">
       <section class="admin-login" id="admin-login" aria-labelledby="admin-login-title">
         <p class="admin-kicker">Tutto Rifiuto / area privata</p>
@@ -35,6 +36,7 @@ import "../styles/site/admin.css";
           <button type="button" data-admin-section="project">Progetto</button>
           <button type="button" data-admin-section="contact">Contatti</button>
           <button type="button" data-admin-section="global">Globali</button>
+          <button type="button" data-admin-section="colors">Colori</button>
         </nav>
         <p class="admin-status" id="admin-status" role="alert" aria-live="assertive"></p><p id="admin-dirty" aria-live="polite"></p>
         <div id="admin-panels"></div>

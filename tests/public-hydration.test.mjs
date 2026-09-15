@@ -160,7 +160,7 @@ test("worker rewrites SEO only for HTML assets and keeps static failures intact"
   assert.equal(await missing.text(), "plain");
 });
 
-test("worker queries only the SEO values needed by the requested public route", async () => {
+test("worker queries the route SEO and palette needed by initial HTML together", async () => {
   const calls = [];
   const DB = {
     prepare() {
@@ -174,7 +174,7 @@ test("worker queries only the SEO values needed by the requested public route", 
   const env = { DB, ASSETS: { fetch: async () => new Response(html, { headers: { "content-type": "text/html" } }) } };
   const response = await routeRequest(new Request("https://site.test/project"), env, {});
   assert.match(await response.text(), /<title>Progetto pubblicato<\/title>/);
-  assert.deepEqual(calls, [["seo.project.title", "seo.project.description", "site.name", "seo.social.image_alt"]]);
+  assert.deepEqual(calls, [["seo.project.title", "seo.project.description", "site.name", "seo.social.image_alt", "global.theme.palette"]]);
 });
 
 test("worker leaves existing static collection metadata unchanged when no stored override exists", async () => {

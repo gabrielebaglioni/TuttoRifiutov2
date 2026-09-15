@@ -17,6 +17,8 @@ export function createGrainFragmentShader({ radialMask = false } = {}) {
 
   uniform float iTime;
   uniform vec3 iResolution;
+  uniform vec3 uColorBg;
+  uniform vec3 uColorFg;
   ${radialMask ? "uniform float uInnerPx;\n  uniform float uOuterPx;" : ""}
   varying vec2 vUv;
 
@@ -49,8 +51,7 @@ export function createGrainFragmentShader({ radialMask = false } = {}) {
     float haze = (hash21(floor(vUv * iResolution.xy * 0.5)) - 0.5) * 0.04;
     color = clamp(color - haze, 0.0, 1.0);
 
-    const vec3 bgColor = vec3(1.0, 1.0, 0.0);
-    color = mix(bgColor, vec3(0.0), 1.0 - color.r);
+    color = mix(uColorBg, uColorFg, 1.0 - color.r);
 
     gl_FragColor = vec4(color, 1.0);
   }

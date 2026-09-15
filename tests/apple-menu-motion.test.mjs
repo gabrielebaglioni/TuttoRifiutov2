@@ -5,6 +5,7 @@ import {parse} from 'acorn';
 import vm from 'node:vm';
 import * as policy from '../src/scripts/motion-policy.js';
 import {parseHTML} from 'linkedom';
+import {bindThemeUniforms} from '../src/scripts/theme.js';
 function functions(file,names){const s=readFileSync(new URL('../src/scripts/'+file,import.meta.url),'utf8');return parse(s,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type==='FunctionDeclaration'&&names.includes(n.id.name)).map(n=>s.slice(n.start,n.end)).join('\n');}
 test('Apple scroll policy includes Chrome iPhone and iPad, excludes Android and desktop',()=>{
  assert.equal(typeof policy.appleHeroScrollMode,'function');
@@ -24,8 +25,9 @@ test('Apple homepage has one scroll owner: native timeline or normalizer, never 
 });
 test('mobile menu uses the original shader rather than an empty blue background',()=>{
  let started=0;
- const context={usesTouchLayout:()=>true,document:{getElementById:()=>({})},window:{devicePixelRatio:3},CONFIG:{colors:{bg:'#2444D9',fg:'#000000'}},hexToRgb:()=>({r:0,g:0,b:0}),matrixShader:{vertexShader:'original',fragmentShader:'TR'},
- THREE:{Scene:class{add(){}},OrthographicCamera:class{},WebGLRenderer:class{constructor(){started++;}setPixelRatio(){}},PlaneGeometry:class{},ShaderMaterial:class{},Vector2:class{},Vector3:class{},Mesh:class{}},resizeAtmosphere(){},animateAtmosphere(){}};
+ const {document}=parseHTML('<html><body><canvas id="menu-canvas"></canvas></body></html>'); document.defaultView.getComputedStyle=element=>element.style;
+ const context={usesTouchLayout:()=>true,document,window:{devicePixelRatio:3,addEventListener(){}},bindThemeUniforms:(uniforms,mapping,draw)=>bindThemeUniforms(uniforms,mapping,draw,document),matrixShader:{vertexShader:'original',fragmentShader:'TR'},
+ THREE:{Scene:class{add(){}},OrthographicCamera:class{},WebGLRenderer:class{constructor(){started++;}setPixelRatio(){}render(){}},PlaneGeometry:class{},ShaderMaterial:class{constructor(options){this.uniforms=options.uniforms;}},Vector2:class{},Vector3:class{},Mesh:class{}},resizeAtmosphere(){},animateAtmosphere(){}};
  vm.runInNewContext(functions('menu.js',['initAtmosphere'])+';initAtmosphere();',context);assert.equal(started,1);
 });
 test('touch shader allocation is capped while keeping the viewport aspect ratio',()=>{

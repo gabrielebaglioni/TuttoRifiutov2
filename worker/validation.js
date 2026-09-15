@@ -1,4 +1,5 @@
 import { SITE_CONTENT } from "./content-defaults.js";
+import { THEME_KEY, validatePalette } from '../src/data/theme.js';
 
 export const MAX_CONTENT_STRING_LENGTH = 20_000;
 
@@ -51,5 +52,6 @@ function matchesSchema(key, fallback, value, depth = 0, path = []) {
 
 export function validateContentValue(key, value, defaults = SITE_CONTENT) {
   if (!isEditableContentKey(key, defaults)) return false;
+  if (key === THEME_KEY) return validatePalette(value);
   return matchesSchema(key, defaults[key], value);
 }

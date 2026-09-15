@@ -2,11 +2,47 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { parseHTML } from "linkedom";
 import { createAdminController } from "../src/scripts/admin.js";
+import { DEFAULT_PALETTE, THEME_KEY } from '../src/data/theme.js';
+
+test('theme draft survives tab switch, validates before atomic CSRF save, cancels and restores', async () => {
+  const { document, window } = parseHTML(SHELL);
+  let palette = {...DEFAULT_PALETTE};
+  const writes = [];
+  let finishSave;
+  const fetch = async (path, init={}) => {
+    if (path === '/api/admin/session') return response({csrfToken:'theme-csrf'});
+    if (path === '/api/content') return response({[THEME_KEY]:palette});
+    if (path === '/api/admin/events' || path === '/api/admin/archive') return response([]);
+    writes.push({path, init});
+    if (init.method === 'PUT') { palette = JSON.parse(init.body).value; await new Promise(resolve=>{finishSave=resolve;}); }
+    if (init.method === 'DELETE') palette = {...DEFAULT_PALETTE};
+    return response({ok:true});
+  };
+  const controller = createAdminController({document,window,fetch}); controller.boot(); await settled();
+  const tab = (section) => document.querySelector(`[data-admin-section="${section}"]`).dispatchEvent(new window.Event('click'));
+  const field = () => document.querySelector('[data-theme-hex="foreground"]');
+  const edit = (value) => {field().value=value; field().dispatchEvent(new window.Event('input'));};
+  const action = (text) => [...document.querySelectorAll('.admin-actions button')].find(b=>b.textContent===text).dispatchEvent(new window.Event('click'));
+  tab('colors'); assert.ok(field()); edit('#123456'); tab('home'); tab('colors'); assert.equal(field().value, '#123456');
+  edit('url(evil)'); action('Save'); await settled(); assert.equal(writes.length,0);
+  edit('#222222'); action('Save'); await settled(); assert.equal(writes.length,1);
+  assert.equal(writes[0].path, '/api/admin/content/global.theme.palette');
+  assert.equal(writes[0].init.headers.get('x-csrf-token'),'theme-csrf');
+  assert.deepEqual(JSON.parse(writes[0].init.body).value, {...DEFAULT_PALETTE,foreground:'#222222'});
+  assert.equal(field().disabled,true); assert.equal(document.querySelector('[data-admin-section="home"]').disabled,true);
+  finishSave(); await settled(); edit('#333333'); action('Cancel'); assert.equal(field().value,'#222222');
+  action('Restore placeholder'); await settled(); assert.equal(field().value,'#000000');
+  assert.equal(writes[1].init.method,'DELETE');
+  edit('#ffff00'); assert.match(document.querySelector('.admin-theme [role="status"]').textContent,/contrasto insufficiente/);
+  [...document.querySelectorAll('.admin-theme button')].find(b=>b.textContent==='Palette iniziale in anteprima').dispatchEvent(new window.Event('click'));
+  assert.equal(field().value,'#000000'); assert.equal(writes.length,2);
+  assert.match(document.querySelector('#admin-dirty').textContent,/1 modifiche/);
+});
 
 const SHELL = `<!doctype html><html><body>
   <section id="admin-login"><form id="admin-login-form"><input name="username"><input name="password"><button type="submit">Entra</button></form><p id="admin-login-status"></p></section>
   <section id="admin-editor" hidden inert><h1 id="admin-title" tabindex="-1">Contenuti</h1><button id="admin-logout">Esci</button>
-    <nav><button data-admin-section="home">Home</button><button data-admin-section="archive">Archivio</button><button data-admin-section="events">Eventi</button><button data-admin-section="project">Progetto</button><button data-admin-section="contact">Contatti</button><button data-admin-section="global">Globali</button></nav>
+    <nav><button data-admin-section="home">Home</button><button data-admin-section="archive">Archivio</button><button data-admin-section="events">Eventi</button><button data-admin-section="project">Progetto</button><button data-admin-section="contact">Contatti</button><button data-admin-section="global">Globali</button><button data-admin-section="colors">Colori</button></nav>
     <p id="admin-status"></p><p id="admin-dirty"></p><div id="admin-panels"></div>
   </section>
 </body></html>`;

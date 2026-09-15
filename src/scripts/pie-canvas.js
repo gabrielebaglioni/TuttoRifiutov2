@@ -101,6 +101,18 @@ export function createPieCanvas(container, { imageUrl, origin, box, color, onErr
   }
   return {
     resize, destroy,
+    setColor(next) {
+      if (!/^#[0-9a-f]{6}$/i.test(next) || next === color || disposed) return;
+      color = next;
+      if (layers) for (const layer of Object.values(layers)) {
+        const context = layer.getContext('2d');
+        context.globalCompositeOperation = 'source-in';
+        context.fillStyle = color;
+        context.fillRect(0, 0, layer.width, layer.height);
+        context.globalCompositeOperation = 'source-over';
+      }
+      schedule();
+    },
     draw(nextProgress, nextMultiplier) { progress = nextProgress; multiplier = nextMultiplier; schedule(); },
   };
 }

@@ -1,6 +1,8 @@
 import { optimizeImage, variantFieldsFor } from "./admin-image-optimizer.js";
 import { contentLabel, fieldLabel } from "./admin-labels.js";
 import { SITE_CONTENT } from "../data/site-content.js";
+import { THEME_KEY, validatePalette } from '../data/theme.js';
+import { themeEditor } from './admin-theme.js';
 import {
   AdminDrafts,
   AuthEpoch,
@@ -17,6 +19,7 @@ import {
 } from "./admin-model.js";
 
 const CONTENT_SECTIONS = {
+  colors: { title: 'Colori', keys: ['global.theme.'] },
   home: { title: "Home", keys: ["home.", "seo.home."] },
   archive: { title: "Archivio", keys: ["archive.", "seo.archive."] },
   events: { title: "Eventi", keys: ["events.", "seo.events."] },
@@ -289,12 +292,16 @@ function valueEditor(value, onChange, path, refresh, live = () => value, relativ
 }
 
 function contentCard(key, original) {
-  const card = disclosure("content:" + key, contentLabel(key), { card: true });
+  const card = disclosure("content:" + key, key === THEME_KEY ? 'Palette del sito' : contentLabel(key), { card: true, open: key === THEME_KEY });
   let baseline = clone(original);
   const resource = `content:${key}`;
   let draft = state.drafts.begin(resource, original);
   const valueSlot = node("div");
   const renderValue = () => {
+    if (key === THEME_KEY) {
+      valueSlot.replaceChildren(themeEditor(document, draft, (next, path) => { draft = state.drafts.set(resource, path, next); markDirty(resource); }));
+      return;
+    }
     valueSlot.replaceChildren(valueEditor(draft, (next, path) => {
       draft = state.drafts.set(resource, path, next);
       markDirty(resource);
@@ -302,6 +309,7 @@ function contentCard(key, original) {
   };
   renderValue();
   const save = async () => {
+    if (key === THEME_KEY && !validatePalette(draft)) { setStatus('Palette non valida: usa tutti i colori #RRGGBB.', 'error'); return; }
     const operation = state.drafts.snapshot(resource);
     const savedValue = clone(draft);
     try {

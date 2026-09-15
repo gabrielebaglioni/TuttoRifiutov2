@@ -1,4 +1,6 @@
 import { SITE_CONTENT } from "../data/site-content.js";
+import { THEME_KEY } from '../data/theme.js';
+import { publicTheme } from './theme.js';
 
 const REQUEST_TIMEOUT_MS = 4_000;
 const menuValuesByRoot = new WeakMap();
@@ -309,6 +311,8 @@ function isNestedRendererMarker(node, key) {
 function applyContentChanges(root, values) {
   if (!root || !values || typeof values !== "object" || Array.isArray(values)) return {};
   const changed = {};
+  const documentRoot = root.documentElement ? root : root.ownerDocument;
+  if (documentRoot && Object.hasOwn(values, THEME_KEY) && publicTheme(documentRoot).apply(values[THEME_KEY])) changed[THEME_KEY] = values[THEME_KEY];
   for (const node of root.querySelectorAll("[data-content-key]")) {
     const key = node.dataset.contentKey;
     if (!key || !Object.prototype.hasOwnProperty.call(values, key) || isNestedRendererMarker(node, key)) continue;

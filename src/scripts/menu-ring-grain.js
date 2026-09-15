@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { bindThemeUniforms } from './theme.js';
 import {
   createGrainFragmentShader,
   GRAIN_VERTEX_SHADER,
@@ -62,6 +63,7 @@ export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
 
   mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
+  const unbindTheme = bindThemeUniforms(material.uniforms, {uColorBg:'background', uColorFg:'foreground'}, () => renderer.render(scene, camera));
 
   function layout() {
     const w = Math.max(1, Math.floor(menuEl.offsetWidth));
@@ -90,6 +92,7 @@ export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
   requestAnimationFrame(animate);
 
   function cleanup() {
+    unbindTheme();
     if (ro) ro.disconnect();
     geometry.dispose();
     material.dispose();
