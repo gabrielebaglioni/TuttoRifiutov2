@@ -57,11 +57,20 @@ export default defineConfig({
       name: "Stylish",
       cssVariable: "--font-stylish",
       options: {
+        variants: [{ src: ["./src/assets/fonts/stylish-latin.woff2"], weight: "400", style: "normal" }],
+      },
+    },
+    {
+      provider: fontProviders.local(),
+      name: "Stylish Extended",
+      cssVariable: "--font-stylish-extended",
+      options: {
         variants: [
           {
             src: ["./src/assets/fonts/stylish.woff2"],
             weight: "400",
             style: "normal",
+            unicodeRange: ["U+3131-3163", "U+3165-318E", "U+AC00-D7A3"],
           },
         ],
       },

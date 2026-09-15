@@ -70,7 +70,8 @@ function startSequence() {
             const currentValue = Math.round(
               gsap.getProperty(progressIndicator, "--progress") * 100,
             );
-            progressText.textContent = `${currentValue}%`;
+            // The percent sign belongs to the surrounding markup.
+            progressText.textContent = String(currentValue);
           },
           onComplete: () => {
             currentProgress = targetProgress;

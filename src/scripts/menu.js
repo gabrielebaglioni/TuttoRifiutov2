@@ -7,6 +7,8 @@ import { matrixShader } from "./menuShaders.js";
 import { SITE_CONTENT } from "../data/site-content.js";
 import { isAllowedLink } from "./content-hydration.js";
 import { playMenuSound } from "./menu-audio.js";
+import { meaningfulResize, usesTouchLayout } from "./motion-policy.js";
+let menuViewport = { width: window.innerWidth, height: window.innerHeight };
 
 gsap.registerPlugin(SplitText);
 
@@ -31,6 +33,8 @@ let menuLinkAnimations = [];
 
 let atmosphereScene, atmosphereCamera, atmosphereRenderer;
 let atmosphereMaterial, atmosphereMesh;
+let lastAtmosphereFrame = null;
+let atmosphereAttempted = false;
 
 // initialization
 document.addEventListener("DOMContentLoaded", () => {
@@ -49,7 +53,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderSegments(menu);
 
-  initMenuRingGrain(menu, responsiveConfig.menuSize);
+  // CSS provides the same readable ring even when WebGL is unavailable.
+  if (!usesTouchLayout()) {
+    try { initMenuRingGrain(menu, responsiveConfig.menuSize, () => isOpen || isMenuAnimating); }
+    catch { /* Keep the CSS ring and working navigation on limited GPUs. */ }
+  }
 
   document
     .querySelector(".menu-toggle-btn")
@@ -59,11 +67,14 @@ document.addEventListener("DOMContentLoaded", () => {
   resetJoystick = initJoystick();
   if (resetJoystick) resetJoystick();
 
-  initAtmosphere();
+  ensureAtmosphere();
 
   window.toggleMenu = toggleMenu;
 
   window.addEventListener("resize", () => {
+    const next = { width: window.innerWidth, height: window.innerHeight };
+    if (!meaningfulResize(menuViewport, next, usesTouchLayout())) return;
+    menuViewport = next;
     resizeAtmosphere();
     resizeMenu();
   });
@@ -154,10 +165,9 @@ function animateMenuLinksFlicker(reverse = false) {
 // responsive config - calculates menu dimensions based on viewport
 function getResponsiveConfig() {
   const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const isMobile = viewportWidth < 1000;
-  const maxSize = Math.min(viewportWidth * 0.9, viewportHeight * 0.9);
-  const menuSize = isMobile ? Math.min(maxSize, 480) : 700;
+  const viewportHeight = document.querySelector('.menu-overlay')?.clientHeight || window.innerHeight;
+  const maxSize = Math.max(160, Math.min(viewportWidth - 32, viewportHeight - 160));
+  const menuSize = Math.min(maxSize, usesTouchLayout() ? 560 : 700);
 
   return {
     menuSize,
@@ -180,6 +190,16 @@ function hexToRgb(hex) {
     : { r: 0, g: 0, b: 0 };
 }
 
+function ensureAtmosphere() {
+  if (atmosphereAttempted || (usesTouchLayout() && !isOpen)) return;
+  atmosphereAttempted = true;
+  try { initAtmosphere(); }
+  catch {
+    atmosphereRenderer?.dispose();
+    atmosphereRenderer = null;
+  }
+}
+
 function initAtmosphere() {
   const canvas = document.getElementById("menu-canvas");
 
@@ -191,7 +211,7 @@ function initAtmosphere() {
     antialias: false,
     alpha: false,
   });
-  atmosphereRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  atmosphereRenderer.setPixelRatio(usesTouchLayout() ? 1 : Math.min(window.devicePixelRatio, 2));
 
   const geometry = new THREE.PlaneGeometry(2, 2);
   const bgColor = hexToRgb(CONFIG.colors.bg);
@@ -216,17 +236,24 @@ function initAtmosphere() {
 }
 
 function resizeAtmosphere() {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  if (!atmosphereRenderer) return;
+  const ratio = usesTouchLayout() ? Math.min(1, 720 / Math.max(window.innerWidth, window.innerHeight)) : 1;
+  const width = Math.max(1, Math.round(window.innerWidth * ratio));
+  const height = Math.max(1, Math.round(window.innerHeight * ratio));
 
-  atmosphereRenderer.setSize(width, height);
+  atmosphereRenderer.setSize(width, height, false);
   atmosphereMaterial.uniforms.iResolution.value.set(width, height);
 }
 
-function animateAtmosphere() {
-  atmosphereMaterial.uniforms.iTime.value += 0.016;
-  atmosphereRenderer.render(atmosphereScene, atmosphereCamera);
+function animateAtmosphere(time = 0) {
   requestAnimationFrame(animateAtmosphere);
+  if ((!isOpen && !isMenuAnimating) || document.hidden) { lastAtmosphereFrame = null; return; }
+  const touch = usesTouchLayout();
+  const elapsed = lastAtmosphereFrame === null ? 34 : time - lastAtmosphereFrame;
+  if (touch && elapsed < 1000 / 30) return;
+  lastAtmosphereFrame = time;
+  atmosphereMaterial.uniforms.iTime.value += touch ? Math.min(elapsed, 100) / 1000 : 0.016;
+  atmosphereRenderer.render(atmosphereScene, atmosphereCamera);
 }
 
 // segment geometry - calculates SVG path for pie slice segments
@@ -352,6 +379,8 @@ function toggleMenu() {
   if (!isOpen) {
     isOpen = true;
     playMenuSound("open");
+    // Allocate the mobile shader only on first open, never during hero startup.
+    ensureAtmosphere();
 
     if (resetJoystick) resetJoystick();
 

@@ -1,5 +1,7 @@
 import * as THREE from "three";
+import { usesTouchLayout } from "./motion-policy.js";
 import { startAfterCollectionsHydration } from "./collections-readiness.js";
+import { loadGalleryImage, galleryTexture, galleryVelocity } from "./gallery-media.js";
 
 const PROJECT_START_EVENT = "tutto-rifiuto:project-start";
 
@@ -38,12 +40,12 @@ const fragmentShader = `
   out vec4 outColor;
 
   void main() {
-    outColor = vec4(texture(uTexture, vUvCover).rgb, 1.0);
+    outColor = linearToOutputTexel(texture(uTexture, vUvCover));
   }
 `;
 
 // scroll-driven image distortion effect
-class ProjectDistortion {
+export class ProjectDistortion {
   constructor() {
     const currentStarts = Number.parseInt(document.documentElement.dataset.projectDistortionInitCount ?? "0", 10);
     document.documentElement.dataset.projectDistortionInitCount = String(Number.isFinite(currentStarts) ? currentStarts + 1 : 1);
@@ -55,7 +57,7 @@ class ProjectDistortion {
     this.renderer = null;
     this.geometry = null;
     this.material = null;
-    this.isMobile = window.innerWidth < 1000;
+    this.isMobile = usesTouchLayout();
     this.init();
   }
 
@@ -97,6 +99,8 @@ class ProjectDistortion {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.domElement.addEventListener("webglcontextlost", () => this.showNativeImages());
+    this.renderer.debug.onShaderError = () => this.showNativeImages();
     this.renderer.domElement.style.position = "fixed";
     this.renderer.domElement.style.top = "0";
     this.renderer.domElement.style.left = "0";
@@ -124,30 +128,16 @@ class ProjectDistortion {
   }
 
   createMeshes() {
-    const scrollY = window.scrollY || window.pageYOffset;
     const media = [...document.querySelectorAll(".project-img img")];
-
-    const loadImage = (img) => {
-      return new Promise((resolve) => {
-        if (img.complete && img.naturalWidth > 0) {
-          resolve(img);
-        } else {
-          img.onload = () => resolve(img);
-          img.onerror = () => resolve(img);
-        }
-      });
-    };
-
-    Promise.all(media.map(loadImage)).then((loadedImages) => {
-      this.mediaStore = loadedImages.map((mediaElement) => {
-        mediaElement.style.opacity = this.isMobile ? "1" : "0";
-
-        const bounds = mediaElement.getBoundingClientRect();
+    Promise.all(media.map((image) => loadGalleryImage(image, () => window.scrollY || window.pageYOffset || 0))).then((loadedImages) => {
+      this.mediaStore = loadedImages.filter(Boolean).map((bounds) => {
+        const mediaElement = bounds.image;
+        mediaElement.style.opacity = "1";
         const imageMaterial = this.material.clone();
         const imageMesh = new THREE.Mesh(this.geometry, imageMaterial);
 
-        const texture = new THREE.Texture(mediaElement);
-        texture.needsUpdate = true;
+        const texture = galleryTexture(mediaElement);
+        texture.onUpdate = () => { this.needsGpuValidation = true; };
 
         imageMaterial.uniforms.uTexture.value = texture;
         imageMaterial.uniforms.uTextureSize.value.x =
@@ -163,15 +153,19 @@ class ProjectDistortion {
           this.scene.add(imageMesh);
         }
 
-        return {
+        const object = {
           media: mediaElement,
           material: imageMaterial,
           mesh: imageMesh,
           width: bounds.width,
           height: bounds.height,
-          top: bounds.top + scrollY,
+          top: bounds.top,
           left: bounds.left,
+          source: mediaElement.currentSrc || mediaElement.src,
+          drawn: false,
         };
+        imageMesh.onAfterRender = () => { object.drawn = true; };
+        return object;
       });
     });
   }
@@ -180,7 +174,7 @@ class ProjectDistortion {
     const checkLenis = () => {
       if (window.lenis) {
         window.lenis.on("scroll", ({ velocity }) => {
-          this.scrollVelocity = velocity;
+          this.scrollVelocity = galleryVelocity(velocity);
         });
       } else {
         setTimeout(checkLenis, 50);
@@ -190,14 +184,18 @@ class ProjectDistortion {
   }
 
   setPositions() {
-    const scrollY = window.scrollY || window.pageYOffset;
-
     this.mediaStore.forEach((object) => {
-      const x = object.left - window.innerWidth / 2 + object.width / 2;
-      const y =
-        -object.top + scrollY + window.innerHeight / 2 - object.height / 2;
-      object.mesh.position.x = x;
-      object.mesh.position.y = y;
+      // Native media is the authoritative fallback layer. A responsive
+      // source swap must never be covered by an obsolete/unallocated texture.
+      const source = object.media.currentSrc || object.media.src;
+      object.mesh.visible = object.media.complete && object.media.naturalWidth > 0 && source === object.source;
+      if (!object.mesh.visible) return;
+      // Fonts, hydration and browser chrome can change layout after image load.
+      const bounds = object.media.getBoundingClientRect();
+      object.mesh.scale.set(bounds.width, bounds.height, 1);
+      object.material.uniforms.uQuadSize.value.set(bounds.width, bounds.height);
+      object.mesh.position.x = bounds.left - window.innerWidth / 2 + bounds.width / 2;
+      object.mesh.position.y = -bounds.top + window.innerHeight / 2 - bounds.height / 2;
     });
   }
 
@@ -206,17 +204,18 @@ class ProjectDistortion {
   }
 
   handleResize() {
+    if (this.failed) return;
     const wasMobile = this.isMobile;
-    this.isMobile = window.innerWidth < 1000;
+    this.isMobile = usesTouchLayout();
 
     if (this.isMobile !== wasMobile) {
       this.toggleMode();
-      return;
     }
 
     if (this.isMobile) return;
 
     this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.fov = (2 * Math.atan(window.innerHeight / 2 / this.camera.position.z) * 180) / Math.PI;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -244,7 +243,7 @@ class ProjectDistortion {
       if (!this.renderer) this.setupRenderer();
       if (this.renderer) this.renderer.domElement.style.display = "block";
       this.mediaStore.forEach((object) => {
-        object.media.style.opacity = "0";
+        object.media.style.opacity = "1";
         if (!this.scene.children.includes(object.mesh)) {
           this.scene.add(object.mesh);
         }
@@ -252,7 +251,14 @@ class ProjectDistortion {
     }
   }
 
+  showNativeImages() {
+    this.failed = true;
+    if (this.renderer) this.renderer.domElement.style.display = "none";
+    document.querySelectorAll(".project-img img").forEach((image) => { image.style.opacity = "1"; });
+  }
+
   render() {
+    if (this.failed) return;
     if (this.isMobile) {
       requestAnimationFrame(() => this.render());
       return;
@@ -261,11 +267,24 @@ class ProjectDistortion {
     this.smoothVelocity += (this.scrollVelocity - this.smoothVelocity) * 0.1;
 
     this.mediaStore.forEach((object) => {
+      object.drawn = false;
       object.material.uniforms.uScrollVelocity.value = this.smoothVelocity;
     });
 
     this.setPositions();
-    if (this.renderer) this.renderer.render(this.scene, this.camera);
+    try {
+      if (this.renderer) this.renderer.render(this.scene, this.camera);
+      // WebGL texture upload errors do not necessarily throw JS exceptions.
+      if (this.needsGpuValidation && this.renderer) {
+        this.needsGpuValidation = false;
+        if (this.renderer.getContext().getError() !== 0) this.showNativeImages();
+      }
+      // Replace native media only for meshes drawn in THIS frame. A previous
+      // texture upload says nothing about culling, source swaps or later frames.
+      this.mediaStore.forEach((object) => {
+        object.media.style.opacity = !this.failed && object.mesh.visible && object.drawn ? "0" : "1";
+      });
+    } catch { this.showNativeImages(); }
     requestAnimationFrame(() => this.render());
   }
 }
@@ -278,7 +297,7 @@ function projectImageSnapshot(documentRef) {
 
 function canStartProjectEffect(windowRef, documentRef) {
   if (!documentRef?.body || typeof windowRef?.requestAnimationFrame !== "function") return false;
-  if (windowRef.innerWidth < 1000) return true;
+  if (usesTouchLayout(windowRef)) return true;
   const canvas = documentRef.createElement?.("canvas");
   if (!canvas || typeof canvas.getContext !== "function") return false;
   try {

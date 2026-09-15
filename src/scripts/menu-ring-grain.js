@@ -19,7 +19,7 @@ function outerRadiusPx(menuSize) {
 }
 
 /** Allineato a getResponsiveConfig in menu.js */
-export function initMenuRingGrain(menuEl, menuSize) {
+export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
   if (!menuEl || document.querySelector(".menu-ring-grain-canvas")) return;
 
   const canvas = document.createElement("canvas");
@@ -83,6 +83,7 @@ export function initMenuRingGrain(menuEl, menuSize) {
 
   function animate(t) {
     requestAnimationFrame(animate);
+    if (!isActive() || document.hidden) return;
     material.uniforms.iTime.value = t * 0.001;
     renderer.render(scene, camera);
   }

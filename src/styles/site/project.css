@@ -133,7 +133,7 @@
   padding-bottom: 12rem;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1000px), (any-pointer: coarse) {
   .project-hero-copy .project-hero-header {
     position: absolute;
     top: 50%;

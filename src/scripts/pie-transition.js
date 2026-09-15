@@ -3,7 +3,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";
 import { createPieCanvas } from "./pie-canvas.js";
-import { meaningfulResize, pieFrame } from "./motion-policy.js";
+import { meaningfulResize, pieFrame, usesTouchLayout } from "./motion-policy.js";
+import { ZOOM_ORIGIN, MASK_BOX, maskZoomMultiplier } from "./pie-geometry.js";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -20,14 +21,10 @@ const STATE = {
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XLINK_NS = "http://www.w3.org/1999/xlink";
 
-const ZOOM_ORIGIN = { x: 410, y: 330 };
 const LOGO_BOX = {
-  x: -20,
-  y: -204,
-  width: 840,
-  height: 1208,
+  ...MASK_BOX,
   /** Asset raw: evita pipeline che può alterare l’alpha della maschera */
-  path: new URL("../assets/optimized/work/qia.webp", import.meta.url).href,
+  path: new URL("../assets/animation/splatter.webp", import.meta.url).href,
 };
 
 const PIE_RADIUS = 604;
@@ -37,8 +34,8 @@ const PIN_LENGTH_VIEWPORTS = 5;
 
 const LOGO_FILL_COLOR = "#2444D9";
 
-let scaleMultiplier = window.innerWidth < 1000 ? 7 : 6;
-const mobile = window.innerWidth <= 1000 || window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+let scaleMultiplier = 7;
+const mobile = usesTouchLayout();
 let viewport = { width: window.innerWidth, height: window.innerHeight };
 
 function createSvgElement(tagName) {
@@ -60,6 +57,7 @@ function init() {
     });
   }
   if (!STATE.canvas) buildSvg();
+  updateZoomTarget();
   setupScrollTrigger();
   Promise.all([document.fonts.ready, contentReady]).then(() => {
     setupHeader();
@@ -206,13 +204,14 @@ function setupHeader() {
   });
 
   gsap.set(STATE.headerSplit.words, { opacity: 0 });
+  STATE.visibleWords = 0;
 }
 
 function setupScrollTrigger() {
   STATE.scrollTrigger = ScrollTrigger.create({
     trigger: mobile ? STATE.container.parentElement : STATE.container,
     start: "top top",
-    end: () => `+=${STATE.container.offsetHeight * PIN_LENGTH_VIEWPORTS}`,
+    end: () => `+=${mobile ? STATE.container.parentElement.offsetHeight - STATE.container.offsetHeight : STATE.container.offsetHeight * PIN_LENGTH_VIEWPORTS}`,
     scrub: true,
     pin: !mobile,
     anticipatePin: 1,
@@ -232,21 +231,11 @@ function renderProgress(progress) {
       }
 
       if (STATE.headerSplit && STATE.headerSplit.words.length > 0) {
-        if (progress >= 0.75 && progress <= 0.95) {
-          const textProgress = (progress - 0.75) / 0.2;
-          const totalWords = STATE.headerSplit.words.length;
-
-          STATE.headerSplit.words.forEach((word, index) => {
-            const wordRevealProgress = index / totalWords;
-            gsap.set(word, {
-              opacity: textProgress >= wordRevealProgress ? 1 : 0,
-            });
-          });
-        } else if (progress < 0.75) {
-          gsap.set(STATE.headerSplit.words, { opacity: 0 });
-        } else if (progress > 0.95) {
-          gsap.set(STATE.headerSplit.words, { opacity: 1 });
-        }
+        const words = STATE.headerSplit.words;
+        const count = progress < 0.75 ? 0 : Math.min(words.length, Math.floor((progress - 0.75) / 0.2 * words.length) + 1);
+        if (count === STATE.visibleWords) return;
+        words.forEach((word, index) => gsap.set(word, { opacity: index < count ? 1 : 0 }));
+        STATE.visibleWords = count;
       }
 }
 
@@ -297,12 +286,23 @@ function updatePieFill(progress) {
   );
 }
 
+function updateZoomTarget() {
+  const width = STATE.container.clientWidth;
+  const height = STATE.container.clientHeight;
+  const stageSize = STATE.svg?.getBoundingClientRect().width ?? Math.min(width, height) * 0.8;
+  scaleMultiplier = maskZoomMultiplier(width, height, stageSize);
+}
+
 function handleResize() {
   const next = { width: window.innerWidth, height: window.innerHeight };
   if (!meaningfulResize(viewport, next, mobile)) return;
   viewport = next;
-  if (mobile) STATE.container.parentElement.style.setProperty("--pie-stage-height", next.height + "px");
-  scaleMultiplier = window.innerWidth < 1000 ? 7 : 6;
+  if (mobile) {
+    const track = STATE.container.parentElement;
+    track.style.removeProperty("--pie-stage-height");
+    track.style.setProperty("--pie-stage-height", STATE.container.offsetHeight + "px");
+  }
+  updateZoomTarget();
   STATE.canvas?.resize();
   ScrollTrigger.refresh(true);
 }

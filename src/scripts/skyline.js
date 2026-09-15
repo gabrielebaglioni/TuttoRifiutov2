@@ -1,5 +1,8 @@
 import * as THREE from "three";
 import { GRAIN_FRAGMENT_SHADER, GRAIN_VERTEX_SHADER } from "./grain-yellow-shader.js";
+import { meaningfulResize, usesTouchLayout } from "./motion-policy.js";
+let skylineViewport = { width: window.innerWidth, height: window.innerHeight };
+let lastNoiseFrame = -1;
 
 // procedural trashscape — cumuli di pacchetti/sacchi abbandonati per strada
 // (Tutto Rifiuto: pacchetti lasciati per le strade della città)
@@ -7,7 +10,7 @@ const canvas = document.getElementById("skyline");
 let isVisible = true;
 const visibilityObserver = new IntersectionObserver(([entry]) => { isVisible = entry.isIntersecting; }, { rootMargin: "200px" });
 visibilityObserver.observe(canvas);
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const isMobile = usesTouchLayout();
 const pixelRatioLimit = isMobile ? 1.0 : 1.25;
 
 const renderer = new THREE.WebGLRenderer({
@@ -39,7 +42,10 @@ scene.add(mesh);
 // resize handler with debounce
 let resizeTimeout;
 
-function handleResize() {
+function handleResize(force = false) {
+  const next = { width: window.innerWidth, height: window.innerHeight };
+  if (force !== true && !meaningfulResize(skylineViewport, next, isMobile)) return;
+  skylineViewport = next;
   clearTimeout(resizeTimeout);
   resizeTimeout = setTimeout(() => {
     const width = window.innerWidth;
@@ -47,6 +53,7 @@ function handleResize() {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, pixelRatioLimit));
     material.uniforms.iResolution.value.set(width, height, 1);
+    lastNoiseFrame = -1;
   }, 100);
 }
 
@@ -54,6 +61,10 @@ function handleResize() {
 function animate(currentTime) {
   requestAnimationFrame(animate);
   if (!isVisible || document.hidden) return;
+  // The shader itself changes only at floor(iTime * 5).
+  const noiseFrame = Math.floor(currentTime / 200);
+  if (noiseFrame === lastNoiseFrame) return;
+  lastNoiseFrame = noiseFrame;
   material.uniforms.iTime.value = currentTime * 0.001;
   renderer.render(scene, camera);
 }
@@ -69,7 +80,7 @@ function cleanup() {
 }
 
 // initialize
-handleResize();
+handleResize(true);
 window.addEventListener("resize", handleResize);
 window.addEventListener("beforeunload", cleanup);
 requestAnimationFrame(animate);

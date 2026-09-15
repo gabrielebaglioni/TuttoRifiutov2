@@ -1,4 +1,5 @@
 import Lenis from "lenis";
+import { usesTouchLayout, appleHeroScrollMode } from "./motion-policy.js";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
@@ -11,7 +12,17 @@ document.addEventListener("DOMContentLoaded", () => initLenisScroll());
 
 // smooth scroll setup with responsive config
 function initLenisScroll() {
-  const isMobile = window.innerWidth <= 1000;
+  const appleMode = document.querySelector('.lab-hero') ? appleHeroScrollMode() : 'standard';
+  if (appleMode !== 'standard') {
+    // One scroll owner only: do not combine Lenis with iOS normalization.
+    // Older WebKit needs scroll and JS-driven reveal on the same thread.
+    if (appleMode === 'normalized') ScrollTrigger.normalizeScroll({
+      type: 'touch', allowNestedScroll: true,
+      ignore: document.querySelector('.menu-overlay'),
+    });
+    return;
+  }
+  const isMobile = usesTouchLayout();
 
   lenis = new Lenis({
     duration: isMobile ? 0.8 : 1.2,

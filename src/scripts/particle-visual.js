@@ -1,3 +1,5 @@
+import { meaningfulResize, usesTouchLayout, particleScale } from "./motion-policy.js";
+let particleViewport = { width: window.innerWidth, height: window.innerHeight };
 // webgl particle system with mouse distortion
 const PV = {
   config: {
@@ -31,11 +33,14 @@ document.addEventListener("DOMContentLoaded", init);
 function init() {
   PV.canvas = document.getElementById("particle-canvas");
   if (!PV.canvas) return;
-  const visibilityObserver = new IntersectionObserver(([entry]) => { PV.isVisible = entry.isIntersecting; }, { rootMargin: "200px" });
+  const visibilityObserver = new IntersectionObserver(([entry]) => {
+    PV.isVisible = entry.isIntersecting;
+    if (PV.isMobile && PV.isVisible && PV.geometry) render();
+  }, { rootMargin: "200px" });
   visibilityObserver.observe(PV.canvas);
   window.addEventListener("pagehide", () => visibilityObserver.disconnect(), { once: true });
 
-  PV.isMobile = window.innerWidth < 1000;
+  PV.isMobile = usesTouchLayout();
   const dpr = Math.min(devicePixelRatio || 1, 2);
 
   PV.canvas.width = innerWidth * dpr;
@@ -69,6 +74,7 @@ function setupShaders() {
   const vs = `
     precision mediump float;
     uniform vec2 u_resolution;
+    uniform float u_pointSize;
     attribute vec2 a_position;
     attribute vec4 a_color;
     varying vec4 v_color;
@@ -76,7 +82,7 @@ function setupShaders() {
       vec2 clip = (a_position / u_resolution * 2.0 - 1.0) * vec2(1.0, -1.0);
       v_color = a_color;
       gl_Position = vec4(clip, 0.0, 1.0);
-      gl_PointSize = 3.0;
+      gl_PointSize = u_pointSize;
     }`;
 
   const fs = `
@@ -110,14 +116,17 @@ function loadImage() {
   img.onload = () => {
     const temp = document.createElement("canvas");
     const ctx = temp.getContext("2d", { willReadFrequently: true });
-    temp.width = temp.height = PV.config.logoSize;
+    // Touch has no mouse physics. Sample at display scale rather than reading
+    // nine million pixels and constructing millions of invisible particles.
+    PV.rasterSize = PV.isMobile ? 640 : PV.config.logoSize;
+    temp.width = temp.height = PV.rasterSize;
 
-    const s = PV.config.logoSize * 0.9;
-    const o = (PV.config.logoSize - s) / 2;
+    const s = PV.rasterSize * 0.9;
+    const o = (PV.rasterSize - s) / 2;
     ctx.drawImage(img, o, o, s, s);
 
     createParticles(
-      ctx.getImageData(0, 0, PV.config.logoSize, PV.config.logoSize).data,
+      ctx.getImageData(0, 0, PV.rasterSize, PV.rasterSize).data,
     );
   };
   img.src = PV.config.logoPath;
@@ -126,8 +135,8 @@ function loadImage() {
 function createParticles(pixels) {
   const cx = PV.canvas.width / 2;
   const cy = PV.canvas.height / 2;
-  const scale = Math.min(innerWidth / 1920, 1);
-  const dim = PV.config.logoSize;
+  const dim = PV.rasterSize;
+  const scale = particleScale(PV.canvas, dim, PV.config.logoSize, PV.isMobile, innerWidth);
   const spacing = PV.config.particleSpacing;
 
   const pos = [];
@@ -173,6 +182,10 @@ function createParticles(pixels) {
 
 // animation loop with physics
 function animate() {
+  if (PV.isMobile) {
+    if (PV.isVisible && !document.hidden) render();
+    return;
+  }
   PV.animFrame = requestAnimationFrame(animate);
   if (!PV.isVisible || document.hidden) return;
 
@@ -242,6 +255,9 @@ function render() {
   PV.gl.clearColor(0, 0, 0, 0);
   PV.gl.clear(PV.gl.COLOR_BUFFER_BIT);
   PV.gl.useProgram(PV.program);
+  // Keep coverage when touch sampling uses fewer points; desktop stays at 3px.
+  const pointSize = PV.isMobile ? Math.max(3, particleScale(PV.canvas, PV.rasterSize, PV.config.logoSize, true, innerWidth) * PV.config.particleSpacing * 1.5) : 3;
+  PV.gl.uniform1f(PV.gl.getUniformLocation(PV.program, "u_pointSize"), pointSize);
 
   PV.gl.uniform2f(
     PV.gl.getUniformLocation(PV.program, "u_resolution"),
@@ -270,7 +286,10 @@ function handleMouseMove(e) {
 }
 
 function handleResize() {
-  PV.isMobile = innerWidth < 1000;
+  const next = { width: innerWidth, height: innerHeight };
+  if (!meaningfulResize(particleViewport, next, PV.isMobile)) return;
+  particleViewport = next;
+  PV.isMobile = usesTouchLayout();
   const dpr = Math.min(devicePixelRatio || 1, 2);
   PV.canvas.width = innerWidth * dpr;
   PV.canvas.height = innerHeight * dpr;
@@ -279,8 +298,9 @@ function handleResize() {
 
   const cx = PV.canvas.width / 2;
   const cy = PV.canvas.height / 2;
-  const scale = Math.min(innerWidth / 1920, 1);
-  const dim = PV.config.logoSize;
+  if (!PV.geometry) return;
+  const dim = PV.rasterSize;
+  const scale = particleScale(PV.canvas, dim, PV.config.logoSize, PV.isMobile, innerWidth);
 
   for (let i = 0; i < PV.particles.length; i++) {
     const p = PV.particles[i];
@@ -293,4 +313,6 @@ function handleResize() {
 
   PV.gl.bindBuffer(PV.gl.ARRAY_BUFFER, PV.geometry.posBuf);
   PV.gl.bufferSubData(PV.gl.ARRAY_BUFFER, 0, PV.posArray);
+  cancelAnimationFrame(PV.animFrame);
+  animate();
 }

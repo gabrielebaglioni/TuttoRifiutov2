@@ -12,7 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const animatedElements = document.querySelectorAll("[data-animate-variant]");
   animatedElements.forEach((element) => gsap.set(element, { opacity: 0 }));
 
-  Promise.all([document.fonts.ready, contentReady, ensureCollectionsReadiness(window).promise, preloaderReady]).then(() => {
+  const copyReady = Promise.all([document.fonts.ready, contentReady, preloaderReady]);
+  // Page titles do not depend on the event/archive image list. Start as soon
+  // as their own copy/fonts are ready, not after an unrelated API request.
+  copyReady.then(() => {
+    document.querySelectorAll('.work-hero h1[data-animate-variant="diffuse"]').forEach(initDiffuseAnimation);
+  });
+  Promise.all([copyReady, ensureCollectionsReadiness(window).promise]).then(() => {
     initAnimatedCopy();
     ScrollTrigger.sort();
     ScrollTrigger.refresh(true);
@@ -23,6 +29,7 @@ function initAnimatedCopy() {
   const animatedElements = document.querySelectorAll("[data-animate-variant]");
 
   animatedElements.forEach((element) => {
+    if (element.matches('.work-hero h1')) return;
     const variant = element.getAttribute("data-animate-variant");
 
     if (variant === "slide") initSlideAnimation(element);

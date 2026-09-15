@@ -113,3 +113,9 @@
     width: 100%;
   }
 }
+
+@media (min-width: 700px) and (max-width: 1000px), (min-width: 700px) and (any-pointer: coarse) {
+  .work-items .container { gap: 4rem; }
+  .work-items { padding-bottom: 8rem; }
+  .work-item-row a { width: 70%; }
+}

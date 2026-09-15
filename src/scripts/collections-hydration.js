@@ -275,6 +275,7 @@ export function renderDetail(root, item, { mediaOnly = false } = {}) {
 }
 
 async function hydrateEvents() {
+  if (!document.querySelector("[data-public-events]")) return true;
   const payload = await fetchJson("/api/events", { array: true });
   if (!Array.isArray(payload)) return false;
   const panels = document.querySelectorAll("[data-public-events]");
@@ -289,6 +290,7 @@ async function hydrateEvents() {
 }
 
 async function hydrateArchive() {
+  if (!document.querySelector("[data-public-archive]")) return true;
   const payload = await fetchJson("/api/archive", { array: true });
   if (!Array.isArray(payload)) return false;
   const container = document.querySelector("[data-public-archive]");

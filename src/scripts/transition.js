@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { usesTouchLayout } from "./motion-policy.js";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { playMenuSound } from "./menu-audio.js";
 
@@ -28,7 +29,7 @@ function init() {
     setTimeout(() => {
       transitionGrid.style.backgroundColor = "";
       reveal();
-    }, 300);
+    }, usesTouchLayout() ? 0 : 300);
   } else {
     gsap.set(blockElements, { opacity: 0 });
   }
@@ -38,6 +39,7 @@ function init() {
 
 // animate blocks to cover screen before navigation
 function animateOut() {
+  const mobile = usesTouchLayout();
   return new Promise((resolve) => {
     const blockElements = blocks.map((b) => b.element);
     const transitionGrid = document.querySelector(".transition-grid");
@@ -57,15 +59,16 @@ function animateOut() {
     shuffled.forEach((block, index) => {
       gsap.to(block, {
         opacity: 1,
-        duration: 0.075,
+        duration: mobile ? 0.04 : 0.075,
         ease: "power2.inOut",
-        delay: index * 0.025,
+        delay: index * (mobile ? 0.008 : 0.025),
         repeat: 1,
         yoyo: true,
         onComplete: () => {
           gsap.set(block, { opacity: 1 });
           if (index === shuffled.length - 1) {
-            setTimeout(() => resolve(), 300);
+            if (mobile) resolve();
+            else setTimeout(() => resolve(), 300);
           }
         },
       });
@@ -75,6 +78,7 @@ function animateOut() {
 
 // reveal page by animating blocks away
 function reveal() {
+  const mobile = usesTouchLayout();
   const blockElements = blocks.map((b) => b.element);
   if (blockElements.length === 0) return;
 
@@ -84,9 +88,9 @@ function reveal() {
   shuffled.forEach((block, index) => {
     gsap.to(block, {
       opacity: 0,
-      duration: 0.075,
+      duration: mobile ? 0.04 : 0.075,
       ease: "power2.inOut",
-      delay: index * 0.025,
+      delay: index * (mobile ? 0.008 : 0.025),
       repeat: 1,
       yoyo: true,
       onComplete: () => {

@@ -75,7 +75,10 @@ footer ::selection {
   color: var(--bg);
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1000px), (any-pointer: coarse) {
+  footer { height: auto; min-height: 75svh; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .footer-container { min-height: 75svh; gap: 3rem; }
+  .footer-content { flex: 1; height: auto; gap: 4rem; }
   .footer-container {
     transform: translateY(0%) !important;
   }
