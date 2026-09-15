@@ -5,6 +5,7 @@ import test from "node:test";
 import { hashToken } from "../worker/auth.js";
 import { PENDING_LEASE_MS, retryTombstones } from "../worker/handlers/media.js";
 import { routeRequest } from "../worker/router.js";
+import { serveMedia } from "../worker/media.js";
 
 const migrations = [
   "drizzle/0000_admin_cms.sql",
@@ -154,6 +155,53 @@ function objectStore({ fail = false } = {}) {
     async get() { return null; },
   };
 }
+
+for (const owner of ['events', 'archive']) test(`${owner} delivery rejects deleting owners and keeps event drafts private`, async (t) => {
+  const db = createDatabase(); t.after(() => db.close());
+  const event = owner === 'events';
+  if(event) insertEvent(db); else insertArchive(db);
+  const key = event ? eventKey(640) : archiveKey(640);
+  if(event) insertEventMedia(db,{id:1,key,widths:'[640]'}); else insertArchiveMedia(db,{id:1,key,widths:'[640]'});
+  let reads = 0;
+  const env = await adminEnvironment(db,{async get(){reads++;return {body:'image bytes',httpEtag:'"fixture"',writeHttpMetadata(headers){headers.set('content-type','image/webp');}};}});
+  const request = (cookie) => new Request(`https://site.test/media/${key}`,{headers:cookie?{cookie}:{}});
+  assert.equal((await serveMedia(request(),env,key)).status,200);
+  if(event) {
+    db.exec("UPDATE events SET status='draft'");
+    const before = reads;
+    const denied = await serveMedia(request(),env,key);
+    assert.equal(denied.status,404);
+    assert.match(denied.headers.get('cache-control'),/no-store/);
+    assert.equal(reads,before,'anonymous drafts never read object storage');
+    db.exec("UPDATE events SET status='unknown'");
+    assert.equal((await serveMedia(request(),env,key)).status,404);
+    db.exec("UPDATE events SET status='draft'");
+    const preview = await serveMedia(request(env.cookie),env,key);
+    assert.equal(preview.status,200);
+    assert.match(preview.headers.get('cache-control'),/private.*no-store/);
+    assert.match(preview.headers.get('vary'),/Cookie/i);
+    db.exec('UPDATE sessions SET expires_at=0');
+    assert.equal((await serveMedia(request(env.cookie),env,key)).status,404);
+  }
+  db.exec(`UPDATE ${event?'events':'archive_items'} SET deleting=1`);
+  assert.equal((await serveMedia(request(),env,key)).status,404);
+  assert.equal((await serveMedia(request(env.cookie),env,key)).status,404);
+});
+
+test('published media revalidates visibility before returning a cached representation',async(t)=>{
+ const db=createDatabase();t.after(()=>db.close());insertEvent(db);
+ const key=eventKey(640);insertEventMedia(db,{id:1,key,widths:'[640]'});
+ const env=await adminEnvironment(db,{async get(){return {body:'image bytes',httpEtag:'"fixture"',writeHttpMetadata(){}};}});
+ const response=await serveMedia(new Request(`https://site.test/media/${key}`),env,key);
+ assert.equal(response.status,200);
+ assert.match(response.headers.get('cache-control'),/max-age=0.*must-revalidate/);
+ assert.doesNotMatch(response.headers.get('cache-control'),/immutable/);
+ const conditional=()=>new Request(`https://site.test/media/${key}`,{headers:{'if-none-match':'"fixture"'}});
+ const cached=await serveMedia(conditional(),env,key);
+ assert.equal(cached.status,304);assert.equal(await cached.text(),'');
+ db.exec("UPDATE events SET status='draft'");
+ assert.equal((await serveMedia(conditional(),env,key)).status,404,'ETag must not bypass current visibility');
+});
 
 function webp(width = 640, height = 384) {
   const little32 = (value) => [value & 255, (value >>> 8) & 255, (value >>> 16) & 255, (value >>> 24) & 255];

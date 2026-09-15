@@ -1,4 +1,6 @@
 import { parseCanonicalMediaKey, validMediaSources } from "../src/data/media-source.js";
+import { getSession } from "./auth.js";
+import { isPublicEventStatus } from "../src/data/event-status.js";
 
 export const VARIANTS = Object.freeze([
   { field: "small", width: 640 },
@@ -146,17 +148,26 @@ export function mediaJson(row, expected) {
   };
 }
 
-export async function serveMedia(_request, env, key) {
+export async function serveMedia(request, env, key) {
   const requested = parseCanonicalMediaKey(key);
   if (!requested) return new Response("Not found", { status: 404 });
   if (!env.MEDIA || !env.DB) return new Response("Media storage unavailable", { status: 500 });
   let rows = [];
+  let privatePreview = false;
+  const notFound = () => new Response("Not found", { status: 404, headers: { "cache-control": "private, no-store", "vary": "Cookie" } });
   try {
     const owner = requested.ownerType === "events"
       ? { mediaTable: "event_media", parentTable: "events", parentColumn: "event_id" }
       : { mediaTable: "archive_media", parentTable: "archive_items", parentColumn: "archive_item_id" };
-    const parent = await env.DB.prepare(`SELECT id FROM ${owner.parentTable} WHERE slug = ? LIMIT 1`)
+    const columns = requested.ownerType === 'events' ? 'id, status, deleting' : 'id, deleting';
+    const parent = await env.DB.prepare(`SELECT ${columns} FROM ${owner.parentTable} WHERE slug = ? LIMIT 1`)
       .bind(requested.ownerSlug).first();
+    if (!parent || parent.deleting) return notFound();
+    if (requested.ownerType === 'events' && !isPublicEventStatus(parent.status)) {
+      // Draft image URLs must not bypass the same session used by the admin.
+      if (!await getSession(request, env)) return notFound();
+      privatePreview = true;
+    }
     if (parent?.id) {
       const result = await env.DB.prepare(`SELECT * FROM ${owner.mediaTable}
         WHERE ${owner.parentColumn} = ? AND state = 'active' ORDER BY position, id`)
@@ -185,7 +196,13 @@ export async function serveMedia(_request, env, key) {
     const headers = new Headers();
     object.writeHttpMetadata(headers);
     headers.set("etag", object.httpEtag);
-    headers.set("cache-control", "public, max-age=31536000, immutable");
+    // Recheck publication state after unpublishing; private previews never cache.
+    headers.set("cache-control", privatePreview ? "private, no-store" : "public, max-age=0, must-revalidate");
+    headers.set("vary", "Cookie");
+    const validators = request.headers.get('if-none-match')?.split(',') ?? [];
+    if (!privatePreview && validators.some(value => value.trim() === '*' || value.trim().replace(/^W\//, '') === object.httpEtag)) {
+      return new Response(null, { status: 304, headers });
+    }
     return new Response(object.body, { headers });
   } catch {
     console.error("media delivery object read failed");

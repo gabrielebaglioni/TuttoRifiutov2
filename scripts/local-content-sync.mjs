@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 import { parseCanonicalMediaKey } from '../src/data/media-source.js';
+import { inspectWebp, MAX_VARIANT_PIXELS } from '../worker/media.js';
 
 export const SITE = 'https://tutto-rifiuto.gabrielebaglioni55.chatgpt.site';
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -88,6 +89,9 @@ export async function syncOnce(root, fetcher = fetch) {
     for (const path of mediaPaths(snapshot)) {
       const image = await boundedFetch(fetcher, path, 4 * 1024 * 1024);
       total += image.length; if (total > 100 * 1024 * 1024) throw new Error('Snapshot exceeds 100 MiB');
+      // Do not expose native decoders for other formats to downloaded bytes.
+      const dimensions = await inspectWebp(new Blob([image]));
+      if (!dimensions || dimensions.width * dimensions.height > MAX_VARIANT_PIXELS) throw new Error('Expected optimized static WebP');
       const metadata = await sharp(image, { limitInputPixels: 25_000_000 }).metadata();
       if (metadata.format !== 'webp' || metadata.pages > 1) throw new Error('Expected optimized static WebP');
       const local = `media/${hash(path)}.webp`;

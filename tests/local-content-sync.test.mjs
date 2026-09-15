@@ -81,3 +81,15 @@ test('uploaded images are copied with verified bytes, including small no-upscale
   const manifest = JSON.parse(await readFile(join(root, 'content/published/manifest.json'), 'utf8'));
   assert.deepEqual(await readFile(join(root, 'content/published', manifest.media[src].file)), image);
 });
+
+test('sync rejects foreign or malformed formats before invoking a native decoder', async (t) => {
+  const decode = t.mock.method(sharp.prototype, 'metadata', async () => { throw new Error('Native decoder reached'); });
+  const src = '/media/events/foto/00000000-0000-4000-8000-000000000001/100.webp';
+  const snapshot = { schemaVersion: 1, content: {}, events: [{ media: [{ sources: [{ src, width: 100 }] }] }], archive: [] };
+  for (const image of [Buffer.from('GIF89a foreign payload'), Buffer.from('RIFF0000WEBPmalformed')]) {
+    const root = await mkdtemp(join(tmpdir(), 'tutto-sync-reject-'));
+    await assert.rejects(syncOnce(root, async url => url.endsWith('.webp') ? new Response(image) : Response.json(snapshot)));
+    assert.equal(decode.mock.callCount(), 0, 'untrusted non-WebP must never reach native metadata parsing');
+    await assert.rejects(readFile(join(root, 'content/published/snapshot.json')), { code: 'ENOENT' });
+  }
+});

@@ -96,7 +96,7 @@ function deliveryEnvironment(row, { dbFailure = false, objectFailure = false, ob
             async first() {
               if (dbFailure) throw new Error("D1 unavailable");
               if (sql.includes("JOIN")) return isEvents && parentSlug === args[0] && row.state !== "tombstone" ? { ...row, owner_slug: parentSlug } : null;
-              if (isParent) return Number.isSafeInteger(parentId) && parentSlug === args[0] ? { id: parentId, slug: parentSlug } : null;
+              if (isParent) return Number.isSafeInteger(parentId) && parentSlug === args[0] ? { id: parentId, slug: parentSlug, status: 'published', deleting: 0 } : null;
               return isEvents && row.state !== "tombstone" && row.key === args[0] ? row : null;
             },
             async all() {
@@ -125,7 +125,7 @@ function deliveryEnvironment(row, { dbFailure = false, objectFailure = false, ob
 }
 
 function createDb({ media = [], archiveMedia = [], failInsert = false, enforceSlotUnique = false, synchronizeInitialSlotReads = false, activationChanges, parents = [{ id: 1, slug: "musica" }] } = {}) {
-  const rows = { events: parents.map((parent) => ({ deleting: 0, ...parent })), archive: [] };
+  const rows = { events: parents.map((parent) => ({ status: 'published', deleting: 0, ...parent })), archive: [] };
   const storedMedia = { events: media.map((item) => ({ state: "active", ...item })), archive: archiveMedia.map((item) => ({ state: "active", ...item })) };
   let nextMediaId = Math.max(0, ...media.map((item) => item.id), ...archiveMedia.map((item) => item.id)) + 1;
   const statements = [];
@@ -150,7 +150,7 @@ function createDb({ media = [], archiveMedia = [], failInsert = false, enforceSl
               const media = owner && storedMedia[kind].find((entry) => entry[parent] === owner.id && entry.state === "active" && entry.key.startsWith(String(args[1]).replace(/%$/, "")));
               return media ? { ...media, owner_slug: owner.slug } : null;
             }
-            if (sql.includes("SELECT id FROM events") || sql.includes("SELECT id FROM archive_items")) {
+            if ((sql.includes("FROM events") || sql.includes("FROM archive_items")) && sql.includes("WHERE slug = ?")) {
               const kind = sql.includes("archive_items") ? "archive" : "events";
               return rows[kind].find((entry) => entry.slug === args[0]) ?? null;
             }
@@ -399,7 +399,7 @@ test("media delivery remains available when D1 rejects the joined lookup used by
         return {
           bind: (...args) => ({
             async first() {
-              if (sql.includes("FROM events")) return args[0] === "musica" ? { id: 1, slug: "musica" } : null;
+              if (sql.includes("FROM events")) return args[0] === "musica" ? { id: 1, slug: "musica", status: 'published', deleting: 0 } : null;
               if (sql.includes("FROM event_media")) return args[0] === 1 ? row : null;
               return null;
             },
@@ -633,7 +633,7 @@ test("deletion removes the D1 reference before deleting all variant keys", async
   assert.deepEqual(env.MEDIA.deleted.sort(), [640, 1280, 2048].map((width) => `events/musica/00000000-0000-4000-8000-000000000001/${width}.webp`).sort());
 });
 
-test("public delivery rejects unsafe keys and serves WebP metadata with immutable caching", async () => {
+test("public delivery rejects unsafe keys and serves WebP metadata with visibility revalidation", async () => {
   const key = "events/musica/00000000-0000-4000-8000-000000000001/640.webp";
   const env = await environment({ media: [{ id: 1, event_id: 1, key, role: "cover", alt: "", position: 0, widths_json: "[640]" }] });
   await env.MEDIA.put(key, image(640), { httpMetadata: { contentType: "image/webp" } });
@@ -641,7 +641,7 @@ test("public delivery rejects unsafe keys and serves WebP metadata with immutabl
   assert.equal(served.status, 200);
   assert.equal(served.headers.get("content-type"), "image/webp");
   assert.equal(served.headers.get("etag"), '"fixture-etag"');
-  assert.equal(served.headers.get("cache-control"), "public, max-age=31536000, immutable");
+  assert.equal(served.headers.get("cache-control"), "public, max-age=0, must-revalidate");
   assert.equal((await routeRequest(new Request("https://site.test/media/events/musica/not-a-uuid/640.webp"), env, {})).status, 404);
   assert.equal((await routeRequest(new Request("https://site.test/media/events%2Fmusica%2F00000000-0000-4000-8000-000000000001%2F640.webp"), env, {})).status, 404);
 });
