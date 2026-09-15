@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
+import { parseHTML } from "linkedom";
 
 test("Sites build embeds HTML in the Worker so runtime content cannot be bypassed by static assets", () => {
   assert.equal(existsSync("dist/client/index.html"), false);
@@ -56,7 +57,22 @@ test("the shared layout publishes a complete social preview", () => {
   assert.match(layout, /name="twitter:card" content="summary_large_image"/);
 });
 
-test("social URLs use the deployed Sites origin", () => {
-  const config = readFileSync("astro.config.mjs", "utf8");
-  assert.match(config, /https:\/\/tutto-rifiuto\.clear-shrew-1686\.chatgpt\.site/);
+for (const path of ['/', '/eventi/giornata-tutto-rifiuto', '/eventi/nuovo-evento']) test(`compiled ${path} metadata uses the current public Sites origin`, async () => {
+  const origin = 'https://tutto-rifiuto.gabrielebaglioni55.chatgpt.site';
+  const worker = (await import('../dist/server/index.js')).default;
+  const env = {
+    DB: { prepare() { return {
+      bind(){ return this; }, async all(){ return {results:[]}; },
+      async first(){ return path.endsWith('/nuovo-evento') ? {id:99,slug:'nuovo-evento',status:'upcoming',deleting:0,seo_json:JSON.stringify({title:'Nuovo evento',description:'Descrizione'})} : null; },
+    }; } },
+    ASSETS: { async fetch(){return new Response('missing',{status:404});} },
+  };
+  const response = await worker.fetch(new Request(origin+path),env,{});
+  assert.equal(response.status,200);
+  const {document}=parseHTML(await response.text());
+  for (const [selector,attribute] of [['link[rel="canonical"]','href'],['meta[property="og:url"]','content'],['meta[property="og:image"]','content'],['meta[name="twitter:image"]','content']]) {
+    const value=document.querySelector(selector)?.getAttribute(attribute);
+    assert.ok(value,`${selector} must be present`);
+    assert.equal(new URL(value).origin,origin,`${path}: ${selector} must not reference the previous Site`);
+  }
 });

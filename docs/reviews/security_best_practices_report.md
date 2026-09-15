@@ -50,7 +50,7 @@ Fonti: [Sharp/libvips](https://github.com/lovell/sharp/security/advisories/GHSA-
 ## Checklist di lancio
 
 - Impostare personalmente una password admin lunga/unica e un SESSION_SECRET casuale; le credenziali storiche non sono riportate né cambiate.
-- Confermare dominio, DNS e HTTPS; coordinare URL canonici e origine del sincronizzatore quando si collega il nuovo dominio. Il vecchio site in astro.config non è un'autorizzazione a cambiare dominio o sincronizzazione.
+- Confermare dominio, DNS e HTTPS; coordinare URL canonici e origine del sincronizzatore quando si collega il nuovo dominio. La revisione finale ha allineato astro.config all'indirizzo Sites attuale verificato, eliminando il precedente host dai metadati compilati; nessun dominio o origine del sincronizzatore è stato cambiato.
 - Usare un Node LTS supportato per sviluppo/build in una verifica separata; Node 23 locale e warning SQLite non descrivono il runtime Worker.
 - Eseguire prove fisiche Safari/Edge/Chrome iOS, Android e tablet: il report browser distingue chiaramente simulazione e hardware realmente verificato.
 - Il push GitHub resta manuale; la replica locale conserva i controlli contro sovrascritture. Nessun GitHub Actions aggiunto.
