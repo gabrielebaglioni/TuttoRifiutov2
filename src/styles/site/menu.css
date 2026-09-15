@@ -200,6 +200,19 @@
   background: radial-gradient(var(--fg) 0.6px, transparent 0.8px) 0 0 / 4px 4px, var(--bg);
 }
 
+.circular-menu::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background-image: var(--grain-background, none);
+  background-size: 256px 256px;
+  -webkit-mask-image: radial-gradient(circle at center, transparent 50px, #000 50.5px);
+  mask-image: radial-gradient(circle at center, transparent 50px, #000 50.5px);
+  pointer-events: none;
+  z-index: 0;
+}
+
 @media (max-width: 1000px), (any-pointer: coarse) {
   .menu-overlay-nav, .menu-overlay-footer { gap: 1rem; }
   .menu-overlay-items { gap: 1rem; flex-wrap: wrap; }

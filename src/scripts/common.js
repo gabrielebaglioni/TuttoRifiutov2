@@ -1,4 +1,5 @@
 import "./content-hydration.js";
+import "./grain-background.js";
 import "./collections-hydration.js";
 import "./preloader.js";
 import "./lenis-scroll.js";

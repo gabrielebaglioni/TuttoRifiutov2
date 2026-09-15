@@ -1,3 +1,13 @@
+.grain-page {
+  /* Background paint stays behind every image, label and interactive element. */
+  background-image: var(--grain-background, none);
+  background-size: 256px 256px;
+}
+.grain-page .event-hero-tabs {
+  background-image: var(--grain-background, none);
+  background-size: 256px 256px;
+}
+
 .work-hero {
   position: relative;
   width: 100%;

@@ -3,7 +3,6 @@ import * as THREE from "three";
 import { bindThemeUniforms } from './theme.js';
 import { SplitText } from "gsap/SplitText";
 import { getIconSvg } from "./icons.js";
-import { initMenuRingGrain, resizeMenuRingGrain } from "./menu-ring-grain.js";
 import { matrixShader } from "./menuShaders.js";
 import { SITE_CONTENT } from "../data/site-content.js";
 import { isAllowedLink } from "./content-hydration.js";
@@ -57,11 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setMenuAccess(false);
   document.addEventListener('keydown', handleMenuKeydown);
 
-  // CSS provides the same readable ring even when WebGL is unavailable.
-  if (!usesTouchLayout() && !prefersReducedMotion()) {
-    try { initMenuRingGrain(menu, responsiveConfig.menuSize, () => isOpen || isMenuAnimating); }
-    catch { /* Keep the CSS ring and working navigation on limited GPUs. */ }
-  }
+  // The outer ring uses the shared static grain tile on every device.
+  // The old WebGL implementation is retained in menu-ring-grain.js for comparison.
 
   document
     .querySelector(".menu-toggle-btn")
@@ -409,7 +405,6 @@ function resizeMenu() {
     updateSegment(segment, index, menuItems.length);
   });
 
-  resizeMenuRingGrain(menu, responsiveConfig.menuSize);
 }
 
 // toggle menu - open/close with flicker animations
