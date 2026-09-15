@@ -1,5 +1,6 @@
 import { meaningfulResize, usesTouchLayout, particleScale, prefersReducedMotion } from "./motion-policy.js";
 import { publicTheme } from './theme.js';
+import { installTouchExplosion } from './touch-explosion.js';
 let particleViewport = { width: window.innerWidth, height: window.innerHeight };
 // webgl particle system with mouse distortion
 const PV = {
@@ -26,6 +27,10 @@ const PV = {
   isAnimating: false,
   isVisible: true,
   failed: false,
+  touch: null,
+  touchStrength: 0,
+  touchPoint: {x:0,y:0},
+  bounds: null,
 };
 
 // initialization
@@ -84,6 +89,7 @@ function init() {
 
 function showParticleFallback() {
   PV.failed = true;
+  PV.touch?.destroy();
   cancelAnimationFrame(PV.animFrame);
   PV.canvas.style.display = 'none';
   if (PV.canvas.parentElement.querySelector('.particle-fallback')) return;
@@ -100,11 +106,21 @@ function setupShaders() {
     precision mediump float;
     uniform vec2 u_resolution;
     uniform float u_pointSize;
+    uniform vec2 uTouchPoint;
+    uniform float uTouchStrength;
+    uniform float uTouchRadius;
     attribute vec2 a_position;
     attribute vec4 a_color;
     varying vec4 v_color;
     void main() {
-      vec2 clip = (a_position / u_resolution * 2.0 - 1.0) * vec2(1.0, -1.0);
+      vec2 position = a_position;
+      if (uTouchStrength > 0.0) {
+        vec2 delta = position - uTouchPoint;
+        float distance = length(delta);
+        float falloff = 1.0 - smoothstep(0.0, uTouchRadius, distance);
+        position += delta / max(distance, 1.0) * falloff * uTouchStrength * uTouchRadius * 0.45;
+      }
+      vec2 clip = (position / u_resolution * 2.0 - 1.0) * vec2(1.0, -1.0);
       v_color = a_color;
       gl_Position = vec4(clip, 0.0, 1.0);
       gl_PointSize = u_pointSize;
@@ -148,7 +164,7 @@ function loadImage() {
     const temp = document.createElement("canvas");
     const ctx = temp.getContext("2d", { willReadFrequently: true });
     if (!ctx) { showParticleFallback(); return; }
-    // Touch has no mouse physics. Sample at display scale rather than reading
+    // Touch deformation stays on the GPU. Sample at display scale rather than reading
     // nine million pixels and constructing millions of invisible particles.
     PV.rasterSize = PV.isMobile ? 640 : PV.config.logoSize;
     temp.width = temp.height = PV.rasterSize;
@@ -175,6 +191,7 @@ function createParticles(pixels) {
   const pos = [];
   const colors = [];
   PV.particles = [];
+  PV.bounds={left:Infinity,top:Infinity,right:-Infinity,bottom:-Infinity};
 
   for (let i = 0; i < dim; i += spacing) {
     for (let j = 0; j < dim; j += spacing) {
@@ -182,6 +199,8 @@ function createParticles(pixels) {
       if (pixels[idx + 3] > 50) {
         const x = cx + (j - dim / 2) * scale;
         const y = cy + (i - dim / 2) * scale;
+        PV.bounds.left=Math.min(PV.bounds.left,x);PV.bounds.right=Math.max(PV.bounds.right,x);
+        PV.bounds.top=Math.min(PV.bounds.top,y);PV.bounds.bottom=Math.max(PV.bounds.bottom,y);
 
         pos.push(x, y);
         colors.push(
@@ -209,6 +228,15 @@ function createParticles(pixels) {
   );
 
   PV.geometry = { posBuf, colBuf, count: PV.particles.length };
+  if (PV.isMobile && PV.particles.length) {
+    PV.touch?.destroy();
+    PV.touch = installTouchExplosion({
+      canvas: PV.canvas, bounds:()=>PV.bounds,
+      enabled:()=>PV.isMobile && !PV.failed && PV.isVisible && !prefersReducedMotion() &&
+        !document.querySelector('.menu-toggle-btn[aria-expanded="true"]') && PV.canvas.getBoundingClientRect().top > -24,
+      onFrame:(x,y,strength)=>{PV.touchPoint.x=x;PV.touchPoint.y=y;PV.touchStrength=strength;if(!document.hidden)render();},
+    });
+  }
   console.log(`Particles created: ${PV.particles.length}`);
   animate();
 }
@@ -291,6 +319,11 @@ function render() {
   PV.gl.clear(PV.gl.COLOR_BUFFER_BIT);
   PV.gl.useProgram(PV.program);
   // Keep coverage when touch sampling uses fewer points; desktop stays at 3px.
+  if (PV.isMobile) {
+    PV.gl.uniform2f(PV.gl.getUniformLocation(PV.program,'uTouchPoint'),PV.touchPoint.x,PV.touchPoint.y);
+    PV.gl.uniform1f(PV.gl.getUniformLocation(PV.program,'uTouchStrength'),PV.touchStrength);
+    PV.gl.uniform1f(PV.gl.getUniformLocation(PV.program,'uTouchRadius'),110*PV.canvas.width/PV.canvas.clientWidth);
+  } else PV.gl.uniform1f(PV.gl.getUniformLocation(PV.program,'uTouchStrength'),0);
   const pointSize = PV.isMobile ? Math.max(3, particleScale(PV.canvas, PV.rasterSize, PV.config.logoSize, true, innerWidth) * PV.config.particleSpacing * 1.5) : 3;
   PV.gl.uniform1f(PV.gl.getUniformLocation(PV.program, "u_pointSize"), pointSize);
 
@@ -338,10 +371,13 @@ function handleResize() {
   const dim = PV.rasterSize;
   const scale = particleScale(PV.canvas, dim, PV.config.logoSize, PV.isMobile, innerWidth);
 
+  PV.bounds={left:Infinity,top:Infinity,right:-Infinity,bottom:-Infinity};
   for (let i = 0; i < PV.particles.length; i++) {
     const p = PV.particles[i];
     p.ox = cx + (p.j - dim / 2) * scale;
     p.oy = cy + (p.i - dim / 2) * scale;
+    PV.bounds.left=Math.min(PV.bounds.left,p.ox);PV.bounds.right=Math.max(PV.bounds.right,p.ox);
+    PV.bounds.top=Math.min(PV.bounds.top,p.oy);PV.bounds.bottom=Math.max(PV.bounds.bottom,p.oy);
     p.vx = p.vy = 0;
     PV.posArray[i * 2] = p.ox;
     PV.posArray[i * 2 + 1] = p.oy;
@@ -350,5 +386,6 @@ function handleResize() {
   PV.gl.bindBuffer(PV.gl.ARRAY_BUFFER, PV.geometry.posBuf);
   PV.gl.bufferSubData(PV.gl.ARRAY_BUFFER, 0, PV.posArray);
   cancelAnimationFrame(PV.animFrame);
+  PV.touch?.layout();
   animate();
 }

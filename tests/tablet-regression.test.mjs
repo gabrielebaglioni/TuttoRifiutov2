@@ -45,7 +45,7 @@ test('sparse touch logo has enough point coverage while desktop retains its orig
  for(const touch of [true,false]) {
   let pointSize;
   const gl=new Proxy({getUniformLocation:(p,n)=>n,uniform1f:(n,v)=>{if(n==='u_pointSize')pointSize=v;}},{get:(o,k)=>k in o?o[k]:()=>{}});
-  vm.runInNewContext(source('particle-visual.js',['render'])+';render();',{particleScale:motion.particleScale,innerWidth:1180,PV:{isMobile:touch,rasterSize:640,config:{logoSize:3000,particleSpacing:2},gl,canvas:{width:2360,height:1640},geometry:{count:4000}}});
+  vm.runInNewContext(source('particle-visual.js',['render'])+';render();',{particleScale:motion.particleScale,innerWidth:1180,PV:{isMobile:touch,touchPoint:{x:0,y:0},touchStrength:0,rasterSize:640,config:{logoSize:3000,particleSpacing:2},gl,canvas:{width:2360,height:1640,clientWidth:1180},geometry:{count:4000}}});
   if(touch)assert.ok(pointSize>=5,'sparse sampling must not make the wordmark disappear');else assert.equal(pointSize,3);
  }
 });
