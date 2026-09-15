@@ -38,8 +38,23 @@ function interaction(){
  const hit=doc.querySelector('.particle-touch-region');
  const send=(name,x,y,id=1,target=hit)=>{const event=new dom.Event(name,{bubbles:true,cancelable:true});Object.assign(event,{pointerType:'touch',pointerId:id,clientX:x,clientY:y});target.dispatchEvent(event);assert.equal(event.defaultPrevented,false);};
  const frame=time=>{now=time;const jobs=[...queue.values()];queue.clear();jobs.forEach(fn=>fn(time));};
- return{doc,hit,send,frame,draws,queue,controller};
+ const touchMove=(x,y,count=1)=>{const e=new dom.Event('touchmove',{bubbles:true,cancelable:true});e.touches=Array.from({length:count},()=>({clientX:x,clientY:y}));hit.dispatchEvent(e);return e.defaultPrevented;};
+ return{doc,hit,send,frame,draws,queue,controller,touchMove};
 }
+test('activated drag owns moves outside the title until release, not the next vertical swipe',()=>{
+ const t=interaction();
+ t.send('pointerdown',100,300);
+ assert.equal(t.touchMove(125,303),true);
+ assert.equal(t.touchMove(250,650),true);
+ t.frame(0);assert.deepEqual(t.draws.at(-1),[500,1300,1]);
+ t.send('pointerup',250,650);
+ t.send('pointerdown',100,300);
+ assert.equal(t.touchMove(102,325),false);
+ t.send('pointerup',102,325);
+ t.send('pointerdown',100,300);
+ assert.equal(t.touchMove(125,303,2),false);
+ t.controller.destroy();
+});
 test('touch pulse stays idle for taps/vertical scroll and stops completely after horizontal decay',()=>{
  const t=interaction();
  assert.equal(t.queue.size,0);

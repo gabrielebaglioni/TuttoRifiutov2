@@ -58,6 +58,17 @@ export function installTouchExplosion({canvas,bounds,enabled,onFrame,view=window
     if(!frame)frame=view.requestAnimationFrame(tick);
   }
   function up(event){contacts.delete(event.pointerId);if(event.pointerId===owner){owner=null;gesture.reset();}}
+  function touchMove(event){
+    if(owner===null)return;
+    if(event.touches.length!==1 || !enabled() || motion.matches){cancel();return;}
+    const touch=event.touches[0];
+    if(!gesture.move(touch.clientX,touch.clientY))return;
+    // Touch events keep their original target outside the lettering. Only an
+    // accepted effect gesture may suppress native panning, never a vertical start.
+    if(!event.cancelable){cancel();return;}
+    event.preventDefault();
+    move({pointerId:owner,clientX:touch.clientX,clientY:touch.clientY});
+  }
   function pointerCancel(event){contacts.delete(event.pointerId);cancel();}
   function layout(){
     cancel();
@@ -74,12 +85,14 @@ export function installTouchExplosion({canvas,bounds,enabled,onFrame,view=window
   }
   const listeners=[['pointerdown',down],['pointermove',move],['pointerup',up],['pointercancel',pointerCancel],['visibilitychange',visibilityChange]];
   for(const [name,handler] of listeners)doc.addEventListener(name,handler,{passive:true});
+  hit.addEventListener('touchmove',touchMove,{passive:false});
   view.addEventListener('scroll',cancel,{passive:true});
   motion.addEventListener?.('change',cancel);
   const onHide=(event)=>{cancel();contacts.clear();if(!event.persisted)destroy();};
   view.addEventListener('pagehide',onHide);
   function destroy(){
     cancel();hit.remove();contacts.clear();
+    hit.removeEventListener('touchmove',touchMove);
     for(const [name,handler] of listeners)doc.removeEventListener(name,handler);
     view.removeEventListener('scroll',cancel);view.removeEventListener('pagehide',onHide);
     motion.removeEventListener?.('change',cancel);
