@@ -10,6 +10,15 @@ test('initial public HTML contains stored theme even before client content hydra
   const response = await routeRequest(new Request('https://site.test/work'), env, {});
   assert.match(await response.text(), /--accent:#112233/);
 });
+for (const path of ['/eventi/musica', '/archivio/parole']) test(`static detail ${path} receives theme without a collection override and preserves static SEO`, async () => {
+  const html='<html style="--accent:#2444d9"><head><title>Static detail title</title><meta name="description" content="Static detail description"><meta name="theme-color" content="#000000"></head><body>Static detail</body></html>';
+  const DB={prepare(){return {bind(){return this;},first:async()=>null,all:async()=>({results:[{key:'global.theme.palette',value_json:JSON.stringify({...DEFAULT_PALETTE,accent:'#112233',foreground:'#334455'})}]})};}};
+  const response=await routeRequest(new Request(`https://site.test${path}`),{DB,ASSETS:{fetch:async()=>new Response(html,{headers:{'content-type':'text/html',etag:'compiled'}})}},{});
+  const body=await response.text();
+  assert.match(body,/--accent:#112233/);assert.match(body,/--fg:#334455/);
+  assert.match(body,/<title>Static detail title<\/title>/);assert.match(body,/content="Static detail description"/);
+  assert.match(body,/name="theme-color" content="#334455"/);assert.equal(response.headers.get('etag'),null);
+});
 test('public theme updates share one cached color read with shader subscribers and reject injections', async () => {
   const { createThemeController } = await import('../src/scripts/theme.js');
   const { document } = parseHTML('<html><head><meta name="theme-color"></head><body></body></html>');

@@ -105,7 +105,7 @@ test("stored overrides gate existing event and archive static details for GET an
   }
 });
 
-test("details without a stored override preserve conditional and range requests end to end", async () => {
+test("details without a stored collection override still fetch full fresh representations for palette injection", async () => {
   const calls = [];
   const ASSETS = {
     async fetch(request) {
@@ -113,25 +113,27 @@ test("details without a stored override preserve conditional and range requests 
       if (request.headers.has("range")) {
         return new Response("par", { status: 206, headers: { "content-range": "bytes 0-2/9", etag: "asset-v1" } });
       }
-      return new Response(null, { status: 304, headers: { etag: "asset-v1" } });
+      if(request.headers.has('if-none-match')) return new Response(null, {status:304,headers:{etag:'asset-v1'}});
+      return new Response('<html><head><title>Static title</title></head></html>',{headers:{'content-type':'text/html',etag:'asset-v1'}});
     },
   };
   const conditional = await routeRequest(new Request("https://site.test/eventi/musica", {
     headers: { "if-none-match": "asset-v1", "if-modified-since": "yesterday" },
   }), { DB: dynamicDb(null), ASSETS }, {});
-  assert.equal(conditional.status, 304);
-  assert.equal(conditional.headers.get("etag"), "asset-v1");
-  assert.equal(calls[0].get("if-none-match"), "asset-v1");
-  assert.equal(calls[0].get("if-modified-since"), "yesterday");
+  assert.equal(conditional.status, 200);
+  assert.equal(conditional.headers.get("etag"), null);
+  assert.equal(calls[0].get("if-none-match"), null);
+  assert.equal(calls[0].get("if-modified-since"), null);
+  assert.match(await conditional.text(), /<title>Static title<\/title>/);
 
   const range = await routeRequest(new Request("https://site.test/archivio/parole", {
     headers: { range: "bytes=0-2", "if-range": "asset-v1" },
   }), { DB: dynamicDb(null), ASSETS }, {});
-  assert.equal(range.status, 206);
-  assert.equal(await range.text(), "par");
-  assert.equal(range.headers.get("content-range"), "bytes 0-2/9");
-  assert.equal(calls[1].get("range"), "bytes=0-2");
-  assert.equal(calls[1].get("if-range"), "asset-v1");
+  assert.equal(range.status, 200);
+  assert.match(await range.text(), /<title>Static title<\/title>/);
+  assert.equal(range.headers.get("content-range"), null);
+  assert.equal(calls[1].get("range"), null);
+  assert.equal(calls[1].get("if-range"), null);
 });
 
 test("a public stored override sanitizes validators and returns fresh no-store GET and HEAD representations", async () => {

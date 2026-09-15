@@ -100,12 +100,16 @@ async function rewriteStaticMetadata(request, env, response, dynamic = null) {
   try {
     let title = dynamic?.seo?.title ?? (page ? values[`seo.${page}.title`] : null);
     let description = dynamic?.seo?.description ?? (page ? values[`seo.${page}.description`] : null);
-    if (typeof title !== "string" || typeof description !== "string") return response;
     const canonical = new URL(url.pathname, url.origin).href;
-    let body = rewriteMetadata(await response.text(), {
-      title, description, canonical, url: canonical,
-      siteName: values["site.name"], author: values["site.name"], imageAlt: values["seo.social.image_alt"],
-    });
+    let body = await response.text();
+    // Static collection details already contain their own SEO. A palette is
+    // independent of a stored collection override and must still reach HTML.
+    if (typeof title === "string" && typeof description === "string") {
+      body = rewriteMetadata(body, {
+        title, description, canonical, url: canonical,
+        siteName: values["site.name"], author: values["site.name"], imageAlt: values["seo.social.image_alt"],
+      });
+    }
     body = body.replace(/<html\b[^>]*>/i, (tag) => tag.replace(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*')/i, '').replace(/>$/, ` style="${themeCss(values[THEME_KEY])}">`));
     body = body.replace(/(<meta\b[^>]*name="theme-color"[^>]*content=")[^"]*(")/i, `$1${values[THEME_KEY].foreground}$2`);
     const headers = freshRepresentationHeaders(response.headers);
@@ -325,14 +329,13 @@ async function routeRequestInternal(request, env, ctx) {
     }
     if (detailOverride.row && !detailOverride.isPublic) return hiddenDetailResponse(request.method);
   }
-  const refreshesRepresentation = representationMethod && isSeoRoute && (!templatePath || detailOverride?.row);
+  const refreshesRepresentation = representationMethod && isSeoRoute;
   const assetRequest = refreshesRepresentation ? requestWithoutRepresentationValidators(request) : request;
   const staticResponse = await fetchAsset(env, assetRequest);
   if (!staticResponse) return serviceUnavailable(request.method);
   if (staticResponse.status !== 404 || !templatePath) {
-    if (detailOverride && !detailOverride.row) return staticResponse;
     const rewritten = await rewriteStaticMetadata(request, env, staticResponse, detailOverride);
-    return detailOverride?.row ? noStoreResponse(rewritten, request.method) : rewritten;
+    return detailOverride ? noStoreResponse(rewritten, request.method) : rewritten;
   }
   if (!representationMethod) return methodNotAllowed("GET, HEAD");
 
