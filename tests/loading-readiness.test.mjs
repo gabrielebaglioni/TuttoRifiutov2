@@ -51,3 +51,30 @@ test('cached images and failed resources settle without a permanent overlay', as
   assert.equal(result.status,'complete');
   assert.equal(values.at(-1),100);
 });
+test('an upstream hydration timeout releases the fallback without claiming full readiness', async () => {
+  const {document,hero}=fixture();
+  hero.complete=true;
+  const values=[];
+  const result=await waitForInitialResources({documentRef:document,readiness:[Promise.resolve('timeout')],onProgress:v=>values.push(v)});
+  assert.equal(result.status,'timeout');
+  assert.ok(values.every(value=>value<100));
+});
+test('a failed remote hero waits for its newly visible local fallback', async () => {
+  const {document,window,hero}=fixture();
+  const fallback=hero.cloneNode();
+  fallback.complete=false;
+  fallback.naturalWidth=100;
+  fallback.getBoundingClientRect=hero.getBoundingClientRect;
+  const values=[];
+  let completed=false;
+  const pending=waitForInitialResources({documentRef:document,onProgress:v=>values.push(v)}).then(result=>{completed=true;return result;});
+  await new Promise(resolve=>setImmediate(resolve));
+  hero.addEventListener('error',()=>hero.replaceWith(fallback),{once:true});
+  hero.dispatchEvent(new window.Event('error'));
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(completed,false,'fallback is still downloading');
+  assert.ok(values.at(-1)<100);
+  fallback.dispatchEvent(new window.Event('load'));
+  assert.equal((await pending).status,'complete');
+  assert.equal(values.at(-1),100);
+});
