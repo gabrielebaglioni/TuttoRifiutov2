@@ -8,6 +8,7 @@ import * as policy from '../src/scripts/motion-policy.js';
 import * as Three from 'three';
 import {themeEditor} from '../src/scripts/admin-theme.js';
 import {DEFAULT_PALETTE} from '../src/data/theme.js';
+import {waitForInitialResources} from '../src/scripts/loading-readiness.js';
 
 function script(file) {
   const source=readFileSync(new URL(`../src/scripts/${file}`,import.meta.url),'utf8');
@@ -27,6 +28,9 @@ function harness(html='') {
 const preloader='<div class="preloader"><div class="progress-bar"><div class="progress-bar-indicator"></div><div class="progress-bar-copy"><span></span></div></div><div class="preloader-block"></div></div>';
 for(const denied of ['read','write']) test(`preloader resolves and uncovers content with storage ${denied} denied`,async()=>{
  const c=harness(preloader+'<h1>Content</h1>');
+ c.waitForInitialResources=waitForInitialResources;
+ c.contentReady=Promise.resolve();
+ c.ensureCollectionsReadiness=()=>({promise:Promise.resolve()});
  c.sessionStorage={getItem(){if(denied==='read')throw new Error('SecurityError');return null;},setItem(){throw new Error('QuotaExceededError');}};
  vm.runInNewContext(script('preloader.js')+';globalThis.ready=preloaderReady;',c);
  assert.doesNotThrow(()=>c.document.dispatchEvent(new c.Event('DOMContentLoaded')));

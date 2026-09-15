@@ -114,10 +114,14 @@
 .pie-transition {
   position: relative;
   width: 100%;
-  height: 100svh;
+  /* Small paint overscan prevents subpixel pin rounding from exposing the
+     next background; the existing scroll/zoom progression is unchanged. */
+  height: calc(100svh + 2px);
   background-color: var(--fg);
   overflow: hidden;
 }
+
+.pie-scroll-track { --pie-viewport-height: calc(100svh + 2px); }
 
 .pie-scroll-track.is-mobile-pie { height: calc(var(--pie-stage-height, var(--pie-viewport-height, 100svh)) * 6); overflow-anchor: none; }
 .pie-scroll-track.is-mobile-pie > .pie-transition { position: sticky; top: 0; height: var(--pie-stage-height, var(--pie-viewport-height, 100svh)); }
@@ -131,7 +135,7 @@
   @supports (-webkit-touch-callout: none) {
     /* Cover the screen after iOS chrome retracts, without resizing the sticky
        track on every toolbar frame. No changes to Android's working track. */
-    .pie-scroll-track { --pie-viewport-height: 100lvh; }
+    .pie-scroll-track { --pie-viewport-height: calc(100lvh + 2px); }
   }
 }
 

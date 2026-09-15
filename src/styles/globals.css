@@ -13,6 +13,11 @@
 /* Paint outside the document (overscroll / Android navigation inset) black. */
 html { background-color: var(--fg); }
 
+/* Definitions must not create an inline line box. External CSS also works
+   under the production CSP, which deliberately rejects style attributes. */
+.theme-filter-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+.theme-filter-defs feFlood { flood-color: var(--fg); }
+
 body {
   background-color: var(--bg);
   color: var(--fg);

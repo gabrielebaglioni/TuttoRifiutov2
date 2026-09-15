@@ -2,6 +2,7 @@
   position: relative;
   width: 100%;
   height: 100svh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -10,11 +11,19 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 100svh;
+  height: 100%;
   overflow: hidden;
 }
 
-.project-hero .project-hero-img img {
+.project-hero .project-hero-img picture:not([hidden]) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.project-hero .project-hero-img img,
+.project-hero .project-hero-img video {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
