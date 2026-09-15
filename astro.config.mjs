@@ -1,6 +1,8 @@
 import { defineConfig, fontProviders } from "astro/config";
+import svelte from '@astrojs/svelte';
 
 export default defineConfig({
+  integrations: [svelte()],
   site: "https://tutto-rifiuto.gabrielebaglioni55.chatgpt.site",
   output: "static",
   // Preserve v6 text spacing while upgrading the compiler independently.

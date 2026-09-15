@@ -74,3 +74,26 @@ nav .nav-location .tr-icon {
   height: 100%;
   overflow: visible;
 }
+
+.site-logo-mobile { display: none; }
+
+/* Touch browsers do not need the SVG/raster filter chain or an offscreen hitbox.
+   The original transparent asset remains sharp and the link stays 44px tall. */
+@media (max-width: 1024px), (pointer: coarse) {
+  .site-logo {
+    top: max(1rem, env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .site-logo a { display: grid; place-items: center; width: 44px; height: 44px; }
+  .site-logo .site-logo-svg { display: none; }
+  .site-logo-mobile {
+    display: block;
+    width: 24px;
+    height: 31px;
+    /* Match the desktop flood source; inherited black disappears in difference blending. */
+    background: var(--bg);
+    -webkit-mask: url('/logo-cropped.png') center / contain no-repeat;
+    mask: url('/logo-cropped.png') center / contain no-repeat;
+  }
+}

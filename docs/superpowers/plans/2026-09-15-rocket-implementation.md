@@ -4,6 +4,8 @@ Scope approved: Rocket Lean, Astro 7.2, the whole admin in Svelte 5, and the sma
 
 ## Independent checkpoints
 
+Local implementation is complete. The checklist below records the original scope; see `docs/reviews/rocket-implementation-verification.md` for completed checks and the remaining staging/security gates. Production verification is not claimed.
+
 - [ ] Upgrade: pin Astro 7.2.10 and compatible Svelte integration; preserve HTML whitespace (`compressHTML: true`), CSP and Worker packaging. Remove obsolete queuedRendering flag. Run build and all existing tests before UI migration.
 - [ ] Lean: progressively type isolated modules. Separate expensive menu rendering from its interaction controller and load it on menu intent, preserving its fallback and reduced-motion behaviour. Validate the public dependency graph and disposal behaviour.
 - [ ] Logo: reproduce mobile bounds/contrast for SiteLogo; reuse existing brand asset, not a new mark. Preserve desktop layout and link semantics.

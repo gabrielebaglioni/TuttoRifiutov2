@@ -1,0 +1,57 @@
+---
+import "../styles/globals.css";
+import "../styles/site/admin.css";
+import { adminThemeCss } from '../data/theme.js';
+// Development-only comparison. Production always uses the Svelte editor.
+if (import.meta.env.PROD) return Astro.redirect('/admin');
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Area privata</title>
+  </head>
+  <body class="admin-body" style={adminThemeCss()}>
+    <main class="admin-shell">
+      <section class="admin-login" id="admin-login" aria-labelledby="admin-login-title">
+        <p class="admin-kicker">Tutto Rifiuto / area privata</p>
+        <h1 id="admin-login-title">Accedi</h1>
+        <form id="admin-login-form" novalidate>
+          <label>Identificativo<input name="username" autocomplete="username" required /></label>
+          <label>Parola d’accesso<input name="password" type="password" autocomplete="current-password" required /></label>
+          <button type="submit">Entra</button>
+        </form>
+        <p class="admin-status" id="admin-login-status" role="status" aria-live="polite"></p>
+      </section>
+      <section class="admin-editor" id="admin-editor" hidden inert aria-labelledby="admin-title">
+        <header class="admin-header">
+          <div><p class="admin-kicker">Tutto Rifiuto / CMS</p><h1 id="admin-title" tabindex="-1">Contenuti</h1></div>
+          <button id="admin-logout" type="button">Esci</button>
+        </header>
+        <nav class="admin-tabs" aria-label="Sezioni editor">
+          <button type="button" data-admin-section="home" aria-current="page">Home</button>
+          <button type="button" data-admin-section="archive">Archivio</button>
+          <button type="button" data-admin-section="events">Eventi</button>
+          <button type="button" data-admin-section="project">Progetto</button>
+          <button type="button" data-admin-section="contact">Contatti</button>
+          <button type="button" data-admin-section="global">Globali</button>
+          <button type="button" data-admin-section="colors">Colori</button>
+        </nav>
+        <p class="admin-status" id="admin-status" role="alert" aria-live="assertive"></p><p id="admin-dirty" aria-live="polite"></p>
+        <div id="admin-panels"></div>
+        <details class="admin-card">
+          <summary>Pubblicazione e copia locale</summary>
+          <p>I testi salvati e gli elementi pubblicati vengono letti dal sito al caricamento della pagina, senza una nuova build.</p>
+          <p>Il sincronizzatore sul Mac controlla i contenuti ogni minuto quando sei connesso. Commit e push su GitHub restano manuali. Questa pagina non può conoscere lo stato del Mac o del push.</p>
+          <button type="button" id="published-check">Verifica la versione online</button>
+          <p id="published-version" role="status" aria-live="polite"></p>
+        </details>
+      </section>
+    </main>
+    <script src="../scripts/admin.js"></script>
+    <script src="../scripts/admin-published-version.js"></script>
+  </body>
+</html>

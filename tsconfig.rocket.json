@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "allowJs": true, "checkJs": false, "noEmit": true },
+  "include": ["src/admin/**/*.ts", "src/admin/**/*.svelte", "src/scripts/navigation-warmup.ts"],
+  "exclude": ["dist", "node_modules"]
+}

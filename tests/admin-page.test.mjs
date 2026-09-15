@@ -4,8 +4,8 @@ import test from "node:test";
 
 const read = (path) => readFileSync(path, "utf8");
 
-test("admin shell starts with a password login and provides all editing sections", () => {
-  const page = read("src/pages/admin.astro");
+test("legacy comparison shell starts with a password login and provides all editing sections", () => {
+  const page = read("src/pages/admin-legacy.astro");
   for (const section of ["Home", "Archivio", "Eventi", "Progetto", "Contatti", "Globali"]) {
     assert.match(page, new RegExp(`>${section}<`));
   }

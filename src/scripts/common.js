@@ -4,7 +4,7 @@ import "./collections-hydration.js";
 import "./preloader.js";
 import "./lenis-scroll.js";
 import "./transition.js";
-import "./navigation-warmup.js";
+import "./navigation-warmup.ts";
 import "./nav.js";
 import "./menu.js";
 import "./animated-copy.js";

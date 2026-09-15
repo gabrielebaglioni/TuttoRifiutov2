@@ -33,12 +33,13 @@ test('page hero starts while collection API is pending without accelerating its 
  assert.equal(starts,1);assert.equal(duration,2);
  ready();await new Promise(r=>setImmediate(r));assert.equal(starts,1,'hero must not restart when collection arrives');
 });
-test('touch menu defers GPU allocation until open and survives a failed GPU without repeated allocations',()=>{
+test('touch menu defers GPU allocation until open and survives a failed GPU without repeated allocations',async()=>{
  let attempted=0;
- const c=vm.createContext({prefersReducedMotion:()=>false,showAtmosphereFallback(){},usesTouchLayout:()=>true,isOpen:false,atmosphereAttempted:false,atmosphereRenderer:null,initAtmosphere(){attempted++;throw new Error('GPU unavailable');}});
+ const c=vm.createContext({loadMenuLibrary:async()=>({}),prefersReducedMotion:()=>false,showAtmosphereFallback(){},usesTouchLayout:()=>true,isOpen:false,atmosphereAttempted:false,atmosphereRenderer:null,initAtmosphere(){attempted++;throw new Error('GPU unavailable');}});
  vm.runInContext(source('menu.js',['ensureAtmosphere'])+';ensureAtmosphere();',c);
  assert.equal(attempted,0);
  c.isOpen=true;vm.runInContext('ensureAtmosphere();ensureAtmosphere();',c);
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(attempted,1);
 });
 test('sparse touch logo has enough point coverage while desktop retains its original points',()=>{

@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import * as THREE from "three";
+import { loadMenuLibrary } from './menu-library.js';
 import { bindThemeUniforms } from './theme.js';
 import { SplitText } from "gsap/SplitText";
 import { getIconSvg } from "./icons.js";
@@ -36,6 +36,7 @@ let lastAtmosphereFrame = null;
 let atmosphereAttempted = false;
 let atmosphereFailed = false;
 let atmosphereFrame;
+let THREE;
 
 // initialization
 document.addEventListener("DOMContentLoaded", () => {
@@ -180,14 +181,17 @@ function getResponsiveConfig() {
 
 function ensureAtmosphere() {
   if (prefersReducedMotion()) { showAtmosphereFallback(); return; }
-  if (atmosphereAttempted || (usesTouchLayout() && !isOpen)) return;
+  if (atmosphereAttempted || !isOpen) return;
   atmosphereAttempted = true;
-  try { initAtmosphere(); }
-  catch {
+  loadMenuLibrary().then((library) => {
+    THREE = library;
+    if (prefersReducedMotion()) { showAtmosphereFallback(); return; }
+    initAtmosphere();
+  }).catch(() => {
     atmosphereRenderer?.dispose();
     atmosphereRenderer = null;
     showAtmosphereFallback();
-  }
+  });
 }
 
 function showAtmosphereFallback() {

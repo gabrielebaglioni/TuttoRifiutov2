@@ -101,6 +101,7 @@ function menuHarness(reduced=false) {
  for(const node of c.document.querySelectorAll('button,a'))node.focus=()=>{c.document.activeElement=node;};
  c.document.activeElement=c.document.querySelector('.menu-toggle-btn');
  Object.assign(c,{prefersReducedMotion:()=>reduced,THREE:{Scene:class{},WebGLRenderer:class{constructor(){throw new Error('No GPU');}}},SplitText:{create(){}},SITE_CONTENT:{'global.menu.items':[['Home','/'],['Eventi','/events']]},getIconSvg:()=>'<svg></svg>',isAllowedLink:()=>true,playMenuSound(){},resizeMenuRingGrain(){},initMenuRingGrain(){}});
+ c.loadMenuLibrary=async()=>c.THREE;
  vm.runInNewContext(script('menu.js'),c);
  c.document.dispatchEvent(new c.Event('DOMContentLoaded'));
  return c;
@@ -227,7 +228,7 @@ test('denied ring renderer retains the themed ring behind working menu links',()
  assert.equal(c.document.querySelector('a').textContent,'Eventi');
 });
 
-for (const surface of ['skyline','ring','atmosphere']) for (const immediateTheme of [false,true]) test(`failed Three shader preserves ${surface} fallback and stops drawing (initial theme: ${immediateTheme})`,()=>{
+for (const surface of ['skyline','ring','atmosphere']) for (const immediateTheme of [false,true]) test(`failed Three shader preserves ${surface} fallback and stops drawing (initial theme: ${immediateTheme})`,async()=>{
  const c=harness('<section class="lab-hero"><canvas id="skyline"></canvas></section><div class="menu-overlay"><canvas id="menu-canvas"></canvas><div class="circular-menu"><a href="/events">Eventi</a></div></div>');
  let nextFrame,draws=0,cancelled=0;
  c.requestAnimationFrame=fn=>{nextFrame=fn;return 1;};c.cancelAnimationFrame=()=>cancelled++;
@@ -241,8 +242,10 @@ for (const surface of ['skyline','ring','atmosphere']) for (const immediateTheme
  if(surface==='skyline') vm.runInNewContext(script('skyline.js'),c);
  if(surface==='ring') vm.runInNewContext(script('menu-ring-grain.js')+';initMenuRingGrain(document.querySelector(".circular-menu"),700);',c);
  if(surface==='atmosphere') {
+   c.loadMenuLibrary=async()=>c.THREE;
    Object.assign(c,{atmosphereFailed:false,atmosphereAttempted:false,atmosphereRenderer:null,atmosphereScene:null,atmosphereCamera:null,atmosphereMaterial:null,atmosphereMesh:null,atmosphereFrame:null,lastAtmosphereFrame:null,isOpen:true,isMenuAnimating:false,matrixShader:{vertexShader:'',fragmentShader:''}});
    vm.runInNewContext(functions('menu.js',['ensureAtmosphere','showAtmosphereFallback','initAtmosphere','resizeAtmosphere','animateAtmosphere'])+';ensureAtmosphere();',c);
+   await new Promise(resolve=>setImmediate(resolve));
  } else if(nextFrame) nextFrame(300);
  const selector=surface==='skyline'?'.lab-hero':surface==='ring'?'.circular-menu':'.menu-overlay';
  const fallbackClass=surface==='skyline'?'has-grain-fallback':surface==='ring'?'has-ring-fallback':'has-atmosphere-fallback';
