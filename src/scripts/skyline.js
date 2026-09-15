@@ -11,7 +11,11 @@ const canvas = document.getElementById("skyline");
 if (canvas) initSkyline();
 
 function initSkyline() {
+let stopped = false;
+let animationFrame;
 const fallback = () => {
+  stopped = true;
+  cancelAnimationFrame(animationFrame);
   canvas.style.display = 'none';
   canvas.parentElement.classList.add('has-grain-fallback');
 };
@@ -22,13 +26,9 @@ try {
     canvas, antialias: false, powerPreference: 'high-performance', stencil: false, depth: false,
   });
 } catch { fallback(); return; }
-let stopped = false;
-let animationFrame;
-canvas.addEventListener('webglcontextlost', () => {
-  stopped = true;
-  cancelAnimationFrame(animationFrame);
-  fallback();
-});
+// Three reports shader failure through this callback, not an exception.
+renderer.debug.onShaderError = fallback;
+canvas.addEventListener('webglcontextlost', fallback);
 let isVisible = true;
 const visibilityObserver = new IntersectionObserver(([entry]) => { isVisible = entry.isIntersecting; }, { rootMargin: "200px" });
 visibilityObserver.observe(canvas);

@@ -27,7 +27,7 @@ test('mobile menu uses the original shader rather than an empty blue background'
  let started=0;
  const {document}=parseHTML('<html><body><canvas id="menu-canvas"></canvas></body></html>'); document.defaultView.getComputedStyle=element=>element.style;
  const context={atmosphereFailed:false,showAtmosphereFallback(){},usesTouchLayout:()=>true,document,window:{devicePixelRatio:3,addEventListener(){}},bindThemeUniforms:(uniforms,mapping,draw)=>bindThemeUniforms(uniforms,mapping,draw,document),matrixShader:{vertexShader:'original',fragmentShader:'TR'},
- THREE:{Scene:class{add(){}},OrthographicCamera:class{},WebGLRenderer:class{constructor(){started++;}setPixelRatio(){}render(){}},PlaneGeometry:class{},ShaderMaterial:class{constructor(options){this.uniforms=options.uniforms;}},Vector2:class{},Vector3:class{},Mesh:class{}},resizeAtmosphere(){},animateAtmosphere(){}};
+ THREE:{Scene:class{add(){}},OrthographicCamera:class{},WebGLRenderer:class{debug={};constructor(){started++;}setPixelRatio(){}render(){}},PlaneGeometry:class{},ShaderMaterial:class{constructor(options){this.uniforms=options.uniforms;}},Vector2:class{},Vector3:class{},Mesh:class{}},resizeAtmosphere(){},animateAtmosphere(){}};
  vm.runInNewContext(functions('menu.js',['initAtmosphere'])+';initAtmosphere();',context);assert.equal(started,1);
 });
 test('touch shader allocation is capped while keeping the viewport aspect ratio',()=>{

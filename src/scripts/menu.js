@@ -214,6 +214,7 @@ function initAtmosphere() {
     antialias: false,
     alpha: false,
   });
+  atmosphereRenderer.debug.onShaderError = showAtmosphereFallback;
   atmosphereRenderer.setPixelRatio(usesTouchLayout() ? 1 : Math.min(window.devicePixelRatio, 2));
 
   const geometry = new THREE.PlaneGeometry(2, 2);

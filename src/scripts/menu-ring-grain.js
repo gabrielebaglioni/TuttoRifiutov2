@@ -49,6 +49,7 @@ export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
     alpha: true,
     premultipliedAlpha: false,
   }); } catch { fallback(); return; }
+  renderer.debug.onShaderError = fallback;
   renderer.setClearColor(0x000000, 0);
 
   scene = new THREE.Scene();
@@ -100,7 +101,7 @@ export function initMenuRingGrain(menuEl, menuSize, isActive = () => true) {
     material.uniforms.iTime.value = t * 0.001;
     renderer.render(scene, camera);
   }
-  animationFrame = requestAnimationFrame(animate);
+  if (!stopped) animationFrame = requestAnimationFrame(animate);
 
   function cleanup(event) {
     if (event.persisted) return;

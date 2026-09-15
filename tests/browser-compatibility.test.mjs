@@ -121,7 +121,7 @@ test('lost skyline context reveals branded grain and stops scheduling GPU work',
  const c=harness('<section class="lab-hero"><canvas id="skyline"></canvas></section>');
  let scheduled=0;c.requestAnimationFrame=()=>++scheduled;
  c.IntersectionObserver=class{observe(){}disconnect(){}};
- c.THREE={...Three,WebGLRenderer:class{setSize(){}setPixelRatio(){}render(){}dispose(){}}};
+ c.THREE={...Three,WebGLRenderer:class{debug={};setSize(){}setPixelRatio(){}render(){}dispose(){}}};
  c.bindThemeUniforms=()=>()=>{};c.GRAIN_VERTEX_SHADER='';c.GRAIN_FRAGMENT_SHADER='';
  vm.runInNewContext(script('skyline.js'),c);
  c.document.querySelector('canvas').dispatchEvent(new c.Event('webglcontextlost'));
@@ -132,7 +132,7 @@ test('back-forward cache keeps skyline resources alive and the next frame can re
  const c=harness('<section class="lab-hero"><canvas id="skyline"></canvas></section>');
  let nextFrame,draws=0,disposed=false;c.requestAnimationFrame=fn=>{nextFrame=fn;return 1;};
  c.IntersectionObserver=class{observe(){}disconnect(){}};
- c.THREE={...Three,WebGLRenderer:class{setSize(){}setPixelRatio(){}render(){draws++;}dispose(){disposed=true;}}};
+ c.THREE={...Three,WebGLRenderer:class{debug={};setSize(){}setPixelRatio(){}render(){draws++;}dispose(){disposed=true;}}};
  c.bindThemeUniforms=()=>()=>{};c.GRAIN_VERTEX_SHADER='';c.GRAIN_FRAGMENT_SHADER='';
  vm.runInNewContext(script('skyline.js'),c);
  c.document.defaultView.dispatchEvent(new c.Event('beforeunload'));
@@ -206,5 +206,30 @@ test('denied ring renderer retains the themed ring behind working menu links',()
  vm.runInNewContext(script('menu-ring-grain.js'),c);
  assert.doesNotThrow(()=>vm.runInNewContext('initMenuRingGrain(document.querySelector(".circular-menu"),700);',c));
  assert.ok(c.document.querySelector('.circular-menu').classList.contains('has-ring-fallback'));
+ assert.equal(c.document.querySelector('a').textContent,'Eventi');
+});
+
+for (const surface of ['skyline','ring','atmosphere']) for (const immediateTheme of [false,true]) test(`failed Three shader preserves ${surface} fallback and stops drawing (initial theme: ${immediateTheme})`,()=>{
+ const c=harness('<section class="lab-hero"><canvas id="skyline"></canvas></section><div class="menu-overlay"><canvas id="menu-canvas"></canvas><div class="circular-menu"><a href="/events">Eventi</a></div></div>');
+ let nextFrame,draws=0,cancelled=0;
+ c.requestAnimationFrame=fn=>{nextFrame=fn;return 1;};c.cancelAnimationFrame=()=>cancelled++;
+ c.IntersectionObserver=class{observe(){}disconnect(){}};
+ c.THREE={...Three,WebGLRenderer:class{
+   debug={}; setSize(){} setPixelRatio(){} setClearColor(){} dispose(){}
+   render(){draws++;this.debug.onShaderError?.();}
+ }};
+ c.bindThemeUniforms=(_uniforms,_mapping,draw)=>{if(immediateTheme)draw?.();return ()=>{};};c.GRAIN_VERTEX_SHADER='';c.GRAIN_FRAGMENT_SHADER='';
+ c.createGrainFragmentShader=()=>'';c.navigator={userAgent:'Desktop'};
+ if(surface==='skyline') vm.runInNewContext(script('skyline.js'),c);
+ if(surface==='ring') vm.runInNewContext(script('menu-ring-grain.js')+';initMenuRingGrain(document.querySelector(".circular-menu"),700);',c);
+ if(surface==='atmosphere') {
+   Object.assign(c,{atmosphereFailed:false,atmosphereAttempted:false,atmosphereRenderer:null,atmosphereScene:null,atmosphereCamera:null,atmosphereMaterial:null,atmosphereMesh:null,atmosphereFrame:null,lastAtmosphereFrame:null,isOpen:true,isMenuAnimating:false,matrixShader:{vertexShader:'',fragmentShader:''}});
+   vm.runInNewContext(functions('menu.js',['ensureAtmosphere','showAtmosphereFallback','initAtmosphere','resizeAtmosphere','animateAtmosphere'])+';ensureAtmosphere();',c);
+ } else if(nextFrame) nextFrame(300);
+ const selector=surface==='skyline'?'.lab-hero':surface==='ring'?'.circular-menu':'.menu-overlay';
+ const fallbackClass=surface==='skyline'?'has-grain-fallback':surface==='ring'?'has-ring-fallback':'has-atmosphere-fallback';
+ assert.ok(c.document.querySelector(selector).classList.contains(fallbackClass),'shader diagnostics must select the visible CSS fallback');
+ assert.ok(cancelled>0,'pending GPU frame must be cancelled');
+ if(nextFrame)nextFrame(600);assert.equal(draws,1,'no repeated draws after shader failure');
  assert.equal(c.document.querySelector('a').textContent,'Eventi');
 });
