@@ -3,6 +3,8 @@ import { defineConfig, fontProviders } from "astro/config";
 export default defineConfig({
   site: "https://tutto-rifiuto.gabrielebaglioni55.chatgpt.site",
   output: "static",
+  // Preserve v6 text spacing while upgrading the compiler independently.
+  compressHTML: true,
   build: {
     format: "directory",
   },
@@ -89,10 +91,5 @@ export default defineConfig({
   },
   markdown: {
     syntaxHighlight: false,
-  },
-  experimental: {
-    queuedRendering: {
-      enabled: true,
-    },
   },
 });
