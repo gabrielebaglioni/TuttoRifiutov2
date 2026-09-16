@@ -1,6 +1,13 @@
 {
   "schemaVersion": 1,
   "content": {
+    "global.theme.palette": {
+      "background": "#ffff00",
+      "foreground": "#000000",
+      "accent": "#2444d9",
+      "loading": "#1a1a1a",
+      "highlight": "#ffffff"
+    },
     "site.name": "Tutto Rifiuto",
     "seo.default.title": "Tutto Rifiuto",
     "seo.default.description": "Tutto Rifiuto — collettivo romano che raccoglie parole, suoni, immagini, pellicole, fantasie, stampe.",
