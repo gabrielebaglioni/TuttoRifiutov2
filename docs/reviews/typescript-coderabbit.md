@@ -30,3 +30,5 @@ Regression tests reproduce rejected-import caching, metadata attribute injection
 The two CodeRabbit runs completed against the pre-fix revisions above. Follow-up fixes are verified locally; this report does not claim an additional remote approval of the follow-up diff.
 
 Private staging uses a separate Site project, D1 database, R2 bucket and session secret. Production and GitHub main remain unchanged.
+
+Fresh-clone validation additionally exposed missing generated Astro type declarations before the first compiler gate. Assets existed; `.astro/types.d.ts` did not. Running `astro sync` restored them, so `check:types` now starts with that generation step before all strict checks. This does not emit publication artifacts or relax any checks.
