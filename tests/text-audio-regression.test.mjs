@@ -4,9 +4,10 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { parse } from "acorn";
 import { parseHTML } from "linkedom";
+import { readBrowserScript } from './read-browser-script.mjs';
 
 function functionSource(file, name) {
-  const source = readFileSync(new URL(file, import.meta.url), "utf8");
+  const source = readBrowserScript(new URL(file, import.meta.url));
   const node = parse(source, { ecmaVersion: "latest", sourceType: "module" }).body
     .find((node) => node.type === "FunctionDeclaration" && node.id.name === name);
   return source.slice(node.start, node.end);
@@ -65,6 +66,7 @@ test("menu navigation plays selection synchronously before capture stops propaga
     let handler;
     const context = vm.createContext({
       document: { addEventListener: (_, callback) => { handler = callback; }, querySelector: () => null },
+      Element: document.defaultView.Element,
       window: { addEventListener() {}, toggleMenu() {}, location: { href: "" } },
       sessionStorage: { setItem() {} },
       isExternalLink: (value) => value.startsWith("mailto:"),
@@ -72,7 +74,7 @@ test("menu navigation plays selection synchronously before capture stops propaga
       playMenuSound: (kind) => calls.push(kind),
       animateOut: () => new Promise(() => {}),
     });
-    vm.runInContext(functionSource("../src/scripts/transition.js", "setupLinkHandlers") + "\nsetupLinkHandlers();", context);
+    vm.runInContext(functionSource("../src/scripts/transition.ts", "setupLinkHandlers") + "\nsetupLinkHandlers();", context);
     handler({ target: document.querySelector("span"), preventDefault() { calls.push("prevent"); }, stopPropagation() {}, stopImmediatePropagation() {} });
     assert.equal(calls[0], "select", "touch/keyboard click must sound before page-transition interception");
     assert.equal(calls.filter((call) => call === "select").length, 1);
@@ -88,7 +90,7 @@ test("menu audio is loaded before interaction and replayed without allocating a 
     play() { this.plays++; return Promise.resolve(); }
   };
   try {
-    const { playMenuSound } = await import("../src/scripts/menu-audio.js");
+    const { playMenuSound } = await import("../src/scripts/menu-audio.ts");
     assert.equal(players.length, 3);
     assert.ok(players.every((player) => player.loaded && player.preload === "auto" && player.plays === 0));
     playMenuSound("open");

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { parseHTML } from "linkedom";
-import { ensureCollectionsReadiness } from "../src/scripts/collections-readiness.js";
+import { ensureCollectionsReadiness } from "../src/scripts/collections-readiness.ts";
 
 const PROJECT_FACTORY = Symbol.for("tutto-rifiuto.project.factory");
 const PROJECT_START_EVENT = "tutto-rifiuto:project-start";

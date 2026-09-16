@@ -1,9 +1,9 @@
 import "./content-hydration.js";
-import "./grain-background.js";
+import "./grain-background.ts";
 import "./collections-hydration.js";
 import "./preloader.js";
 import "./lenis-scroll.js";
-import "./transition.js";
+import "./transition.ts";
 import "./navigation-warmup.ts";
 import "./nav.js";
 import "./menu.js";

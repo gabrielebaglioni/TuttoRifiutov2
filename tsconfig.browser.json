@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.migration.json",
+  "compilerOptions": { "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": [] },
+  "include": ["tests/types/browser-contracts.ts", "src/scripts/transition.ts", "src/scripts/menu-audio.ts", "src/scripts/events-switch.ts", "src/types/browser.ts"]
+}

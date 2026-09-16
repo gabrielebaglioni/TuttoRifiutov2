@@ -1,13 +1,20 @@
 // Readiness progress, not downloaded bytes: fonts/content first, then the
 // visible initial images after hydration. Lazy galleries never hold the page.
-export function waitForInitialResources({ documentRef, readiness = [], onProgress, timeoutMs = 12000 }) {
+export type LoadingStatus = 'complete' | 'timeout' | 'fallback';
+export interface InitialResourcesOptions {
+  documentRef: Document;
+  readiness?: readonly unknown[];
+  onProgress(value: number): void;
+  timeoutMs?: number;
+}
+export function waitForInitialResources({ documentRef, readiness = [], onProgress, timeoutMs = 12000 }: InitialResourcesOptions): Promise<{ status: LoadingStatus }> {
   return new Promise((resolve) => {
     let finished = false;
     let settled = 0;
     let lastProgress = 0;
-    const cleanups = [];
-    const report = (value) => { if (!finished) { lastProgress = Math.max(lastProgress, value); onProgress(lastProgress); } };
-    const finish = (status) => {
+    const cleanups: Array<() => void> = [];
+    const report = (value: number) => { if (!finished) { lastProgress = Math.max(lastProgress, value); onProgress(lastProgress); } };
+    const finish = (status: LoadingStatus) => {
       if (finished) return;
       finished = true;
       clearTimeout(timer);
@@ -27,7 +34,7 @@ export function waitForInitialResources({ documentRef, readiness = [], onProgres
     Promise.all(tasks).then(async () => {
       if (finished) return;
       const viewportHeight = documentRef.defaultView?.innerHeight ?? Infinity;
-      const seen = new Set();
+      const seen = new Set<HTMLImageElement>();
       const initialImages = () => [...documentRef.querySelectorAll('img')].filter((image) => {
         if (seen.has(image)) return false;
         if (image.loading === 'lazy' || image.closest('[hidden], .menu-overlay')) return false;
@@ -39,7 +46,7 @@ export function waitForInitialResources({ documentRef, readiness = [], onProgres
       let images = initialImages();
       while (images.length && !finished) {
       let imagesDone = 0;
-      await Promise.all(images.map((image) => new Promise((done) => {
+      await Promise.all(images.map((image) => new Promise<void>((done) => {
         seen.add(image);
         let handled = false;
         const cleanup = () => { image.removeEventListener('load', loaded); image.removeEventListener('error', loaded); };

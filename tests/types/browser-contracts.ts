@@ -1,0 +1,18 @@
+import { waitForInitialResources } from '../../src/scripts/loading-readiness.ts';
+import { ensureCollectionsReadiness } from '../../src/scripts/collections-readiness.ts';
+import { createThemeController } from '../../src/scripts/theme.ts';
+import { getIconSvg } from '../../src/scripts/icons.ts';
+import { createGrainFragmentShader } from '../../src/scripts/grain-yellow-shader.ts';
+import { grainPixels } from '../../src/scripts/grain-background.ts';
+import { createPieCanvas } from '../../src/scripts/pie-canvas.ts';
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+type Expect<T extends true> = T;
+export type Progress = Expect<Equal<Parameters<Parameters<typeof waitForInitialResources>[0]['onProgress']>, [value: number]>>;
+export type Readiness = Expect<Equal<Awaited<ReturnType<typeof ensureCollectionsReadiness>['promise']>, 'complete' | 'failure' | 'timeout'>>;
+export type ThemeInput = Expect<Equal<Parameters<ReturnType<typeof createThemeController>['apply']>[0], unknown>>;
+export type ThemeRgb = Expect<Equal<ReturnType<ReturnType<typeof createThemeController>['current']>['rgb']['accent'], [number, number, number]>>;
+export type IconInput = Expect<Equal<Parameters<typeof getIconSvg>, [name: string]>>;
+export type GrainOptions = Expect<Equal<Parameters<typeof createGrainFragmentShader>, [options?: { radialMask?: boolean }]>>;
+export type GrainInk = Expect<Equal<Parameters<typeof grainPixels>, [ink: string]>>;
+export type PieContainer = Expect<Equal<Parameters<typeof createPieCanvas>[0], HTMLElement>>;
+export type PieDraw = Expect<Equal<Parameters<NonNullable<ReturnType<typeof createPieCanvas>>['draw']>, [progress: number, multiplier: number]>>;

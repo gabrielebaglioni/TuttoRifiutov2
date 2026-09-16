@@ -1,15 +1,31 @@
 import { canvasSize, pieFrame } from "./motion-policy.ts";
+import type { MASK_BOX, ZOOM_ORIGIN } from './pie-geometry.ts';
+
+export interface PieCanvasOptions {
+  imageUrl: string;
+  origin: typeof ZOOM_ORIGIN;
+  box: typeof MASK_BOX;
+  color: string;
+  onError(): void;
+}
+
+export interface PieCanvasController {
+  resize(): void;
+  destroy(): void;
+  setColor(color: string): void;
+  draw(progress: number, multiplier: number): void;
+}
 
 // The two masks are rasterized once. Zoom never allocates an enlarged surface:
 // only the viewport-sized canvas is repainted, with at most two drawImage calls.
-export function createPieCanvas(container, { imageUrl, origin, box, color, onError }) {
+export function createPieCanvas(container: HTMLElement, { imageUrl, origin, box, color, onError }: PieCanvasOptions): PieCanvasController | null {
   const canvas = document.createElement("canvas");
   canvas.className = "pie-mobile-canvas";
   canvas.setAttribute("aria-hidden", "true");
   const ctx = canvas.getContext("2d", { alpha: true });
   if (!ctx) return null;
   container.appendChild(canvas);
-  let layers;
+  let layers: { dots: HTMLCanvasElement; fill: HTMLCanvasElement } | null = null;
   let progress = 0;
   let multiplier = 7;
   let queued = 0;
@@ -61,7 +77,7 @@ export function createPieCanvas(container, { imageUrl, origin, box, color, onErr
       const fit = Math.min(box.width / image.naturalWidth, box.height / image.naturalHeight);
       const w = image.naturalWidth * fit, h = image.naturalHeight * fit;
       maskContext.drawImage(image, box.x + (box.width - w) / 2, box.y + (box.height - h) / 2, w, h);
-      const makeLayer = (dots) => {
+      const makeLayer = (dots: boolean) => {
         const layer = document.createElement("canvas");
         layer.width = layer.height = 800;
         const context = layer.getContext("2d");
@@ -105,7 +121,8 @@ export function createPieCanvas(container, { imageUrl, origin, box, color, onErr
       if (!/^#[0-9a-f]{6}$/i.test(next) || next === color || disposed) return;
       color = next;
       if (layers) for (const layer of Object.values(layers)) {
-        const context = layer.getContext('2d');
+        // makeLayer validated this exact canvas/context type before caching it.
+        const context = layer.getContext('2d')!;
         context.globalCompositeOperation = 'source-in';
         context.fillStyle = color;
         context.fillRect(0, 0, layer.width, layer.height);

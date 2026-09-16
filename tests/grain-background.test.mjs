@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 test('grain tile is bounded, repeatable and follows foreground ink without opaque paint', async () => {
-  const {grainPixels}=await import('../src/scripts/grain-background.js');
+  const {grainPixels}=await import('../src/scripts/grain-background.ts');
   const a=grainPixels('#123456');
   assert.equal(a.length,256*256*4);
   assert.deepEqual(a,grainPixels('#123456'));

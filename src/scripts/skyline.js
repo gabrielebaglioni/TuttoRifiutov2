@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { bindThemeUniforms } from './theme.js';
-import { GRAIN_FRAGMENT_SHADER, GRAIN_VERTEX_SHADER } from "./grain-yellow-shader.js";
+import { bindThemeUniforms } from './theme.ts';
+import { GRAIN_FRAGMENT_SHADER, GRAIN_VERTEX_SHADER } from "./grain-yellow-shader.ts";
 import { meaningfulResize, usesTouchLayout, prefersReducedMotion } from "./motion-policy.ts";
 let skylineViewport = { width: window.innerWidth, height: window.innerHeight };
 let lastNoiseFrame = -1;

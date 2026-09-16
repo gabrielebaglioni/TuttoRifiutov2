@@ -7,7 +7,7 @@ export const GRAIN_VERTEX_SHADER = `
   }
 `;
 
-export function createGrainFragmentShader({ radialMask = false } = {}) {
+export function createGrainFragmentShader({ radialMask = false }: { radialMask?: boolean } = {}): string {
   return `
   #ifdef GL_FRAGMENT_PRECISION_HIGH
     precision highp float;

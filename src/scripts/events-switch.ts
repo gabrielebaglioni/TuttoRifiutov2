@@ -3,16 +3,16 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { runEventTransition } from "./event-transition.ts";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const tabs = [...document.querySelectorAll("[data-event-tab]")];
-  const panels = [...document.querySelectorAll("[data-event-panel]")];
-  const root = document.querySelector(".events-panels");
-  const label = document.querySelector(".event-hero-tabs");
-  const grid = document.querySelector(".transition-grid-small");
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>("[data-event-tab]")];
+  const panels = [...document.querySelectorAll<HTMLElement>("[data-event-panel]")];
+  const root = document.querySelector<HTMLElement>(".events-panels");
+  const label = document.querySelector<HTMLElement>(".event-hero-tabs");
+  const grid = document.querySelector<HTMLElement>(".transition-grid-small");
   if (!tabs.length || !panels.length || !root || !label || !grid) return;
   let switching = false;
-  let timeline;
+  let timeline: ReturnType<typeof runEventTransition> | undefined;
 
-  function setActive(status) {
+  function setActive(status: string) {
     tabs.forEach((tab) => {
       const active = tab.dataset.eventTab === status;
       tab.classList.toggle("is-active", active);
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
       panel.inert = !active;
     });
   }
-  function finish() {
+  const finish = () => {
     grid.style.visibility = "hidden";
     root.style.minHeight = "";
     root.removeAttribute("aria-busy");
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     switching = false;
     window.lenis?.resize();
     ScrollTrigger.refresh(true);
-  }
+  };
   tabs.forEach((tab) => tab.addEventListener("click", () => {
     const status = tab.dataset.eventTab;
     if (!status || switching || tab.classList.contains("is-active")) return;
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // When switching deep in a list, reveal the new first event under the fixed label.
       if (label.getBoundingClientRect().top <= 0) {
         if (window.lenis) window.lenis.scrollTo(label, { immediate: true });
-        else window.scrollTo({ top: window.scrollY + label.parentElement.getBoundingClientRect().top, behavior: "instant" });
+        else if (label.parentElement) window.scrollTo({ top: window.scrollY + label.parentElement.getBoundingClientRect().top, behavior: "instant" });
       }
     }, finish);
   }));

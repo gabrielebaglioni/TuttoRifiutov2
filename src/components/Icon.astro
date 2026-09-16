@@ -1,5 +1,5 @@
 ---
-import { getIconSvg } from "../scripts/icons.js";
+import { getIconSvg } from "../scripts/icons.ts";
 
 const { name, class: className = "" } = Astro.props;
 const svg = getIconSvg(name).replace('class="tr-icon"', `class="tr-icon ${className}"`);

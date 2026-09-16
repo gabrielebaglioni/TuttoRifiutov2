@@ -1,24 +1,24 @@
 import gsap from "gsap";
 import { usesTouchLayout, prefersReducedMotion } from "./motion-policy.ts";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { playMenuSound } from "./menu-audio.js";
+import { playMenuSound } from "./menu-audio.ts";
 
 gsap.registerPlugin(ScrollTrigger);
 
-let blocks = [];
+let blocks: Array<{ element: HTMLElement }> = [];
 
 // initialization
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  const transitionGrid = document.querySelector(".transition-grid");
+  const transitionGrid = document.querySelector<HTMLElement>(".transition-grid");
   if (!transitionGrid) return;
 
   let isPageNavigation = false;
   try { isPageNavigation = sessionStorage.getItem("pageTransition") === "true"; }
   catch { /* Navigation does not require storage. */ }
   const blockElements = Array.from(
-    transitionGrid.querySelectorAll(".transition-block"),
+    transitionGrid.querySelectorAll<HTMLElement>(".transition-block"),
   );
   blocks = blockElements.map((block) => ({ element: block }));
 
@@ -46,9 +46,9 @@ function init() {
 function animateOut() {
   if (prefersReducedMotion()) return Promise.resolve();
   const mobile = usesTouchLayout();
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     const blockElements = blocks.map((b) => b.element);
-    const transitionGrid = document.querySelector(".transition-grid");
+    const transitionGrid = document.querySelector<HTMLElement>(".transition-grid");
 
     if (!blockElements.length || !transitionGrid) {
       setTimeout(() => resolve(), 100);
@@ -88,7 +88,7 @@ function reveal() {
   const blockElements = blocks.map((b) => b.element);
   if (blockElements.length === 0) return;
 
-  const transitionGrid = document.querySelector(".transition-grid");
+  const transitionGrid = document.querySelector<HTMLElement>(".transition-grid");
   if (prefersReducedMotion()) {
     gsap.set(blockElements, { opacity: 0 });
     if (transitionGrid) transitionGrid.style.pointerEvents = "none";
@@ -117,7 +117,7 @@ function reveal() {
 }
 
 // link utilities
-function isExternalLink(href) {
+function isExternalLink(href: string | null) {
   if (!href) return false;
   return (
     href.startsWith("http") ||
@@ -127,7 +127,7 @@ function isExternalLink(href) {
   );
 }
 
-function isSamePage(href) {
+function isSamePage(href: string | null) {
   if (!href) return true;
 
   let current = window.location.pathname;
@@ -157,14 +157,14 @@ function setupLinkHandlers() {
   window.addEventListener('pageshow', (event) => {
     if (!event.persisted) return;
     isTransitioning = false;
-    const grid = document.querySelector('.transition-grid');
+    const grid = document.querySelector<HTMLElement>('.transition-grid');
     gsap.killTweensOf?.(blocks.map(block => block.element));
     gsap.set(blocks.map(block => block.element), { opacity: 0 });
     if (grid) { grid.style.pointerEvents = 'none'; grid.style.backgroundColor = ''; }
     try { sessionStorage.removeItem('pageTransition'); } catch { /* Optional hint. */ }
   });
 
-  const handleLinkClick = (event) => {
+  const handleLinkClick = (event: MouseEvent) => {
     if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || (event.button != null && event.button !== 0)) return;
     if (isTransitioning) {
       event.preventDefault();
@@ -172,7 +172,8 @@ function setupLinkHandlers() {
       return;
     }
 
-    const link = event.target.closest("a");
+    if (!(event.target instanceof Element)) return;
+    const link = event.target.closest('a');
     if (!link) return;
     if (link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
 
@@ -200,7 +201,7 @@ function setupLinkHandlers() {
 
     isTransitioning = true;
 
-    const transitionGrid = document.querySelector(".transition-grid");
+    const transitionGrid = document.querySelector<HTMLElement>(".transition-grid");
     if (transitionGrid) transitionGrid.style.pointerEvents = "auto";
 
     try { sessionStorage.setItem("pageTransition", "true"); } catch { /* Still navigate. */ }

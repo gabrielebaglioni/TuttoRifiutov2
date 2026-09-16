@@ -3,7 +3,7 @@ import { prefersReducedMotion } from './motion-policy.ts';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";
-import { ensureCollectionsReadiness } from "./collections-readiness.js";
+import { ensureCollectionsReadiness } from "./collections-readiness.ts";
 import { preloaderReady } from "./preloader.js";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);

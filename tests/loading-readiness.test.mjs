@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseHTML } from 'linkedom';
-import { waitForInitialResources } from '../src/scripts/loading-readiness.js';
+import { waitForInitialResources } from '../src/scripts/loading-readiness.ts';
 
 function fixture() {
   const {document, window} = parseHTML('<html><body><img id="hero"><img id="gallery" loading="lazy"></body></html>');

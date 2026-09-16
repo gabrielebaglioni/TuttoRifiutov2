@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import ts from "typescript";
 
-for (const configName of ["tsconfig.migration.json", "tsconfig.worker.json"]) {
+for (const configName of ["tsconfig.migration.json", "tsconfig.worker.json", "tsconfig.browser.json"]) {
 test(`${configName} sources satisfy strict TypeScript contracts`, () => {
   const configPath = ts.findConfigFile(process.cwd(), ts.sys.fileExists, configName);
   assert.ok(configPath, "tsconfig.migration.json must exist");

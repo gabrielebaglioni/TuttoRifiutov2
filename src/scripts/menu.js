@@ -1,12 +1,12 @@
 import gsap from "gsap";
 import { loadMenuLibrary } from './menu-library.js';
-import { bindThemeUniforms } from './theme.js';
+import { bindThemeUniforms } from './theme.ts';
 import { SplitText } from "gsap/SplitText";
-import { getIconSvg } from "./icons.js";
+import { getIconSvg } from "./icons.ts";
 import { matrixShader } from "./menuShaders.js";
 import { SITE_CONTENT } from "../data/site-content.ts";
 import { isAllowedLink } from "./content-hydration.js";
-import { playMenuSound } from "./menu-audio.js";
+import { playMenuSound } from "./menu-audio.ts";
 import { meaningfulResize, usesTouchLayout, prefersReducedMotion } from "./motion-policy.ts";
 let menuViewport = { width: window.innerWidth, height: window.innerHeight };
 

@@ -1,9 +1,9 @@
 import * as THREE from "three";
-import { bindThemeUniforms } from './theme.js';
+import { bindThemeUniforms } from './theme.ts';
 import {
   createGrainFragmentShader,
   GRAIN_VERTEX_SHADER,
-} from "./grain-yellow-shader.js";
+} from "./grain-yellow-shader.ts";
 
 /** Stessa grana del sito, ma solo nella corona ( tra raggio interno ed esterno del menu ). */
 const FRAGMENT = createGrainFragmentShader({ radialMask: true });

@@ -1,6 +1,6 @@
 import { SITE_CONTENT } from "../data/site-content.ts";
 import { THEME_KEY } from '../data/theme.ts';
-import { publicTheme } from './theme.js';
+import { publicTheme } from './theme.ts';
 
 const REQUEST_TIMEOUT_MS = 4_000;
 const menuValuesByRoot = new WeakMap();

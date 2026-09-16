@@ -1,8 +1,9 @@
 // Allocate and preload once, not at the moment of a tap. Playback itself stays
 // synchronous with the user gesture so mobile autoplay rules can allow it.
-const sounds = new Map();
+export type MenuSound = 'open' | 'close' | 'select';
+const sounds = new Map<MenuSound, HTMLAudioElement>();
 if (typeof Audio !== "undefined") {
-  for (const kind of ["open", "close", "select"]) {
+  for (const kind of ["open", "close", "select"] as const) {
     const audio = new Audio(`/sfx/menu-${kind}.mp3`);
     audio.preload = "auto";
     audio.load();
@@ -10,7 +11,7 @@ if (typeof Audio !== "undefined") {
   }
 }
 
-export function playMenuSound(kind) {
+export function playMenuSound(kind: MenuSound): void {
   const audio = sounds.get(kind);
   if (!audio) return;
   try {

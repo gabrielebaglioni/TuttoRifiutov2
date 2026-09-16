@@ -1,5 +1,5 @@
 import { meaningfulResize, usesTouchLayout, particleScale, prefersReducedMotion } from "./motion-policy.ts";
-import { publicTheme } from './theme.js';
+import { publicTheme } from './theme.ts';
 import { installTouchExplosion } from './touch-explosion.ts';
 let particleViewport = { width: window.innerWidth, height: window.innerHeight };
 // webgl particle system with mouse distortion

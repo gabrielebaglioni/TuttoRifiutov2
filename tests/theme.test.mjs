@@ -20,7 +20,7 @@ for (const path of ['/eventi/musica', '/archivio/parole']) test(`static detail $
   assert.match(body,/name="theme-color" content="#334455"/);assert.equal(response.headers.get('etag'),null);
 });
 test('public theme updates share one cached color read with shader subscribers and reject injections', async () => {
-  const { createThemeController } = await import('../src/scripts/theme.js');
+  const { createThemeController } = await import('../src/scripts/theme.ts');
   const { document } = parseHTML('<html><head><meta name="theme-color"></head><body></body></html>');
   let reads = 0;
   const controller = createThemeController(document, () => { reads++; return {getPropertyValue:(key)=>document.documentElement.style.getPropertyValue(key)}; });
@@ -34,8 +34,8 @@ test('public theme updates share one cached color read with shader subscribers a
   assert.equal(controller.apply({...DEFAULT_PALETTE, accent:'red; color:blue'}), false); assert.equal(reads, 2);
 });
 test('grain uniforms follow palette changes and redraw subscribers without frame-time style reads', async () => {
-  const { bindThemeUniforms, publicTheme } = await import('../src/scripts/theme.js');
-  const { createGrainFragmentShader } = await import('../src/scripts/grain-yellow-shader.js');
+  const { bindThemeUniforms, publicTheme } = await import('../src/scripts/theme.ts');
+  const { createGrainFragmentShader } = await import('../src/scripts/grain-yellow-shader.ts');
   const { document } = parseHTML('<html><body></body></html>');
   document.defaultView.getComputedStyle = element => element.style;
   const uniforms = {}; let redraws=0;
@@ -48,7 +48,7 @@ test('grain uniforms follow palette changes and redraw subscribers without frame
   assert.match(createGrainFragmentShader(), /mix\(uColorBg, uColorFg,/);
 });
 test('mobile pie recolors cached masks and repaints without reallocating geometry', async () => {
-  const {createPieCanvas} = await import('../src/scripts/pie-canvas.js');
+  const {createPieCanvas} = await import('../src/scripts/pie-canvas.ts');
   const saved = Object.fromEntries(['document','window','Image','requestAnimationFrame','cancelAnimationFrame'].map(key=>[key,globalThis[key]]));
   const contexts=[]; const callbacks=[]; let sourceImage;
   const context = () => {const calls=[]; const c={calls,fillStyle:'',globalCompositeOperation:'',setTransform(){},clearRect(){},translate(){},scale(){},drawImage(){},save(){},restore(){},beginPath(){},moveTo(){},arc(){},closePath(){},clip(){},fill(){},fillRect(){calls.push({color:this.fillStyle,composite:this.globalCompositeOperation});}}; contexts.push(c);return c;};
@@ -86,7 +86,7 @@ test('CMS permits only a complete palette under its single schema key', () => {
   assert.equal(validateContentValue('global.nav.location', DEFAULT_PALETTE), false);
 });
 test('public updates cannot overwrite the protected admin palette', async () => {
-  const {createThemeController} = await import('../src/scripts/theme.js');
+  const {createThemeController} = await import('../src/scripts/theme.ts');
   const {document} = parseHTML('<html><body class="admin-body"></body></html>');
   const theme=createThemeController(document,()=>{assert.fail('Admin must not read public colors');});
   assert.equal(theme.apply({...DEFAULT_PALETTE,foreground:'#ffff00'}),false);

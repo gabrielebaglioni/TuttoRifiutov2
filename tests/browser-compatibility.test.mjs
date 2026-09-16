@@ -8,22 +8,24 @@ import * as policy from '../src/scripts/motion-policy.ts';
 import * as Three from 'three';
 import {themeEditor} from '../src/scripts/admin-theme.js';
 import {DEFAULT_PALETTE} from '../src/data/theme.ts';
-import {waitForInitialResources} from '../src/scripts/loading-readiness.js';
+import {waitForInitialResources} from '../src/scripts/loading-readiness.ts';
+import {readBrowserScript} from './read-browser-script.mjs';
 
 function script(file) {
-  const source=readFileSync(new URL(`../src/scripts/${file}`,import.meta.url),'utf8');
+  const source=readBrowserScript(new URL(`../src/scripts/${file}`,import.meta.url));
   return parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type!=='ImportDeclaration').map(n=>source.slice(n.type==='ExportNamedDeclaration'?n.declaration.start:n.start,n.end)).join('\n');
 }
 function functions(file,names) {
- const source=readFileSync(new URL(`../src/scripts/${file}`,import.meta.url),'utf8');
+ const source=readBrowserScript(new URL(`../src/scripts/${file}`,import.meta.url));
  return parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type==='FunctionDeclaration'&&names.includes(n.id.name)).map(n=>source.slice(n.start,n.end)).join('\n');
 }
 function harness(html='') {
   const {document,window}=parseHTML(`<html><body>${html}</body></html>`);
+  const Element = window.Element;
   const view={innerWidth:390,innerHeight:844,devicePixelRatio:1,location:{pathname:'/',href:'/'},addEventListener:window.addEventListener.bind(window),removeEventListener:window.removeEventListener.bind(window),matchMedia:()=>({matches:false})};
   const set=(nodes,options)=>{for(const node of typeof nodes==='string'?document.querySelectorAll(nodes):nodes?.nodeType?[nodes]:nodes||[]) for(const [key,value] of Object.entries(options)) if(key==='opacity'||key==='display') node.style[key]=String(value);};
   const gsap={registerPlugin(){},set,to(nodes,options){set(nodes,options);options.onStart?.();options.onUpdate?.();options.onComplete?.();return {kill(){}};},getProperty(){return 1;}};
-  return {document,window:view,Event:window.Event,gsap,setTimeout:fn=>{fn();return 1;},clearTimeout(){},requestAnimationFrame(){return 1;},cancelAnimationFrame(){},...policy,usesTouchLayout:()=>policy.usesTouchLayout(view),prefersReducedMotion:()=>false};
+  return {document,window:view,Element,Event:window.Event,gsap,setTimeout:fn=>{fn();return 1;},clearTimeout(){},requestAnimationFrame(){return 1;},cancelAnimationFrame(){},...policy,usesTouchLayout:()=>policy.usesTouchLayout(view),prefersReducedMotion:()=>false};
 }
 const preloader='<div class="preloader"><div class="progress-bar"><div class="progress-bar-indicator"></div><div class="progress-bar-copy"><span></span></div></div><div class="preloader-block"></div></div>';
 for(const denied of ['read','write']) test(`preloader resolves and uncovers content with storage ${denied} denied`,async()=>{
@@ -45,7 +47,7 @@ test('touch navigation paints the covered grid before starting its reveal',()=>{
  c.ScrollTrigger={sort(){},refresh(){}};
  c.requestAnimationFrame=fn=>frames.push(fn);
  c.gsap.to=()=>reveals++;
- vm.runInNewContext(script('transition.js'),c);
+ vm.runInNewContext(script('transition.ts'),c);
  c.document.dispatchEvent(new c.Event('DOMContentLoaded'));
  assert.equal(c.document.querySelector('.transition-block').style.opacity,'1');
  assert.equal(reveals,0);
@@ -56,7 +58,7 @@ test('denied storage still follows internal navigation and bfcache restores clic
  const c=harness('<div class="transition-grid"><div class="transition-block"></div></div><a href="/events">Eventi</a>');
  c.sessionStorage={getItem(){throw new Error('SecurityError');},setItem(){throw new Error('SecurityError');}};
  c.ScrollTrigger={sort(){},refresh(){}};c.playMenuSound=()=>{};
- vm.runInNewContext(script('transition.js'),c);
+ vm.runInNewContext(script('transition.ts'),c);
  assert.doesNotThrow(()=>c.document.dispatchEvent(new c.Event('DOMContentLoaded')));
  const click=()=>c.document.querySelector('a').dispatchEvent(new c.Event('click',{bubbles:true,cancelable:true}));
  assert.doesNotThrow(click);await Promise.resolve();

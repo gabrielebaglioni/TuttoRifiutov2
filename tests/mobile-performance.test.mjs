@@ -5,9 +5,10 @@ import { parse } from 'acorn';
 import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
 import { usesTouchLayout } from '../src/scripts/motion-policy.ts';
+import { readBrowserScript } from './read-browser-script.mjs';
 
 function functions(file, names) {
-  const source = readFileSync(new URL(`../src/scripts/${file}`, import.meta.url), 'utf8');
+  const source = readBrowserScript(new URL(`../src/scripts/${file}`, import.meta.url));
   const body = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }).body;
   return body.flatMap(node => node.type === 'FunctionDeclaration' && node.id.name === 'initSkyline' ? node.body.body : [node])
     .filter(n => n.type === 'FunctionDeclaration' && names.includes(n.id.name))
@@ -15,7 +16,7 @@ function functions(file, names) {
 }
 
 function script(file) {
-  const source=readFileSync(new URL(`../src/scripts/${file}`,import.meta.url),'utf8');
+  const source=readBrowserScript(new URL(`../src/scripts/${file}`,import.meta.url));
   return parse(source,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type!=='ImportDeclaration').map(n=>source.slice(n.start,n.end)).join('\n');
 }
 
@@ -76,7 +77,7 @@ test('mobile page cover does not impose a long delay before navigation can begin
     setTimeout:(fn,delay)=>jobs.push({fn,at:now+delay}),
     gsap:{set(){},to(target,options){jobs.push({fn:options.onComplete,at:now+1000*((options.delay||0)+options.duration*(1+(options.repeat||0)))});}},
   });
-  vm.runInContext(functions('transition.js',['animateOut']),context);
+  vm.runInContext(functions('transition.ts',['animateOut']),context);
   const done=vm.runInContext('animateOut()',context);
   while(jobs.length){jobs.sort((a,b)=>a.at-b.at);const job=jobs.shift();now=job.at;job.fn();}
   await done;
@@ -89,7 +90,7 @@ test('mobile page reveal remains visible long enough and releases navigation', (
  const context={blocks,prefersReducedMotion:()=>false,usesTouchLayout:()=>true,Math,
  document:{querySelector:()=>grid},ScrollTrigger:{sort(){},refresh(){}},
  gsap:{set(){},to(target,options){jobs.push(options);}}};
- vm.runInNewContext(functions('transition.js',['reveal'])+';reveal();',context);
+ vm.runInNewContext(functions('transition.ts',['reveal'])+';reveal();',context);
  const duration=Math.max(...jobs.map(o=>1000*((o.delay||0)+o.duration*(1+(o.repeat||0)))));
  assert.ok(duration>=450 && duration<=1000,`reveal duration ${duration}ms`);
  jobs.forEach(o=>o.onComplete());

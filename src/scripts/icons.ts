@@ -1,4 +1,4 @@
-const ICONS = {
+const ICONS: Record<string, string> = {
   "cube-sharp":
     '<svg class="tr-icon" viewBox="0 0 512 512" aria-hidden="true"><path fill="currentColor" d="M48 170v196.92L240 480V284L48 170zM272 480l192-113.08V170L272 284zm176-122.36zM448 144L256 32 64 144l192 112 192-112z"/></svg>',
   "calendar-sharp":
@@ -19,6 +19,6 @@ const ICONS = {
     '<svg class="tr-icon" viewBox="0 0 512 512" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="square" stroke-miterlimit="10" stroke-width="48" d="M184 112l144 144-144 144"/></svg>',
 };
 
-export function getIconSvg(name) {
-  return ICONS[name] || "";
+export function getIconSvg(name: string): string {
+  return Object.hasOwn(ICONS, name) ? ICONS[name] || "" : "";
 }

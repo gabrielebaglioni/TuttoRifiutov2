@@ -1,8 +1,8 @@
 import gsap from "gsap";
 import { prefersReducedMotion } from './motion-policy.ts';
 import { contentReady } from './content-hydration.js';
-import { ensureCollectionsReadiness } from './collections-readiness.js';
-import { waitForInitialResources } from './loading-readiness.js';
+import { ensureCollectionsReadiness } from './collections-readiness.ts';
+import { waitForInitialResources } from './loading-readiness.ts';
 
 function trackInitialLoad(onProgress) {
   return waitForInitialResources({ documentRef: document, readiness: [document.fonts?.ready, contentReady, ensureCollectionsReadiness(window).promise], onProgress });

@@ -1,11 +1,11 @@
-import { publicTheme } from './theme.js';
+import { publicTheme } from './theme.ts';
 
 const SIDE = 256;
 
 // One tiny transparent tile, no WebGL context, animation frame or scroll work.
 // Two speck scales match the existing grain's 0.45/0.25 ink strengths.
-export function grainPixels(ink) {
-  const rgb = [1,3,5].map(index=>parseInt(ink.slice(index,index+2),16));
+export function grainPixels(ink: string): Uint8ClampedArray {
+  const rgb = [parseInt(ink.slice(1,3),16), parseInt(ink.slice(3,5),16), parseInt(ink.slice(5,7),16)] as const;
   const pixels = new Uint8ClampedArray(SIDE*SIDE*4);
   let seed=42;
   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
@@ -23,7 +23,7 @@ function initGrainBackground() {
   canvas.width=canvas.height=SIDE;
   const context=canvas.getContext('2d');
   if(!context)return;
-  let previousInk;
+  let previousInk: string | undefined;
   const unsubscribe=publicTheme().subscribe(({palette})=>{
     if(palette.foreground===previousInk)return;
     try {

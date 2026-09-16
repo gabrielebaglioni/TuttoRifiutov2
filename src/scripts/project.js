@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { usesTouchLayout, prefersReducedMotion } from "./motion-policy.ts";
-import { startAfterCollectionsHydration } from "./collections-readiness.js";
+import { startAfterCollectionsHydration } from "./collections-readiness.ts";
 import { loadGalleryImage, galleryTexture, galleryVelocity } from "./gallery-media.ts";
 
 const PROJECT_START_EVENT = "tutto-rifiuto:project-start";

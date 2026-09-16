@@ -1,7 +1,8 @@
 <script lang="ts">
   import { THEME_TOKENS, DEFAULT_PALETTE, validatePalette, themeCss, contrastRatio } from '../data/theme.ts';
-  let { value, onchange }: { value: Record<string, string>; onchange: (value: any, path: string[]) => void } = $props();
-  const pairs = [['Testo / fondo', 'foreground', 'background'], ['Testo sagoma / accento', 'foreground', 'accent'], ['Link menu / accento', 'background', 'accent'], ['Link menu / inchiostro', 'background', 'foreground']];
+  import type { ThemePalette, ThemeToken } from '../data/theme.ts';
+  let { value, onchange }: { value: Record<string, string>; onchange: (value: string | ThemePalette, path: string[]) => void } = $props();
+  const pairs = [['Testo / fondo', 'foreground', 'background'], ['Testo sagoma / accento', 'foreground', 'accent'], ['Link menu / accento', 'background', 'accent'], ['Link menu / inchiostro', 'background', 'foreground']] as const satisfies readonly (readonly [string, ThemeToken, ThemeToken])[];
 </script>
 <div class="admin-theme">
   {#each Object.entries(THEME_TOKENS) as [key, token] (key)}
