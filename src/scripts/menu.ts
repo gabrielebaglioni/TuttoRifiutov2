@@ -187,17 +187,16 @@ function getResponsiveConfig() {
 
 function ensureAtmosphere() {
   if (prefersReducedMotion()) { showAtmosphereFallback(); return; }
-  if (atmosphereAttempted || !isOpen) return;
+  if (atmosphereAttempted) return;
   atmosphereAttempted = true;
-  loadMenuLibrary().then((library) => {
-    THREE = library;
-    if (prefersReducedMotion()) { showAtmosphereFallback(); return; }
+  try {
+    THREE = loadMenuLibrary();
     initAtmosphere();
-  }).catch(() => {
+  } catch {
     atmosphereRenderer?.dispose();
     atmosphereRenderer = null;
     showAtmosphereFallback();
-  });
+  }
 }
 
 function showAtmosphereFallback() {
@@ -447,8 +446,11 @@ function toggleMenu() {
     isOpen = true;
     setMenuAccess(true);
     playMenuSound("open");
-    // Allocate the mobile shader only on first open, never during hero startup.
+    // Already initialized with the initial bundle; no network request on tap.
     ensureAtmosphere();
+    if (!atmosphereFailed && atmosphereRenderer && atmosphereScene && atmosphereCamera) {
+      atmosphereRenderer.render(atmosphereScene, atmosphereCamera);
+    }
 
     if (resetJoystick) resetJoystick();
 

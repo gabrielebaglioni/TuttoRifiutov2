@@ -136,18 +136,9 @@
   outline-offset: 4px;
 }
 
-/* Static TR signature when the GPU is denied/lost or motion is reduced. */
-.has-atmosphere-fallback .menu-bg::after {
-  content: 'TR';
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: var(--type-1);
-  font-size: min(75vw, 90vh);
-  line-height: 1;
-  color: var(--fg);
-  opacity: 0.35;
+/* Explicit fallback: no substitute motif when WebGL is unavailable. */
+.has-atmosphere-fallback .menu-bg {
+  background-color: #000;
 }
 
 @media (prefers-reduced-motion: reduce) {

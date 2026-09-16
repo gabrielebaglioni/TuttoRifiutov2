@@ -143,9 +143,9 @@
 @media (max-width: 1000px), (any-pointer: coarse) {
   .pie-scroll-track { height: calc(var(--pie-stage-height, var(--pie-viewport-height, 100svh)) * 6); overflow-anchor: none; }
   .pie-scroll-track > .pie-transition { position: sticky; top: 0; height: var(--pie-stage-height, var(--pie-viewport-height, 100svh)); }
-  @supports (-webkit-touch-callout: none) {
-    /* Cover the screen after iOS chrome retracts, without resizing the sticky
-       track on every toolbar frame. No changes to Android's working track. */
+  @supports (height: 100lvh) {
+    /* Cover expanded mobile viewports on Android as well as iOS. Keep this
+       stable while browser bars retract so the sticky scroll track cannot jump. */
     .pie-scroll-track { --pie-viewport-height: calc(100lvh + 2px); }
   }
 }

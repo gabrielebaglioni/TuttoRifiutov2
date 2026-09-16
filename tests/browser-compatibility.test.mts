@@ -111,7 +111,7 @@ function menuHarness(reduced=false) {
  for(const node of c.document.querySelectorAll<HTMLElement>('button,a'))node.focus=()=>{Object.assign(c.document, { activeElement: node });};
  Object.assign(c.document, { activeElement: c.document.querySelector<HTMLElement>('.menu-toggle-btn') });
  Object.assign(c,{prefersReducedMotion:()=>reduced,THREE:{Scene:class{},WebGLRenderer:class{constructor(){throw new Error('No GPU');}}},SplitText:{create(){}},SITE_CONTENT:{'global.menu.items':[['Home','/'],['Eventi','/events']]},getIconSvg:()=>'<svg></svg>',isAllowedLink:()=>true,playMenuSound(){},resizeMenuRingGrain(){},initMenuRingGrain(){}});
- c.loadMenuLibrary=async()=>c.THREE;
+ c.loadMenuLibrary=()=>c.THREE;
  vm.runInNewContext(script('menu.ts'),c);
  c.document.dispatchEvent(new c.Event('DOMContentLoaded'));
  return c;
@@ -130,7 +130,7 @@ test('menu closes keyboard access, traps focus while open and restores it with E
  assert.equal(must(overlay).inert,true);assert.equal(must(c.document.querySelector<HTMLElement>('main')).inert,false);
  assert.equal(c.document.activeElement,toggle);assert.equal(must(toggle).getAttribute('aria-expanded'),'false');
 });
-test('reduced motion menu exposes all links immediately and retains TR fallback without GPU',()=>{
+test('reduced motion menu exposes all links immediately with the fallback without GPU',()=>{
  const c=menuHarness(true);must(c.document.querySelector<HTMLElement>('.menu-toggle-btn')).click();
  assert.equal(must(c.document.querySelector<HTMLElement>('.menu-overlay')).style.opacity,'1');
  assert.equal(must(c.document.querySelector<HTMLElement>('.menu-overlay-nav')).style.opacity,'1');
@@ -252,7 +252,7 @@ for (const surface of ['skyline','ring','atmosphere']) for (const immediateTheme
  if(surface==='skyline') vm.runInNewContext(script('skyline.ts'),c);
  if(surface==='ring') vm.runInNewContext(script('menu-ring-grain.ts')+';initMenuRingGrain(document.querySelector(".circular-menu"),700);',c);
  if(surface==='atmosphere') {
-   c.loadMenuLibrary=async()=>c.THREE;
+   c.loadMenuLibrary=()=>c.THREE;
    Object.assign(c,{atmosphereFailed:false,atmosphereAttempted:false,atmosphereRenderer:null,atmosphereScene:null,atmosphereCamera:null,atmosphereMaterial:null,atmosphereMesh:null,atmosphereFrame:null,lastAtmosphereFrame:null,isOpen:true,isMenuAnimating:false,matrixShader:{vertexShader:'',fragmentShader:''}});
    vm.runInNewContext(functions('menu.ts',['ensureAtmosphere','showAtmosphereFallback','initAtmosphere','resizeAtmosphere','animateAtmosphere'])+';ensureAtmosphere();',c);
    await new Promise(resolve=>setImmediate(resolve));

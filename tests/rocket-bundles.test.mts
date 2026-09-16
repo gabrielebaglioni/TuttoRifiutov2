@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 import { measureRoute } from '../scripts/measure-rocket.mts';
-test('closed menu does not pull Three into its initial dependency graph', async () => {
+test('menu renderer is included in the initial dependency graph without a deferred request', async () => {
   const result = await build({ entryPoints: ['src/scripts/menu.ts'], bundle: true, splitting: true, format: 'esm', outdir: '/tmp/rocket-bundle-check', write: false, metafile: true, logLevel: 'silent' });
   const outputs = result.metafile.outputs;
   const entry = Object.entries(outputs).find(([, value]) => value.entryPoint === 'src/scripts/menu.ts');
   assert.ok(entry, 'menu entry must exist in the bundle graph');
   const inputs = Object.keys(entry[1].inputs);
-  assert.equal(inputs.some(path => path.includes('node_modules/three/')), false);
-  assert.ok(Object.values(outputs).some(output => output.imports.some(imported => imported.kind === 'dynamic-import')));
+  assert.equal(inputs.some(path => path.includes('node_modules/three/')), true);
+  assert.equal(Object.values(outputs).some(output => output.imports.some(imported => imported.kind === 'dynamic-import')), false);
 });
 
 test('built public pages never request the admin island or Svelte renderer', async () => {

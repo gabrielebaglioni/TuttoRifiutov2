@@ -38,22 +38,18 @@ test('metadata failure after consuming the asset still returns a readable fallba
   assert.equal(await response.text(), html);
 });
 
-test('menu library retries a rejected import and shares successful requests', async () => {
+test('menu library is loaded with the initial module, before any menu request', () => {
   const source = ts.transpileModule(readFileSync('src/scripts/menu-library.ts', 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
   const exports: Record<string, unknown> = {};
   let attempts = 0;
-  vm.runInNewContext(source, { exports, require() { if (++attempts === 1) throw new Error('offline'); return { marker: 'loaded' }; } });
+  vm.runInNewContext(source, { exports, require() { attempts++; return { marker: 'loaded' }; } });
+  assert.equal(attempts, 1, 'the initial module must already include the renderer');
   const load = exports.loadMenuLibrary;
   assert.equal(typeof load, 'function');
   if (typeof load !== 'function') throw new Error('missing loader');
-  const first: Promise<unknown> = load();
+  const first = load();
   assert.equal(load(), first);
-  await assert.rejects(first, /offline/);
-  const second: Promise<unknown> = load();
-  assert.notEqual(second, first);
-  await second;
-  assert.equal(attempts, 2);
-  assert.equal(load(), second);
+  assert.equal(attempts, 1);
 });
 
 for (const component of ['EventCard', 'EventDetail']) test(`${component} retains URL and imported-image video posters`, () => {
