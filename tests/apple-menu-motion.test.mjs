@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {parse} from 'acorn';
 import vm from 'node:vm';
-import * as policy from '../src/scripts/motion-policy.js';
+import * as policy from '../src/scripts/motion-policy.ts';
 import {parseHTML} from 'linkedom';
 import {bindThemeUniforms} from '../src/scripts/theme.js';
 function functions(file,names){const s=readFileSync(new URL('../src/scripts/'+file,import.meta.url),'utf8');return parse(s,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type==='FunctionDeclaration'&&names.includes(n.id.name)).map(n=>s.slice(n.start,n.end)).join('\n');}

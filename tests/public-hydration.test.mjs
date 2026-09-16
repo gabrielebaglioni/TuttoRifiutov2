@@ -7,7 +7,7 @@ import { eventsForPublicGroup, renderArchive, renderDetail, renderEvents } from 
 import { escapeAttribute, rewriteMetadata } from "../worker/html-metadata.js";
 import { routeRequest } from "../worker/router.js";
 import { ARCHIVE_DEFAULTS, EVENT_DEFAULTS } from "../worker/collections-defaults.js";
-import { validMediaSources } from "../src/data/media-source.js";
+import { validMediaSources } from "../src/data/media-source.ts";
 
 test("public hydration accepts only relative, HTTPS, and mailto links", () => {
   assert.equal(isAllowedLink("/eventi"), true);

@@ -2,7 +2,7 @@
 export const ZOOM_ORIGIN = { x: 424, y: 400 };
 export const MASK_BOX = { x: 0, y: 0, width: 800, height: 800 };
 
-export function maskZoomMultiplier(width, height, stageSize = Math.min(width, height) * 0.8) {
+export function maskZoomMultiplier(width: number, height: number, stageSize = Math.min(width, height) * 0.8): number {
   // A 112-unit radius around the target is inside the opaque core of splatter.webp.
   // Fit the farthest viewport corner inside it without allocating a larger canvas.
   const unitsPerPixel = 800 / Math.max(1, stageSize);

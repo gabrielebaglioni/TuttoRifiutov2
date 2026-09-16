@@ -1,7 +1,7 @@
 import { optimizeImage, variantFieldsFor } from "./admin-image-optimizer.js";
 import { contentLabel, fieldLabel } from "./admin-labels.js";
-import { SITE_CONTENT } from "../data/site-content.js";
-import { THEME_KEY, validatePalette } from '../data/theme.js';
+import { SITE_CONTENT } from "../data/site-content.ts";
+import { THEME_KEY, validatePalette } from '../data/theme.ts';
 import { themeEditor } from './admin-theme.js';
 import {
   AdminDrafts,

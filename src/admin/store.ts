@@ -1,5 +1,5 @@
 import { AdminDrafts, AuthEpoch, DirtyResources, mergeMediaSlots, buildContentRequest, buildCollectionReorderRequest, buildMediaMetadataRequest, buildMediaOrderRequest } from '../scripts/admin-model.js';
-import { THEME_KEY, validatePalette } from '../data/theme.js';
+import { THEME_KEY, validatePalette } from '../data/theme.ts';
 
 export type Value = string | number | boolean | null | Value[] | { [key: string]: Value };
 export type Kind = 'events' | 'archive';

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createAdminStore } from '../src/admin/store.ts';
 import { collectionKey } from '../src/admin/store.ts';
 import { rocketWorkerFixture } from './rocket-worker-fixture.mjs';
-import { THEME_KEY } from '../src/data/theme.js';
+import { THEME_KEY } from '../src/data/theme.ts';
 
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status });
 test('Svelte admin store ignores a session response superseded by logout', async () => {

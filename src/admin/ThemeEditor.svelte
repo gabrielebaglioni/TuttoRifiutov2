@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { THEME_TOKENS, DEFAULT_PALETTE, validatePalette, themeCss, contrastRatio } from '../data/theme.js';
+  import { THEME_TOKENS, DEFAULT_PALETTE, validatePalette, themeCss, contrastRatio } from '../data/theme.ts';
   let { value, onchange }: { value: Record<string, string>; onchange: (value: any, path: string[]) => void } = $props();
   const pairs = [['Testo / fondo', 'foreground', 'background'], ['Testo sagoma / accento', 'foreground', 'accent'], ['Link menu / accento', 'background', 'accent'], ['Link menu / inchiostro', 'background', 'foreground']];
 </script>

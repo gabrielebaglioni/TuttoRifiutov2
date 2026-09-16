@@ -1,6 +1,6 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { runEventTransition } from "./event-transition.js";
+import { runEventTransition } from "./event-transition.ts";
 
 document.addEventListener("DOMContentLoaded", () => {
   const tabs = [...document.querySelectorAll("[data-event-tab]")];

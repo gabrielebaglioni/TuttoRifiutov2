@@ -1,4 +1,4 @@
-import { THEME_TOKENS, DEFAULT_PALETTE, validatePalette, themeProperties, contrastRatio } from '../data/theme.js';
+import { THEME_TOKENS, DEFAULT_PALETTE, validatePalette, themeProperties, contrastRatio } from '../data/theme.ts';
 
 // Only the value editor belongs here. Saving, CSRF, draft revisions and busy
 // controls remain owned by the existing CMS content-card lifecycle.

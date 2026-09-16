@@ -1,5 +1,5 @@
-import { SITE_CONTENT } from "../data/site-content.js";
-import { THEME_KEY } from '../data/theme.js';
+import { SITE_CONTENT } from "../data/site-content.ts";
+import { THEME_KEY } from '../data/theme.ts';
 import { publicTheme } from './theme.js';
 
 const REQUEST_TIMEOUT_MS = 4_000;

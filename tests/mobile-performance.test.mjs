@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { parse } from 'acorn';
 import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
-import { usesTouchLayout } from '../src/scripts/motion-policy.js';
+import { usesTouchLayout } from '../src/scripts/motion-policy.ts';
 
 function functions(file, names) {
   const source = readFileSync(new URL(`../src/scripts/${file}`, import.meta.url), 'utf8');

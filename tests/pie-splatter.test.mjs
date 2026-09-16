@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import { existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { pieFrame } from '../src/scripts/motion-policy.js';
+import { pieFrame } from '../src/scripts/motion-policy.ts';
 
 test('splatter alpha stays transparent outside the silhouette and covers the viewport after zoom', async () => {
   const asset = new URL('../src/assets/animation/splatter.webp', import.meta.url);
   assert.ok(existsSync(asset), 'dedicated splatter mask must exist');
-  const { ZOOM_ORIGIN, maskZoomMultiplier } = await import('../src/scripts/pie-geometry.js');
+  const { ZOOM_ORIGIN, maskZoomMultiplier } = await import('../src/scripts/pie-geometry.ts');
   assert.ok(statSync(asset).size < 100_000, 'mask stays lightweight');
   const { data, info } = await sharp(fileURLToPath(asset)).resize(800, 800).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const alpha = (x, y) => data[(y * info.width + x) * 4 + 3] ?? 0;

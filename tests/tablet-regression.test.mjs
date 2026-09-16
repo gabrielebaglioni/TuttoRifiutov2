@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {parse} from 'acorn';
 import vm from 'node:vm';
 import {parseHTML} from 'linkedom';
-import * as motion from '../src/scripts/motion-policy.js';
+import * as motion from '../src/scripts/motion-policy.ts';
 function source(file, names) {
  const text=readFileSync(new URL(`../src/scripts/${file}`,import.meta.url),'utf8');
  return parse(text,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>names?n.type==='FunctionDeclaration'&&names.includes(n.id.name):n.type!=='ImportDeclaration').map(n=>text.slice(n.start,n.end)).join('\n');

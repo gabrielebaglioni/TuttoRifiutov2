@@ -1,6 +1,6 @@
-import { parseCanonicalMediaKey, validMediaSources } from "../src/data/media-source.js";
+import { parseCanonicalMediaKey, validMediaSources } from "../src/data/media-source.ts";
 import { getSession } from "./auth.js";
-import { isPublicEventStatus } from "../src/data/event-status.js";
+import { isPublicEventStatus } from "../src/data/event-status.ts";
 
 export const VARIANTS = Object.freeze([
   { field: "small", width: 640 },

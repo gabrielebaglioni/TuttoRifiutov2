@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { prefersReducedMotion } from './motion-policy.js';
+import { prefersReducedMotion } from './motion-policy.ts';
 import { contentReady } from './content-hydration.js';
 import { ensureCollectionsReadiness } from './collections-readiness.js';
 import { waitForInitialResources } from './loading-readiness.js';

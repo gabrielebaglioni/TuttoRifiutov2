@@ -4,10 +4,10 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {parse} from 'acorn';
 import {parseHTML} from 'linkedom';
-import * as policy from '../src/scripts/motion-policy.js';
+import * as policy from '../src/scripts/motion-policy.ts';
 import * as Three from 'three';
 import {themeEditor} from '../src/scripts/admin-theme.js';
-import {DEFAULT_PALETTE} from '../src/data/theme.js';
+import {DEFAULT_PALETTE} from '../src/data/theme.ts';
 import {waitForInitialResources} from '../src/scripts/loading-readiness.js';
 
 function script(file) {

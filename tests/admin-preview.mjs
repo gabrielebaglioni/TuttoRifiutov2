@@ -1,6 +1,6 @@
 // Disposable local UI fixture. No production credentials, database or writes.
 import { createServer } from 'node:http';
-import { SITE_CONTENT } from '../src/data/site-content.js';
+import { SITE_CONTENT } from '../src/data/site-content.ts';
 let content = structuredClone(SITE_CONTENT);
 let collections = { events: [], archive: [] };
 createServer(async (req, res) => {

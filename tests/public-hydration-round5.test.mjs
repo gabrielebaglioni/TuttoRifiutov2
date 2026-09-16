@@ -3,8 +3,8 @@ import test from "node:test";
 import { parseHTML } from "linkedom";
 import { applyContent, hydrateContent } from "../src/scripts/content-hydration.js";
 import { renderDetail } from "../src/scripts/collections-hydration.js";
-import { SITE_CONTENT } from "../src/data/site-content.js";
-import { validMediaSources } from "../src/data/media-source.js";
+import { SITE_CONTENT } from "../src/data/site-content.ts";
+import { validMediaSources } from "../src/data/media-source.ts";
 import { mediaJson } from "../worker/media.js";
 import { routeRequest } from "../worker/router.js";
 

@@ -1,6 +1,8 @@
 // Values in this object are the static-site fallback and the complete editable
 // copy schema for the public pages. Keep keys stable: D1 overrides use them.
-import { THEME_KEY, DEFAULT_PALETTE } from './theme.js';
+import { THEME_KEY, DEFAULT_PALETTE } from './theme.ts';
+export type SiteContentLeaf = string | Readonly<Record<string, string>>;
+export type SiteContentValue = SiteContentLeaf | SiteContentValue[];
 export const SITE_CONTENT = {
   [THEME_KEY]: DEFAULT_PALETTE,
   "site.name": "Tutto Rifiuto",
@@ -132,4 +134,7 @@ export const SITE_CONTENT = {
     ["Contatti", "/contact"],
     ["Manifesto", "/"],
   ],
-};
+} satisfies Record<string, SiteContentValue>;
+
+export type SiteContent = typeof SITE_CONTENT;
+export type SiteContentKey = keyof SiteContent;

@@ -8,7 +8,7 @@ import { publishedSnapshot } from '../worker/published-snapshot.js';
 import { DatabaseSync } from 'node:sqlite';
 import { readdirSync, readFileSync } from 'node:fs';
 import sharp from 'sharp';
-import { THEME_KEY, DEFAULT_PALETTE } from '../src/data/theme.js';
+import { THEME_KEY, DEFAULT_PALETTE } from '../src/data/theme.ts';
 
 test('only canonical uploaded WebP paths are eligible for download', () => {
   assert.throws(() => mediaPaths({ events: [{ media: [{ sources: [{ src: '/media/../../.git/config' }] }] }], archive: [] }));

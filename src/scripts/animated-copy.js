@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { prefersReducedMotion } from './motion-policy.js';
+import { prefersReducedMotion } from './motion-policy.ts';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";

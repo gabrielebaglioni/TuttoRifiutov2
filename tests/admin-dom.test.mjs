@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { parseHTML } from "linkedom";
 import { createAdminController } from "../src/scripts/admin.js";
-import { DEFAULT_PALETTE, THEME_KEY } from '../src/data/theme.js';
+import { DEFAULT_PALETTE, THEME_KEY } from '../src/data/theme.ts';
 
 test('theme draft survives tab switch, validates before atomic CSRF save, cancels and restores', async () => {
   const { document, window } = parseHTML(SHELL);

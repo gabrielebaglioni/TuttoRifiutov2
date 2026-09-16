@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "host": "astro dev --host",
     "test": "node --test tests/*.test.mjs",
+    "check:types": "tsc -p tsconfig.migration.json",
     "check:rocket": "svelte-check --tsconfig ./tsconfig.rocket.json",
     "db:generate": "drizzle-kit generate",
     "content:sync": "node scripts/local-content-sync.mjs"
@@ -35,6 +36,7 @@
     "three": "^0.182.0"
   },
   "devDependencies": {
+    "@types/three": "^0.182.0",
     "acorn": "8.15.0",
     "drizzle-kit": "0.31.4",
     "esbuild": "0.28.2",

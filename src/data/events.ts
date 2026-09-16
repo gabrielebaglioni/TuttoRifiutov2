@@ -1,3 +1,4 @@
+import type { ImageMetadata } from "astro";
 import bruciaRifiuti from "../assets/optimized/eventi/bruciaRifiuti.webp";
 import attachinoMorto from "../assets/optimized/eventi/attachinoMorto.webp";
 import saltaRifiuti from "../assets/optimized/eventi/saltaRifiuti.webp";
@@ -7,13 +8,45 @@ import giornataTR from "../assets/optimized/eventi/giornataTR.webp";
 import nucleare from "../assets/optimized/eventi/nucleare.webp";
 import pianetaSonoro from "../assets/optimized/eventi/pianetaSonoro.webp";
 import work01 from "../assets/optimized/work/work_01.webp";
-import { eventsForPublicGroup } from "./event-status.js";
+import { eventsForPublicGroup } from "./event-status.ts";
 import work02 from "../assets/optimized/work/work_02.webp";
 import work03 from "../assets/optimized/work/work_03.webp";
 import work04 from "../assets/optimized/work/work_04.webp";
 import work05 from "../assets/optimized/work/work_05.webp";
 
-export const events = [
+export type EventPublicationStatus = "upcoming" | "published" | "past" | "draft";
+export type ContentPair = [label: string, value: string];
+export type ContentColumns = ContentPair[][];
+export interface ImageMedia {
+  type: "image";
+  src: ImageMetadata | string;
+  alt: string;
+}
+export interface VideoMedia {
+  type: "video";
+  src: string;
+  poster: ImageMetadata | string;
+  alt: string;
+}
+export type EventMedia = ImageMedia | VideoMedia;
+export interface EventRecord {
+  slug: string;
+  title: string;
+  code: string;
+  status: EventPublicationStatus;
+  summary: string;
+  seo: { title: string; description: string };
+  cardMedia: EventMedia;
+  heroMedia: ImageMedia;
+  meta: string[];
+  description: string;
+  info: ContentColumns;
+  detailMedia: EventMedia[];
+  outro: string;
+  outroInfo: ContentColumns;
+}
+
+export const events: EventRecord[] = [
   {
     slug: "giornata-tutto-rifiuto",
     title: "Giornata Tutto Rifiuto",
@@ -176,12 +209,13 @@ export const eventGroups = {
   past: eventsForPublicGroup(events, "past"),
 };
 
-export function getEventBySlug(slug) {
+export function getEventBySlug(slug: string): EventRecord | undefined {
   return events.find((event) => event.slug === slug);
 }
 
 // Public API defaults are kept JSON-safe without changing the imported Astro
 // image objects used by the server-rendered fallback components.
-export const eventCollectionDefaults = events.map((event, position) =>
+export type EventCollectionDefault = EventRecord & { position: number };
+export const eventCollectionDefaults: EventCollectionDefault[] = events.map((event, position) =>
   JSON.parse(JSON.stringify({ ...event, position })),
 );

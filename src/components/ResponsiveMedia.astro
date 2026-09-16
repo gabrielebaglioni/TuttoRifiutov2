@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import { validMediaSources } from "../data/media-source.js";
+import { validMediaSources } from "../data/media-source.ts";
 
 const { media, width, height, loading = "lazy", sizes = "(max-width: 1000px) 100vw, 40vw", class: className = "" } = Astro.props;
 const isVideo = media?.type === "video";

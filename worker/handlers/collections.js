@@ -5,7 +5,7 @@ import { requireAdmin } from "../auth.js";
 import { isAllowedLink, MAX_CONTENT_STRING_LENGTH } from "../validation.js";
 import { isSafeMediaKey, keysForVariantSet, mediaJson } from "../media.js";
 import { isSlug } from "../slug.js";
-import { isKnownEventStatus, isPublicEventStatus } from "../../src/data/event-status.js";
+import { isKnownEventStatus, isPublicEventStatus } from "../../src/data/event-status.ts";
 
 const HEADERS = { "cache-control": "no-store" };
 const MAX_BODY_BYTES = 1_000_000;

@@ -1,5 +1,5 @@
 import Lenis from "lenis";
-import { usesTouchLayout, appleHeroScrollMode, prefersReducedMotion } from "./motion-policy.js";
+import { usesTouchLayout, appleHeroScrollMode, prefersReducedMotion } from "./motion-policy.ts";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);

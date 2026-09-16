@@ -14,9 +14,9 @@ import { isSlug } from "./slug.js";
 import { getContentOverridesForKeys } from "./db.js";
 import { mergeContent } from "./handlers/content.js";
 import { SITE_CONTENT } from "./content-defaults.js";
-import { THEME_KEY, themeCss } from '../src/data/theme.js';
+import { THEME_KEY, themeCss } from '../src/data/theme.ts';
 import { rewriteMetadata } from "./html-metadata.js";
-import { isPublicEventStatus } from "../src/data/event-status.js";
+import { isPublicEventStatus } from "../src/data/event-status.ts";
 import { embeddedHtmlResponse } from "./static-html.js";
 
 function methodNotAllowed(allow) {

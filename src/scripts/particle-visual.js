@@ -1,4 +1,4 @@
-import { meaningfulResize, usesTouchLayout, particleScale, prefersReducedMotion } from "./motion-policy.js";
+import { meaningfulResize, usesTouchLayout, particleScale, prefersReducedMotion } from "./motion-policy.ts";
 import { publicTheme } from './theme.js';
 import { installTouchExplosion } from './touch-explosion.js';
 let particleViewport = { width: window.innerWidth, height: window.innerHeight };

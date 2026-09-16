@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import gsapPackage from "gsap/dist/gsap.js";
-import { runEventTransition } from "../src/scripts/event-transition.js";
+import { runEventTransition } from "../src/scripts/event-transition.ts";
 const gsap = gsapPackage.gsap;
 
 test("events change only at full coverage and dissolve once before unlocking", () => {

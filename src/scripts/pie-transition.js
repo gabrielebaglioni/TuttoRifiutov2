@@ -4,8 +4,8 @@ import { SplitText } from "gsap/SplitText";
 import { contentReady } from "./content-hydration.js";
 import { createPieCanvas } from "./pie-canvas.js";
 import { publicTheme } from './theme.js';
-import { meaningfulResize, pieFrame, usesTouchLayout, prefersReducedMotion } from "./motion-policy.js";
-import { ZOOM_ORIGIN, MASK_BOX, maskZoomMultiplier } from "./pie-geometry.js";
+import { meaningfulResize, pieFrame, usesTouchLayout, prefersReducedMotion } from "./motion-policy.ts";
+import { ZOOM_ORIGIN, MASK_BOX, maskZoomMultiplier } from "./pie-geometry.ts";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 

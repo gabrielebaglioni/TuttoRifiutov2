@@ -1,8 +1,8 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SITE_CONTENT } from "../data/site-content.js";
+import { SITE_CONTENT } from "../data/site-content.ts";
 import { contentReady } from "./content-hydration.js";
-import { clientMotion, prefersReducedMotion } from "./motion-policy.js";
+import { clientMotion, prefersReducedMotion } from "./motion-policy.ts";
 
 gsap.registerPlugin(ScrollTrigger);
 

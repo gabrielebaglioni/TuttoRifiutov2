@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "exactOptionalPropertyTypes": true,
+    "noEmit": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "strict": true,
+    "useUnknownInCatchVariables": true
+  },
+  "include": [
+    ".astro/types.d.ts",
+    "src/data/*.ts",
+    "src/scripts/motion-policy.ts",
+    "src/scripts/pie-geometry.ts",
+    "src/scripts/event-transition.ts",
+    "src/scripts/gallery-media.ts",
+    "tests/types/contracts.ts"
+  ],
+  "exclude": ["dist", "node_modules"]
+}

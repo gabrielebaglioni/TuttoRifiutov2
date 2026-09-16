@@ -1,5 +1,5 @@
 import { SITE_CONTENT } from "./content-defaults.js";
-import { THEME_KEY, validatePalette } from '../src/data/theme.js';
+import { THEME_KEY, validatePalette } from '../src/data/theme.ts';
 
 export const MAX_CONTENT_STRING_LENGTH = 20_000;
 

@@ -1,4 +1,4 @@
-import { canvasSize, pieFrame } from "./motion-policy.js";
+import { canvasSize, pieFrame } from "./motion-policy.ts";
 
 // The two masks are rasterized once. Zoom never allocates an enlarged surface:
 // only the viewport-sized canvas is repainted, with at most two drawImage calls.

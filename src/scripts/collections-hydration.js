@@ -1,9 +1,9 @@
 import { fetchJson, isAllowedLink } from "./content-hydration.js";
-import { validMediaSources } from "../data/media-source.js";
+import { validMediaSources } from "../data/media-source.ts";
 import { ensureCollectionsReadiness } from "./collections-readiness.js";
-import { eventsForPublicGroup } from "../data/event-status.js";
+import { eventsForPublicGroup } from "../data/event-status.ts";
 
-export { eventsForPublicGroup } from "../data/event-status.js";
+export { eventsForPublicGroup } from "../data/event-status.ts";
 
 const detailFallbacks = new WeakMap();
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_PALETTE, validatePalette, themeCss, themeProperties } from '../src/data/theme.js';
+import { DEFAULT_PALETTE, validatePalette, themeCss, themeProperties } from '../src/data/theme.ts';
 import { validateContentValue } from '../worker/validation.js';
 import { parseHTML } from 'linkedom';
 import { routeRequest } from '../worker/router.js';

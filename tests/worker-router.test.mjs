@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { jsonResponse } from "../worker/response.js";
 import { routeRequest } from "../worker/router.js";
-import {DEFAULT_PALETTE} from '../src/data/theme.js';
+import {DEFAULT_PALETTE} from '../src/data/theme.ts';
 
 test('static detail theme refresh strips old representation validators for both collection families', async () => {
   for(const path of ['/eventi/musica','/archivio/parole']) {

@@ -4,10 +4,10 @@ import { bindThemeUniforms } from './theme.js';
 import { SplitText } from "gsap/SplitText";
 import { getIconSvg } from "./icons.js";
 import { matrixShader } from "./menuShaders.js";
-import { SITE_CONTENT } from "../data/site-content.js";
+import { SITE_CONTENT } from "../data/site-content.ts";
 import { isAllowedLink } from "./content-hydration.js";
 import { playMenuSound } from "./menu-audio.js";
-import { meaningfulResize, usesTouchLayout, prefersReducedMotion } from "./motion-policy.js";
+import { meaningfulResize, usesTouchLayout, prefersReducedMotion } from "./motion-policy.ts";
 let menuViewport = { width: window.innerWidth, height: window.innerHeight };
 
 gsap.registerPlugin(SplitText);

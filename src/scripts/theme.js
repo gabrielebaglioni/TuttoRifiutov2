@@ -1,4 +1,4 @@
-import { THEME_TOKENS, DEFAULT_PALETTE, validatePalette, themeProperties, colorChannels } from '../data/theme.js';
+import { THEME_TOKENS, DEFAULT_PALETTE, validatePalette, themeProperties, colorChannels } from '../data/theme.ts';
 
 export function createThemeController(root, computedStyle = (element) => root.defaultView.getComputedStyle(element)) {
   const listeners = new Set();

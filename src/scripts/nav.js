@@ -1,4 +1,4 @@
-import { prefersReducedMotion } from './motion-policy.js';
+import { prefersReducedMotion } from './motion-policy.ts';
 // navigation clock with blinking colon
 const clockEl = document.querySelector(".nav-clock p");
 const hoursEl = clockEl.querySelector('[data-content-key="global.nav.clock_hours"]');

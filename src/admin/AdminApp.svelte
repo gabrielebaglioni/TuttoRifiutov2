@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { createAdminStore, sections, sectionFor, collectionKey, type Section, type Kind } from './store';
   import { contentLabel } from '../scripts/admin-labels.js';
-  import { THEME_KEY } from '../data/theme.js';
+  import { THEME_KEY } from '../data/theme.ts';
   import ValueEditor from './ValueEditor.svelte';
   import ThemeEditor from './ThemeEditor.svelte';
   import CollectionEditor from './CollectionEditor.svelte';

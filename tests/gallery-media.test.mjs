@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { loadGalleryImage, galleryTexture, galleryVelocity } from '../src/scripts/gallery-media.js';
+import { loadGalleryImage, galleryTexture, galleryVelocity } from '../src/scripts/gallery-media.ts';
 
 test('fast scroll never bends image vertices through the camera near plane', () => {
   for (const input of [-10000, -100, 0, 100, 10000, NaN, Infinity]) {

@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { usesTouchLayout, appleHeroScrollMode, lockHeroViewport, prefersReducedMotion } from "./motion-policy.js";
+import { usesTouchLayout, appleHeroScrollMode, lockHeroViewport, prefersReducedMotion } from "./motion-policy.ts";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);

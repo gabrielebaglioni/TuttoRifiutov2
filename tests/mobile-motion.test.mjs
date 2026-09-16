@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canvasSize, meaningfulResize, pieFrame, clientMotion } from "../src/scripts/motion-policy.js";
+import { canvasSize, meaningfulResize, pieFrame, clientMotion } from "../src/scripts/motion-policy.ts";
 
 test("mobile address-bar height changes do not reset the animation but rotation does", () => {
   assert.equal(meaningfulResize({ width: 390, height: 844 }, { width: 390, height: 730 }, true), false);

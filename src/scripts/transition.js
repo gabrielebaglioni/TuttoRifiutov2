@@ -1,5 +1,5 @@
 import gsap from "gsap";
-import { usesTouchLayout, prefersReducedMotion } from "./motion-policy.js";
+import { usesTouchLayout, prefersReducedMotion } from "./motion-policy.ts";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { playMenuSound } from "./menu-audio.js";
 
