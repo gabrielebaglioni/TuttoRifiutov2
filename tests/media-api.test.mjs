@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import sharp from "sharp";
-import { hashToken } from "../worker/auth.js";
-import { routeRequest } from "../worker/router.js";
-import { retryTombstones } from "../worker/handlers/media.js";
-import { inspectWebp, mediaJson, serveMedia, validateVariant } from "../worker/media.js";
+import { hashToken } from "../worker/auth.ts";
+import { routeRequest } from "../worker/router.ts";
+import { retryTombstones } from "../worker/handlers/media.ts";
+import { inspectWebp, mediaJson, serveMedia, validateVariant } from "../worker/media.ts";
 
 const WEBP = webp(640, 360);
 const widths = [640, 1280, 2048];
@@ -293,6 +293,12 @@ async function environment(options = {}) {
 function uploadRequest(env, body = form()) {
   return new Request("https://site.test/api/admin/media", { method: "POST", headers: { cookie: env.cookie, "x-csrf-token": env.csrfToken }, body });
 }
+
+test("WebP inspection rejects non-buffer results from an invalid file reader", async () => {
+  const valid = image(640);
+  const bytes = new Uint8Array(await valid.arrayBuffer());
+  assert.equal(await inspectWebp({ size: bytes.length, arrayBuffer: async () => Array.from(bytes) }), null);
+});
 
 test("media variants require a nonempty WebP MIME/signature pair within their exact budget", async () => {
   assert.equal(await validateVariant(image(640), 2_500_000), true);

@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { hashToken } from "../worker/auth.js";
-import { PENDING_LEASE_MS, retryTombstones } from "../worker/handlers/media.js";
-import { routeRequest } from "../worker/router.js";
-import { serveMedia } from "../worker/media.js";
+import { hashToken } from "../worker/auth.ts";
+import { PENDING_LEASE_MS, retryTombstones } from "../worker/handlers/media.ts";
+import { routeRequest } from "../worker/router.ts";
+import { serveMedia } from "../worker/media.ts";
 
 const migrations = [
   "drizzle/0000_admin_cms.sql",

@@ -1,8 +1,9 @@
-import { requireAdmin } from "../auth.js";
-import { materializeCollectionItem } from "./collections.js";
-import { jsonResponse } from "../response.js";
-import { MAX_VARIANT_BYTES, VARIANTS, inspectWebp, isSafeMediaKey, keysForVariantSet, mediaJson, serveMedia, validateVariant } from "../media.js";
-import { isSlug, MAX_SLUG_BYTES } from "../slug.js";
+import { requireAdmin } from "../auth.ts";
+import { materializeCollectionItem } from "./collections.ts";
+import { jsonResponse } from "../response.ts";
+import { MAX_VARIANT_BYTES, VARIANTS, inspectWebp, isSafeMediaKey, keysForVariantSet, mediaJson, serveMedia, validateVariant } from "../media.ts";
+import { isSlug, MAX_SLUG_BYTES } from "../slug.ts";
+import { isRecord, type CollectionKind, type DatabaseReader, type MediaMetadata, type MediaOrderPayload, type MediaRow, type MediaRole, type MediaStore, type MediaVariant, type OrderEntry, type ParentRow, type UploadPayload, type WorkerContext, type WorkerDatabase, type WorkerEnv } from '../types.ts';
 
 const HEADERS = { "cache-control": "no-store" };
 const MAX_REQUEST_BYTES = 8_000_000;
@@ -19,14 +20,14 @@ const ASPECT_RATIO_TOLERANCE = 0.02;
 // Lowering it requires a heartbeat so a live reservation cannot be reclaimed early.
 export const PENDING_LEASE_MS = 5 * 60 * 1000;
 
-function error(message, status) { return jsonResponse({ error: message }, { status, headers: HEADERS }); }
-function config(ownerType) {
+function error(message: string, status: number) { return jsonResponse({ error: message }, { status, headers: HEADERS }); }
+function config(ownerType: CollectionKind) {
   return ownerType === "events"
-    ? { table: "event_media", parent: "event_id", parentTable: "events" }
-    : { table: "archive_media", parent: "archive_item_id", parentTable: "archive_items" };
+    ? { table: "event_media", parent: "event_id" as const, parentTable: "events" }
+    : { table: "archive_media", parent: "archive_item_id" as const, parentTable: "archive_items" };
 }
 
-async function boundedFormData(request) {
+async function boundedFormData(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
   const declared = Number(request.headers.get("content-length"));
   if (!contentType.toLowerCase().startsWith("multipart/form-data;") || (request.headers.has("content-length") && (!Number.isSafeInteger(declared) || declared < 0 || declared > MAX_REQUEST_BYTES))) return null;
@@ -49,12 +50,12 @@ async function boundedFormData(request) {
   } catch { return null; }
 }
 
-function single(form, name) {
+function single(form: FormData, name: string) {
   const entries = form.getAll(name);
   return entries.length === 1 ? entries[0] : null;
 }
 
-async function uploadPayload(request) {
+async function uploadPayload(request: Request): Promise<UploadPayload | null> {
   const form = await boundedFormData(request);
   if (!form) return null;
   const ownerType = single(form, "ownerType");
@@ -62,35 +63,36 @@ async function uploadPayload(request) {
   const role = single(form, "role");
   const position = single(form, "position");
   const alt = single(form, "alt");
-  if (!OWNER_TYPES.has(ownerType) || !isSlug(ownerSlug) || new TextEncoder().encode(ownerSlug).byteLength > MAX_OWNER_SLUG_BYTES || !["cover", "detail"].includes(role) || !/^(0|[1-9]\d*)$/.test(position) || !Number.isSafeInteger(Number(position)) || Number(position) > 1_000_000 || (role === "cover" && Number(position) !== 0) || typeof alt !== "string" || alt.length > MAX_ALT_LENGTH) return null;
-  const variants = [];
+  if ((ownerType !== 'events' && ownerType !== 'archive') || !isSlug(ownerSlug) || new TextEncoder().encode(ownerSlug).byteLength > MAX_OWNER_SLUG_BYTES || (role !== 'cover' && role !== 'detail') || typeof position !== 'string' || !/^(0|[1-9]\d*)$/.test(position) || !Number.isSafeInteger(Number(position)) || Number(position) > 1_000_000 || (role === "cover" && Number(position) !== 0) || typeof alt !== "string" || alt.length > MAX_ALT_LENGTH) return null;
+  const variants: MediaVariant[] = [];
   for (const variant of VARIANTS) {
     const files = form.getAll(variant.field);
     if (!files.length) continue;
     const file = files.length === 1 ? files[0] : null;
-    if (!await validateVariant(file, MAX_VARIANT_BYTES)) return null;
-    const dimensions = await inspectWebp(file);
+    if (!file || typeof file === 'string' || !await validateVariant(file, MAX_VARIANT_BYTES)) return null;
+    // validateVariant already inspected this immutable File successfully.
+    const dimensions = (await inspectWebp(file))!;
     if (dimensions.width > MAX_FIELD_WIDTH[variant.field]) return null;
     variants.push({ ...variant, file, width: dimensions.width, height: dimensions.height });
   }
-  if (!variants.length || variants.some((variant, index) => index && variant.width <= variants[index - 1].width)) return null;
-  const ratio = variants[0].width / variants[0].height;
+  if (!variants.length || variants.some((variant, index) => index && variant.width <= variants[index - 1]!.width)) return null;
+  const ratio = variants[0]!.width / variants[0]!.height;
   if (variants.some((variant) => Math.abs((variant.width / variant.height) - ratio) / ratio > ASPECT_RATIO_TOLERANCE)) return null;
   return { ownerType, ownerSlug, role, position: Number(position), alt, variants };
 }
 
-async function parentFor(db, ownerType, ownerSlug) {
+async function parentFor(db: WorkerDatabase, ownerType: CollectionKind, ownerSlug: string) {
   const table = ownerType === "events" ? "events" : "archive_items";
-  const present = await db.prepare(`SELECT id FROM ${table} WHERE slug = ?`).bind(ownerSlug).first();
+  const present = await db.prepare(`SELECT id FROM ${table} WHERE slug = ?`).bind(ownerSlug).first<{ id: number }>();
   return present ?? materializeCollectionItem(db, ownerType, ownerSlug);
 }
 
-async function currentMedia(db, ownerType, parentId, role, position) {
+async function currentMedia(db: DatabaseReader, ownerType: CollectionKind, parentId: number, role: MediaRole, position: number) {
   const { table, parent } = config(ownerType);
-  return db.prepare(`SELECT * FROM ${table} WHERE ${parent} = ? AND role = ? AND position = ? AND state = 'active'`).bind(parentId, role, position).first();
+  return db.prepare(`SELECT * FROM ${table} WHERE ${parent} = ? AND role = ? AND position = ? AND state = 'active'`).bind(parentId, role, position).first<MediaRow>();
 }
 
-function insertStatement(db, ownerType, parentId, key, role, alt, position, widths, sources, reservationStartedAt) {
+function insertStatement(db: DatabaseReader, ownerType: CollectionKind, parentId: number, key: string, role: MediaRole, alt: string, position: number, widths: readonly number[], sources: readonly { key: string; width: number }[], reservationStartedAt: number) {
   const { table, parent, parentTable } = config(ownerType);
   return db.prepare(`INSERT INTO ${table} (${parent}, key, role, alt, position, widths_json, sources_json, state, reservation_started_at, created_at)
     SELECT owner.id, ?, ?, ?, ?, ?, ?, 'pending', ?, ?
@@ -99,27 +101,27 @@ function insertStatement(db, ownerType, parentId, key, role, alt, position, widt
     .bind(key, role, alt, position, JSON.stringify(widths), JSON.stringify(sources), reservationStartedAt, reservationStartedAt, parentId);
 }
 
-function deleteStatement(db, ownerType, id, parentId) {
+function deleteStatement(db: DatabaseReader, ownerType: CollectionKind, id: number, parentId: number) {
   const { table, parent } = config(ownerType);
   return db.prepare(`UPDATE ${table} SET state = 'tombstone', cleanup_attempts = cleanup_attempts + 1 WHERE id = ? AND ${parent} = ? AND state = 'active'`).bind(id, parentId);
 }
 
-function purgeStatement(db, ownerType, id) {
+function purgeStatement(db: DatabaseReader, ownerType: CollectionKind, id: number) {
   const { table } = config(ownerType);
   return db.prepare(`DELETE FROM ${table} WHERE id = ? AND state IN ('tombstone', 'pending_cleanup')`).bind(id);
 }
 
-function pendingCleanupStatement(db, ownerType, id) { const { table } = config(ownerType); return db.prepare(`UPDATE ${table} SET state = 'pending_cleanup', cleanup_attempts = cleanup_attempts + 1 WHERE id = ? AND state = 'pending'`).bind(id); }
-function activateStatement(db, ownerType, id) { const { table } = config(ownerType); return db.prepare(`UPDATE ${table} SET state = 'active' WHERE id = ? AND state = 'pending'`).bind(id); }
-function retryStatement(db, ownerType, id) { const { table } = config(ownerType); return db.prepare(`UPDATE ${table} SET cleanup_attempts = cleanup_attempts + 1 WHERE id = ? AND state IN ('tombstone', 'pending_cleanup')`).bind(id); }
-function claimStalePendingStatement(db, ownerType, id, cutoff) {
+function pendingCleanupStatement(db: DatabaseReader, ownerType: CollectionKind, id: number) { const { table } = config(ownerType); return db.prepare(`UPDATE ${table} SET state = 'pending_cleanup', cleanup_attempts = cleanup_attempts + 1 WHERE id = ? AND state = 'pending'`).bind(id); }
+function activateStatement(db: DatabaseReader, ownerType: CollectionKind, id: number) { const { table } = config(ownerType); return db.prepare(`UPDATE ${table} SET state = 'active' WHERE id = ? AND state = 'pending'`).bind(id); }
+function retryStatement(db: DatabaseReader, ownerType: CollectionKind, id: number) { const { table } = config(ownerType); return db.prepare(`UPDATE ${table} SET cleanup_attempts = cleanup_attempts + 1 WHERE id = ? AND state IN ('tombstone', 'pending_cleanup')`).bind(id); }
+function claimStalePendingStatement(db: DatabaseReader, ownerType: CollectionKind, id: number, cutoff: number) {
   const { table } = config(ownerType);
   return db.prepare(`UPDATE ${table}
     SET state = 'pending_cleanup', cleanup_attempts = cleanup_attempts + 1
     WHERE id = ? AND state = 'pending' AND reservation_started_at > 0 AND reservation_started_at <= ?`).bind(id, cutoff);
 }
 
-function finalizeGatedParentStatement(db, ownerType, parentId) {
+function finalizeGatedParentStatement(db: DatabaseReader, ownerType: CollectionKind, parentId: number) {
   const { table, parent, parentTable } = config(ownerType);
   return db.prepare(`DELETE FROM ${parentTable}
     WHERE id = ? AND deleting = 1 AND NOT EXISTS (
@@ -127,29 +129,33 @@ function finalizeGatedParentStatement(db, ownerType, parentId) {
     )`).bind(parentId, parentId);
 }
 
-async function runBatch(db, statements) {
+async function runBatch(db: WorkerDatabase, statements: D1PreparedStatement[]) {
   if (typeof db.batch !== "function") throw new Error("Atomic D1 batch unavailable");
   return db.batch(statements);
 }
 
-function cleanupKeys(media) {
-  let sources = [];
-  try { sources = JSON.parse(media.sources_json); } catch { sources = []; }
-  const stored = Array.isArray(sources) ? sources.map((source) => source?.key).filter(isSafeMediaKey) : [];
+function cleanupKeys(media: MediaRow) {
+  let sources: unknown = [];
+  try { sources = JSON.parse(media.sources_json ?? ''); } catch { sources = []; }
+  const stored = Array.isArray(sources) ? sources.map((source: unknown) => isRecord(source) ? source.key : undefined).filter((key): key is string => typeof key === 'string' && isSafeMediaKey(key)) : [];
   if (stored.length) return [...new Set(stored)];
-  let widths = [];
+  let widths: unknown = [];
   try { widths = JSON.parse(media.widths_json); } catch { widths = []; }
-  return keysForVariantSet(media.key, widths.length ? widths : [2048]);
+  // Preserve failure for malformed legacy values with a truthy length: never
+  // invent a fallback deletion target when the old manifest cannot be read.
+  if (widths === null || (!Array.isArray(widths) && ((typeof widths === 'string' && widths.length > 0) || (isRecord(widths) && widths.length)))) throw new TypeError('Invalid media widths');
+  const values = Array.isArray(widths) ? widths : [];
+  return keysForVariantSet(media.key, values.length ? values.filter((width): width is number => typeof width === 'number') : [2048]);
 }
 
-async function removeKeys(media, store) {
+async function removeKeys(media: MediaRow, store: MediaStore) {
   const keys = cleanupKeys(media).filter(isSafeMediaKey);
   if (!keys.length) return false;
   const results = await Promise.allSettled(keys.map((key) => store.delete(key)));
   return results.every((result) => result.status === "fulfilled");
 }
 
-async function cleanupTombstone(db, ownerType, media, store) {
+async function cleanupTombstone(db: DatabaseReader, ownerType: CollectionKind, media: MediaRow, store: MediaStore) {
   try {
     if (!await removeKeys(media, store)) {
       await retryStatement(db, ownerType, media.id).run().catch(() => {});
@@ -158,7 +164,8 @@ async function cleanupTombstone(db, ownerType, media, store) {
     const purged = await purgeStatement(db, ownerType, media.id).run();
     if (Number(purged?.meta?.changes) !== 1) return false;
     const { parent } = config(ownerType);
-    await finalizeGatedParentStatement(db, ownerType, media[parent]).run().catch(() => {});
+    // The selected SQL table determines which parent foreign key is present.
+    await finalizeGatedParentStatement(db, ownerType, media[parent]!).run().catch(() => {});
     return true;
   } catch {
     await retryStatement(db, ownerType, media.id).run().catch(() => {});
@@ -166,8 +173,8 @@ async function cleanupTombstone(db, ownerType, media, store) {
   }
 }
 
-export async function retryTombstones(env, ownerType, now = Date.now()) {
-  const kinds = ownerType ? [ownerType] : ["events", "archive"];
+export async function retryTombstones(env: WorkerEnv, ownerType?: CollectionKind, now = Date.now()) {
+  const kinds: CollectionKind[] = ownerType ? [ownerType] : ["events", "archive"];
   if (!env.DB || !env.MEDIA || kinds.some((kind) => !OWNER_TYPES.has(kind))) return 0;
   let cleaned = 0;
   for (const kind of kinds) {
@@ -179,7 +186,7 @@ export async function retryTombstones(env, ownerType, now = Date.now()) {
       ORDER BY cleanup_attempts ASC,
         CASE WHEN state = 'pending' THEN reservation_started_at ELSE created_at END ASC,
         id ASC
-      LIMIT 25`).bind(cutoff).all();
+      LIMIT 25`).bind(cutoff).all<MediaRow>();
     const rows = Array.isArray(result) ? result : result?.results ?? [];
     for (const row of rows) {
       let cleanup = row;
@@ -194,72 +201,69 @@ export async function retryTombstones(env, ownerType, now = Date.now()) {
   return cleaned;
 }
 
-function scheduleWork(ctx, work) {
+function scheduleWork(ctx: WorkerContext | undefined, work: Promise<unknown>) {
   const guarded = Promise.resolve(work).catch(() => {});
   if (typeof ctx?.waitUntil !== "function") { void guarded; return false; }
   try { ctx.waitUntil(guarded); return true; } catch { void guarded; return false; }
 }
 
-function schedulePostCommitWork(ctx, work) {
+function schedulePostCommitWork(ctx: WorkerContext | undefined, work: Promise<unknown>) {
   const guarded = Promise.resolve(work).catch(() => {});
   if (typeof ctx?.waitUntil !== "function") { void guarded; return false; }
   ctx.waitUntil(guarded);
   return true;
 }
 
-export function scheduleTombstoneRetry(env, ctx) {
+export function scheduleTombstoneRetry(env: WorkerEnv, ctx?: WorkerContext) {
   if (!env?.DB || !env?.MEDIA || typeof ctx?.waitUntil !== "function") return false;
   return scheduleWork(ctx, retryTombstones(env));
 }
 
 function mediaSlotConflict() {
-  const cause = new Error("Media slot conflict");
-  cause.code = "MEDIA_SLOT_CONFLICT";
+  const cause = Object.assign(new Error("Media slot conflict"), { code: "MEDIA_SLOT_CONFLICT" });
   return cause;
 }
 
 function ownerDeletionConflict() {
-  const cause = new Error("Media owner deletion in progress");
-  cause.code = "MEDIA_OWNER_DELETING";
+  const cause = Object.assign(new Error("Media owner deletion in progress"), { code: "MEDIA_OWNER_DELETING" });
   return cause;
 }
 
 function ownerNotFound() {
-  const cause = new Error("Media owner not found");
-  cause.code = "MEDIA_OWNER_NOT_FOUND";
+  const cause = Object.assign(new Error("Media owner not found"), { code: "MEDIA_OWNER_NOT_FOUND" });
   return cause;
 }
 
-async function zeroReservationCause(db, ownerType, parentId) {
+async function zeroReservationCause(db: DatabaseReader, ownerType: CollectionKind, parentId: number) {
   const { parentTable } = config(ownerType);
-  const parent = await db.prepare(`SELECT id, deleting FROM ${parentTable} WHERE id = ?`).bind(parentId).first();
+  const parent = await db.prepare(`SELECT id, deleting FROM ${parentTable} WHERE id = ?`).bind(parentId).first<ParentRow>();
   return parent?.id ? ownerDeletionConflict() : ownerNotFound();
 }
 
-function isSlotConflict(cause) {
-  return cause?.code === "MEDIA_SLOT_CONFLICT" || /unique|constraint/i.test(String(cause?.message));
+function isSlotConflict(cause: unknown) {
+  return isRecord(cause) && (cause.code === "MEDIA_SLOT_CONFLICT" || /unique|constraint/i.test(String(cause.message)));
 }
 
-function exactMetadata(value) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+function exactMetadata(value: unknown): value is MediaMetadata {
+  if (!isRecord(value)) return false;
   const keys = Object.keys(value);
   return keys.length === 3 && keys.every((key) => ["role", "alt", "position"].includes(key))
-    && ["cover", "detail"].includes(value.role)
+    && (value.role === 'cover' || value.role === 'detail')
     && typeof value.alt === "string"
     && value.alt.length <= MAX_ALT_LENGTH
     && new TextEncoder().encode(value.alt).byteLength <= MAX_ALT_LENGTH
-    && Number.isSafeInteger(value.position)
+    && typeof value.position === 'number' && Number.isSafeInteger(value.position)
     && value.position >= 0
     && value.position <= MAX_MEDIA_POSITION
     && (value.role !== "cover" || value.position === 0);
 }
 
-function hasExactKeys(value, keys) {
-  return value && typeof value === "object" && !Array.isArray(value)
+function hasExactKeys(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
+  return isRecord(value)
     && Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
 }
 
-async function boundedJson(request, maximumBytes) {
+async function boundedJson(request: Request, maximumBytes: number): Promise<unknown> {
   const contentType = request.headers.get("content-type") ?? "";
   const declared = request.headers.get("content-length");
   if (!contentType.toLowerCase().startsWith("application/json") || (declared !== null && (!Number.isSafeInteger(Number(declared)) || Number(declared) < 0 || Number(declared) > maximumBytes))) return null;
@@ -293,33 +297,33 @@ async function boundedJson(request, maximumBytes) {
   } catch { return null; }
 }
 
-async function boundedMetadata(request) {
+async function boundedMetadata(request: Request) {
   const payload = await boundedJson(request, MAX_METADATA_BYTES);
   return exactMetadata(payload) ? payload : null;
 }
 
-function exactMediaOrder(value) {
+function exactMediaOrder(value: unknown): value is MediaOrderPayload {
   if (!hasExactKeys(value, ["ownerType", "ownerSlug", "items"])
-    || !OWNER_TYPES.has(value.ownerType)
+    || (value.ownerType !== 'events' && value.ownerType !== 'archive')
     || !isSlug(value.ownerSlug)
     || new TextEncoder().encode(value.ownerSlug).byteLength > MAX_OWNER_SLUG_BYTES
     || !Array.isArray(value.items)
     || value.items.length > MAX_MEDIA_ORDER_ITEMS) return false;
   const ids = new Set();
-  return value.items.every((item) => hasExactKeys(item, ["id", "position"])
-    && Number.isSafeInteger(item.id) && item.id > 0
-    && Number.isSafeInteger(item.position) && item.position >= 0 && item.position <= MAX_MEDIA_POSITION
+  return value.items.every((item: unknown) => hasExactKeys(item, ["id", "position"])
+    && typeof item.id === 'number' && Number.isSafeInteger(item.id) && item.id > 0
+    && typeof item.position === 'number' && Number.isSafeInteger(item.position) && item.position >= 0 && item.position <= MAX_MEDIA_POSITION
     && !ids.has(item.id) && (ids.add(item.id), true));
 }
 
-async function mediaOrderPayload(request) {
+async function mediaOrderPayload(request: Request) {
   const payload = await boundedJson(request, MAX_MEDIA_ORDER_BYTES);
   return exactMediaOrder(payload) ? payload : null;
 }
 
-function rowsFrom(result) { return Array.isArray(result) ? result : result?.results ?? []; }
+function rowsFrom<T>(result: T[] | { results?: T[] } | null | undefined): T[] { return Array.isArray(result) ? result : result?.results ?? []; }
 
-function mediaOrderStatements(db, ownerType, parentId, current, items) {
+function mediaOrderStatements(db: DatabaseReader, ownerType: CollectionKind, parentId: number, current: Pick<MediaRow, 'id' | 'role' | 'position'>[], items: OrderEntry[]) {
   const { table, parent, parentTable } = config(ownerType);
   const ids = current.map(({ id }) => id);
   const byId = new Map(current.map((media) => [media.id, media]));
@@ -337,7 +341,7 @@ function mediaOrderStatements(db, ownerType, parentId, current, items) {
   const temporaryBase = Math.max(MAX_MEDIA_POSITION + 1, maximum + details.length + 1);
   if (!Number.isSafeInteger(temporaryBase)) return null;
   const placeholders = ids.map(() => "?").join(", ");
-  const guardedUpdate = (id, position) => db.prepare(`UPDATE ${table} SET position = ?
+  const guardedUpdate = (id: number, position: number) => db.prepare(`UPDATE ${table} SET position = ?
     WHERE id = ? AND ${parent} = ? AND state = 'active'
       AND EXISTS (SELECT 1 FROM ${parentTable} WHERE id = ? AND deleting = 0)
       AND (SELECT count(*) FROM ${table} WHERE ${parent} = ? AND state = 'active') = ?
@@ -351,12 +355,12 @@ function mediaOrderStatements(db, ownerType, parentId, current, items) {
   ];
 }
 
-export async function uploadMedia(request, env, ctx) {
+export async function uploadMedia(request: Request, env: WorkerEnv, ctx?: WorkerContext) {
   const admin = await requireAdmin(request, env, { csrf: true }); if (admin instanceof Response) return admin;
   if (!env.DB || !env.MEDIA) return error("Media storage unavailable", 500);
   const payload = await uploadPayload(request); if (!payload) return error("Invalid media upload", 400);
-  let reserved;
-  let old;
+  let reserved: MediaRow | undefined;
+  let old: MediaRow | null | undefined;
   let committed = false;
   try {
     const parent = await parentFor(env.DB, payload.ownerType, payload.ownerSlug);
@@ -364,17 +368,18 @@ export async function uploadMedia(request, env, ctx) {
     const uuid = crypto.randomUUID();
     const keys = payload.variants.map((variant) => `${payload.ownerType}/${payload.ownerSlug}/${uuid}/${variant.width}.webp`);
     if (keys.some((key) => !isSafeMediaKey(key))) return error("Invalid media upload", 400);
-    const sources = payload.variants.map((variant, index) => ({ width: variant.width, key: keys[index] }));
+    // keys is a one-to-one mapping of the non-empty validated variant list.
+    const sources = payload.variants.map((variant, index) => ({ width: variant.width, key: keys[index]! }));
     old = await currentMedia(env.DB, payload.ownerType, parent.id, payload.role, payload.position);
     const reservationStartedAt = Date.now();
-    const reservation = await insertStatement(env.DB, payload.ownerType, parent.id, keys.at(-1), payload.role, payload.alt, payload.position, payload.variants.map((variant) => variant.width), sources, reservationStartedAt).run();
+    const reservation = await insertStatement(env.DB, payload.ownerType, parent.id, keys.at(-1)!, payload.role, payload.alt, payload.position, payload.variants.map((variant) => variant.width), sources, reservationStartedAt).run();
     if (Number(reservation?.meta?.changes) !== 1) throw await zeroReservationCause(env.DB, payload.ownerType, parent.id);
     const reservationId = Number(reservation?.meta?.last_row_id);
     if (!Number.isSafeInteger(reservationId) || reservationId <= 0) throw new Error("Pending reservation id unavailable");
-    reserved = { id: reservationId, key: keys.at(-1), role: payload.role, alt: payload.alt, position: payload.position, widths_json: JSON.stringify(payload.variants.map((variant) => variant.width)), sources_json: JSON.stringify(sources), state: "pending", reservation_started_at: reservationStartedAt, [config(payload.ownerType).parent]: parent.id };
+    reserved = { id: reservationId, key: keys.at(-1)!, role: payload.role, alt: payload.alt, position: payload.position, widths_json: JSON.stringify(payload.variants.map((variant) => variant.width)), sources_json: JSON.stringify(sources), state: "pending", reservation_started_at: reservationStartedAt, [config(payload.ownerType).parent]: parent.id };
     for (let index = 0; index < payload.variants.length; index += 1) {
-      const { file } = payload.variants[index];
-      await env.MEDIA.put(keys[index], file, { httpMetadata: { contentType: "image/webp", cacheControl: "public, max-age=31536000, immutable" } });
+      const { file } = payload.variants[index]!;
+      await env.MEDIA.put(keys[index]!, file, { httpMetadata: { contentType: "image/webp", cacheControl: "public, max-age=31536000, immutable" } });
     }
     const statements = [activateStatement(env.DB, payload.ownerType, reserved.id)];
     if (old) statements.unshift(deleteStatement(env.DB, payload.ownerType, old.id, parent.id));
@@ -382,7 +387,7 @@ export async function uploadMedia(request, env, ctx) {
     const activation = Array.isArray(results) ? results.at(-1) : null;
     if (Number(activation?.meta?.changes) !== 1) throw mediaSlotConflict();
     committed = true;
-    const response = jsonResponse(mediaJson({ ...reserved, state: "active" }, { ownerType: payload.ownerType, ownerSlug: payload.ownerSlug, role: payload.role }), { status: 201, headers: HEADERS });
+    const response = jsonResponse(mediaJson(reserved, { ownerType: payload.ownerType, ownerSlug: payload.ownerSlug, role: payload.role }), { status: 201, headers: HEADERS });
     if (old) schedulePostCommitWork(ctx, cleanupTombstone(env.DB, payload.ownerType, old, env.MEDIA));
     return response;
   } catch (cause) {
@@ -395,21 +400,21 @@ export async function uploadMedia(request, env, ctx) {
       if (Number(marked?.meta?.changes) === 1) scheduleWork(ctx, cleanupTombstone(env.DB, payload.ownerType, { ...reserved, state: "pending_cleanup" }, env.MEDIA));
       else scheduleTombstoneRetry(env, ctx);
     }
-    if (cause?.code === "MEDIA_OWNER_DELETING") return error("Media owner deletion in progress", 409);
-    if (cause?.code === "MEDIA_OWNER_NOT_FOUND") return error("Media owner not found", 404);
+    if (isRecord(cause) && cause.code === "MEDIA_OWNER_DELETING") return error("Media owner deletion in progress", 409);
+    if (isRecord(cause) && cause.code === "MEDIA_OWNER_NOT_FOUND") return error("Media owner not found", 404);
     return isSlotConflict(cause) ? error("Media slot conflict", 409) : error("Media storage unavailable", 500);
   }
 }
 
-export async function deleteMediaHandler(request, env, ownerType, id, ctx) {
+export async function deleteMediaHandler(request: Request, env: WorkerEnv, ownerType: CollectionKind, id: number, ctx?: WorkerContext) {
   const admin = await requireAdmin(request, env, { csrf: true }); if (admin instanceof Response) return admin;
   if (!env.DB || !env.MEDIA) return error("Media storage unavailable", 500);
   if (!OWNER_TYPES.has(ownerType) || !Number.isSafeInteger(id) || id <= 0) return error("Not found", 404);
   try {
     const { table, parent } = config(ownerType);
-    const row = await env.DB.prepare(`SELECT * FROM ${table} WHERE id = ? AND state = 'active'`).bind(id).first();
+    const row = await env.DB.prepare(`SELECT * FROM ${table} WHERE id = ? AND state = 'active'`).bind(id).first<MediaRow>();
     if (!row) return error("Not found", 404);
-    const result = await deleteStatement(env.DB, ownerType, id, row[parent]).run();
+    const result = await deleteStatement(env.DB, ownerType, id, row[parent]!).run();
     if (!result?.meta?.changes) return error("Not found", 404);
     const cleaned = await cleanupTombstone(env.DB, ownerType, { ...row, state: "tombstone" }, env.MEDIA);
     if (!cleaned) scheduleTombstoneRetry(env, ctx);
@@ -417,45 +422,45 @@ export async function deleteMediaHandler(request, env, ownerType, id, ctx) {
   } catch { return error("Media storage unavailable", 500); }
 }
 
-export async function updateMediaMetadataHandler(request, env, ownerType, id) {
+export async function updateMediaMetadataHandler(request: Request, env: WorkerEnv, ownerType: CollectionKind, id: number) {
   const admin = await requireAdmin(request, env, { csrf: true }); if (admin instanceof Response) return admin;
   if (!env.DB || !OWNER_TYPES.has(ownerType) || !Number.isSafeInteger(id) || id <= 0) return error("Not found", 404);
   const payload = await boundedMetadata(request);
   if (!payload) return error("Invalid media metadata", 400);
   try {
     const { table, parent } = config(ownerType);
-    const row = await env.DB.prepare(`SELECT * FROM ${table} WHERE id = ? AND state = 'active'`).bind(id).first();
+    const row = await env.DB.prepare(`SELECT * FROM ${table} WHERE id = ? AND state = 'active'`).bind(id).first<MediaRow>();
     if (!row) return error("Not found", 404);
     const occupied = await env.DB.prepare(`SELECT id FROM ${table} WHERE ${parent} = ? AND role = ? AND position = ? AND state = 'active' AND id != ?`).bind(row[parent], payload.role, payload.position, id).first();
     if (occupied) return error("Media slot conflict", 409);
     const result = await env.DB.prepare(`UPDATE ${table} SET role = ?, alt = ?, position = ? WHERE id = ? AND state = 'active'`).bind(payload.role, payload.alt, payload.position, id).run();
     if (Number(result?.meta?.changes) !== 1) return error("Not found", 404);
     return jsonResponse({ id, role: payload.role, alt: payload.alt, position: payload.position }, { headers: HEADERS });
-  } catch (cause) { return /unique|constraint/i.test(String(cause?.message)) ? error("Media slot conflict", 409) : error("Media storage unavailable", 500); }
+  } catch (cause) { return /unique|constraint/i.test(String(isRecord(cause) ? cause.message : undefined)) ? error("Media slot conflict", 409) : error("Media storage unavailable", 500); }
 }
 
-export async function reorderMediaHandler(request, env) {
+export async function reorderMediaHandler(request: Request, env: WorkerEnv) {
   const admin = await requireAdmin(request, env, { csrf: true }); if (admin instanceof Response) return admin;
   if (!env.DB || typeof env.DB.batch !== "function") return error("Media storage unavailable", 500);
   const payload = await mediaOrderPayload(request);
   if (!payload) return error("Invalid media ordering", 400);
   try {
     const { table, parent, parentTable } = config(payload.ownerType);
-    const owner = await env.DB.prepare(`SELECT id, deleting FROM ${parentTable} WHERE slug = ?`).bind(payload.ownerSlug).first();
+    const owner = await env.DB.prepare(`SELECT id, deleting FROM ${parentTable} WHERE slug = ?`).bind(payload.ownerSlug).first<ParentRow>();
     if (!owner?.id) return error("Media owner not found", 404);
     if (owner.deleting) return error("Media owner deletion in progress", 409);
     const current = rowsFrom(await env.DB.prepare(`SELECT id, role, position FROM ${table}
-      WHERE ${parent} = ? AND state = 'active' ORDER BY id`).bind(owner.id).all());
+      WHERE ${parent} = ? AND state = 'active' ORDER BY id`).bind(owner.id).all<Pick<MediaRow, 'id' | 'role' | 'position'>>());
     const statements = mediaOrderStatements(env.DB, payload.ownerType, owner.id, current, payload.items);
     if (!statements) return error("Invalid media ordering", 400);
     if (!statements.length) return jsonResponse([], { headers: HEADERS });
     const result = await env.DB.batch(statements);
     if (!Array.isArray(result) || result.length !== statements.length || result.some((entry) => Number(entry?.meta?.changes) !== 1)) return error("Media ordering conflict", 409);
     const ordered = rowsFrom(await env.DB.prepare(`SELECT id, role, position FROM ${table}
-      WHERE ${parent} = ? AND state = 'active' ORDER BY id`).bind(owner.id).all());
+      WHERE ${parent} = ? AND state = 'active' ORDER BY id`).bind(owner.id).all<Pick<MediaRow, 'id' | 'role' | 'position'>>());
     return jsonResponse(ordered.map(({ id, role, position }) => ({ id, role, position })), { headers: HEADERS });
   } catch (cause) {
-    return /unique|constraint/i.test(String(cause?.message)) ? error("Media slot conflict", 409) : error("Media storage unavailable", 500);
+    return /unique|constraint/i.test(String(isRecord(cause) ? cause.message : undefined)) ? error("Media slot conflict", 409) : error("Media storage unavailable", 500);
   }
 }
 

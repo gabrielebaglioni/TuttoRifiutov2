@@ -5,9 +5,9 @@ import {
   hashToken,
   requireAdmin,
   verifyCredentials,
-} from "../worker/auth.js";
-import { login, logout, session } from "../worker/handlers/auth.js";
-import { routeRequest } from "../worker/router.js";
+} from "../worker/auth.ts";
+import { login, logout, session } from "../worker/handlers/auth.ts";
+import { routeRequest } from "../worker/router.ts";
 
 function createDb() {
   const sessions = new Map();

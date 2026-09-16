@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { jsonResponse } from "../worker/response.js";
-import { routeRequest } from "../worker/router.js";
+import { jsonResponse } from "../worker/response.ts";
+import { routeRequest } from "../worker/router.ts";
 import {DEFAULT_PALETTE} from '../src/data/theme.ts';
 
 test('static detail theme refresh strips old representation validators for both collection families', async () => {

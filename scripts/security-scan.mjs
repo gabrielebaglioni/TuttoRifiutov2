@@ -1,6 +1,7 @@
 import { createReadStream } from "node:fs";
 import { lstat } from "node:fs/promises";
 import { parse } from "acorn";
+import ts from "typescript";
 
 const PASSWORD_KEY = ["ADMIN", "PASSWORD"].join("_");
 
@@ -17,6 +18,7 @@ function scanMode(path) {
   if (isDotenvPath(normalized)) return "dotenv";
   if (normalized.endsWith(".json")) return "json";
   if (normalized.endsWith(".astro")) return "astro";
+  if (/\.(?:cts|mts|ts|tsx)$/.test(normalized)) return "typescript";
   if (/\.(?:cjs|mjs|js)$/.test(normalized)) return "javascript";
   return "unknown";
 }
@@ -206,6 +208,34 @@ function javascriptContainsEmbeddedPassword(source, options) {
   return ast === null || astContainsEmbeddedPassword(ast);
 }
 
+function typescriptContainsEmbeddedPassword(source, path) {
+  const compiled = ts.transpileModule(source, {
+    // Declaration files also need source inspection, not declaration-only emit.
+    fileName: path.replace(/\.d\.(cts|mts|ts)$/i, '.$1'),
+    reportDiagnostics: true,
+    compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX },
+    // Scan value-bearing declarations even when `declare` would erase them.
+    // This transform is only for inspection, never the deployment build.
+    transformers: { before: [(context) => {
+      const hasInitializer = (node) => Boolean(node.initializer) || Boolean(ts.forEachChild(node, hasInitializer));
+      const visit = (node, ambient = false) => {
+        const modifiers = ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined;
+        const declared = Boolean(modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.DeclareKeyword));
+        // A pure ambient binding has no value to inspect and must stay erased:
+        // dropping declare from `declare const name: Type` emits invalid JS.
+        if ((ambient || declared) && ts.isVariableStatement(node) && !hasInitializer(node)) return context.factory.createNotEmittedStatement(node);
+        const inspected = declared
+          ? context.factory.replaceModifiers(node, modifiers.filter((modifier) => modifier.kind !== ts.SyntaxKind.DeclareKeyword))
+          : node;
+        return ts.visitEachChild(inspected, (child) => visit(child, ambient || declared), context);
+      };
+      return (node) => ts.visitNode(node, visit);
+    }] },
+  });
+  if (compiled.diagnostics?.some((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error)) return true;
+  return javascriptContainsEmbeddedPassword(compiled.outputText);
+}
+
 function jsonContainsEmbeddedPassword(source) {
   let value;
   try {
@@ -307,6 +337,7 @@ export function containsEmbeddedAdminPasswordAssignment(text, path = "inline.js"
     case "json": return jsonContainsEmbeddedPassword(source);
     case "astro": return astroContainsEmbeddedPassword(source);
     case "javascript": return javascriptContainsEmbeddedPassword(source);
+    case "typescript": return typescriptContainsEmbeddedPassword(source, path);
     default: return source.includes(PASSWORD_KEY);
   }
 }

@@ -5,8 +5,8 @@ import { applyContent, hydrateContent } from "../src/scripts/content-hydration.j
 import { renderDetail } from "../src/scripts/collections-hydration.js";
 import { SITE_CONTENT } from "../src/data/site-content.ts";
 import { validMediaSources } from "../src/data/media-source.ts";
-import { mediaJson } from "../worker/media.js";
-import { routeRequest } from "../worker/router.js";
+import { mediaJson } from "../worker/media.ts";
+import { routeRequest } from "../worker/router.ts";
 
 const UUID = "00000000-0000-4000-8000-000000000001";
 

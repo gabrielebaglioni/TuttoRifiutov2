@@ -1,0 +1,36 @@
+import { digest, equalBytes } from '../../worker/crypto.ts';
+import { validateContentValue } from '../../worker/validation.ts';
+import { getSession, verifyCredentials } from '../../worker/auth.ts';
+import { login } from '../../worker/handlers/auth.ts';
+import { updateContent } from '../../worker/handlers/content.ts';
+import { inspectWebp, serveMedia } from '../../worker/media.ts';
+import { validateCollectionPayload } from '../../worker/handlers/collections.ts';
+import { uploadMedia } from '../../worker/handlers/media.ts';
+import { routeRequest } from '../../worker/router.ts';
+import type { MediaMetadata, WorkerEnv } from '../../worker/types.ts';
+
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
+  (<T>() => T extends B ? 1 : 2) ? true : false;
+type Expect<T extends true> = T;
+export type DigestInput = Expect<Equal<Parameters<typeof digest>, [value: string]>>;
+type ByteArguments = Parameters<typeof equalBytes>;
+export type ByteInput = Expect<ByteArguments extends [Uint8Array, Uint8Array] ? true : false>;
+export type ByteInputAcceptsArrays = Expect<[Uint8Array, Uint8Array] extends ByteArguments ? true : false>;
+export type ByteInputIsNotAny = Expect<Equal<0 extends (1 & ByteArguments[0]) ? true : false, false>>;
+export type ContentBoundary = Expect<Equal<Parameters<typeof validateContentValue>[1], unknown>>;
+export type CredentialBoundary = Expect<Equal<Parameters<typeof verifyCredentials>[1], unknown>>;
+export type SessionRequest = Expect<Equal<Parameters<typeof getSession>[0], Request>>;
+export type LoginRequest = Expect<Equal<Parameters<typeof login>[0], Request>>;
+export type ContentRequest = Expect<Equal<Parameters<typeof updateContent>[0], Request>>;
+export type MediaBoundary = Expect<Equal<Parameters<typeof inspectWebp>[0], unknown>>;
+export type MediaRequest = Expect<Equal<Parameters<typeof serveMedia>[0], Request>>;
+export type CollectionBoundary = Expect<Equal<Parameters<typeof validateCollectionPayload>[1], unknown>>;
+export type UploadRequest = Expect<Equal<Parameters<typeof uploadMedia>[0], Request>>;
+type Assignable<A, B> = A extends B ? true : false;
+export type InvalidDatabase = Expect<Equal<Assignable<{ DB: { prepare: number } }, WorkerEnv>, false>>;
+export type InvalidMediaStore = Expect<Equal<Assignable<{ MEDIA: { put: string } }, WorkerEnv>, false>>;
+export type InvalidRole = Expect<Equal<Assignable<{ role: 'other'; alt: string; position: number }, MediaMetadata>, false>>;
+export type InvalidPosition = Expect<Equal<Assignable<{ role: 'cover'; alt: string; position: string }, MediaMetadata>, false>>;
+export type PlatformBindings = Expect<Assignable<{ DB: D1Database; MEDIA: R2Bucket }, WorkerEnv>>;
+export type UploadBindings = Expect<Equal<Parameters<typeof uploadMedia>[1], WorkerEnv>>;
+export type RouterRequest = Expect<Equal<Parameters<typeof routeRequest>[0], Request>>;

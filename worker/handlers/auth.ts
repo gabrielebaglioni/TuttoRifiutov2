@@ -4,7 +4,7 @@ import {
   deleteSession,
   pruneLoginAttempts,
   reserveLoginAttempt,
-} from "../db.js";
+} from "../db.ts";
 import {
   hashClientIp,
   hashToken,
@@ -14,14 +14,15 @@ import {
   sessionCookie,
   SESSION_DURATION_MS,
   verifyCredentials,
-} from "../auth.js";
-import { randomToken } from "../crypto.js";
-import { jsonResponse } from "../response.js";
+} from "../auth.ts";
+import { randomToken } from "../crypto.ts";
+import { jsonResponse } from "../response.ts";
+import { isRecord, type WorkerEnv } from '../types.ts';
 
 const MAX_LOGIN_BODY_BYTES = 1024;
 const MAX_CREDENTIAL_LENGTH = 256;
 
-function privateResponse(body, init = {}) {
+function privateResponse(body: unknown, init: ResponseInit = {}) {
   const headers = new Headers(init.headers);
   headers.set("cache-control", "no-store");
   return jsonResponse(body, { ...init, headers });
@@ -31,7 +32,7 @@ function invalidCredentials() {
   return privateResponse({ error: "Invalid credentials" }, { status: 401 });
 }
 
-async function credentialsFrom(request) {
+async function credentialsFrom(request: Request) {
   const contentLength = Number(request.headers.get("content-length"));
   if (Number.isFinite(contentLength) && contentLength > MAX_LOGIN_BODY_BYTES) return null;
   const reader = request.body?.getReader();
@@ -55,20 +56,21 @@ async function credentialsFrom(request) {
       bytes.set(chunk, offset);
       offset += chunk.byteLength;
     }
-    const body = JSON.parse(new TextDecoder().decode(bytes));
+    const body: unknown = JSON.parse(new TextDecoder().decode(bytes));
     if (
-      typeof body?.username !== "string"
+      !isRecord(body)
+      || typeof body.username !== "string"
       || body.username.length > MAX_CREDENTIAL_LENGTH
       || typeof body?.password !== "string"
       || body.password.length > MAX_CREDENTIAL_LENGTH
     ) return null;
-    return body;
+    return { username: body.username, password: body.password };
   } catch {
     return null;
   }
 }
 
-export async function login(request, env) {
+export async function login(request: Request, env: WorkerEnv) {
   const credentials = await credentialsFrom(request);
   if (
     !credentials
@@ -118,15 +120,16 @@ export async function login(request, env) {
   );
 }
 
-export async function logout(request, env) {
+export async function logout(request: Request, env: WorkerEnv) {
   const authorized = await requireAdmin(request, env, { csrf: true });
   if (authorized instanceof Response) return authorized;
   const token = (request.headers.get("cookie") ?? "").match(/(?:^|;\s*)tr_admin=([^;]+)/)?.[1];
-  if (token) await deleteSession(env.DB, await hashToken(token, env.SESSION_SECRET));
+  // Successful requireAdmin has already checked both bindings via getSession.
+  if (token) await deleteSession(env.DB!, await hashToken(token, env.SESSION_SECRET!));
   return privateResponse({ ok: true }, { headers: { "set-cookie": sessionCookie("", 0) } });
 }
 
-export async function session(request, env) {
+export async function session(request: Request, env: WorkerEnv) {
   const authorized = await requireAdmin(request, env);
   if (authorized instanceof Response) return authorized;
   return privateResponse({ authenticated: true, csrfToken: authorized.csrf_token });

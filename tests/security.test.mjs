@@ -21,6 +21,21 @@ const TEXT_EXTENSIONS = new Set([
   ".txt", ".xml", ".yaml", ".yml",
 ]);
 
+test("typed runtime reads are allowed while TypeScript password assignments fail closed", () => {
+  for (const extension of ['ts', 'mts', 'cts', 'tsx', 'd.ts', 'd.mts', 'd.cts']) {
+    const path = `worker/example.${extension}`;
+    assert.equal(detect('interface Env { ADMIN_PASSWORD?: string }; function read(env: Env) { return env.ADMIN_PASSWORD; }', path), false);
+    assert.equal(detect('declare const ADMIN_PASSWORD: string;', path), false);
+    assert.equal(detect('declare namespace Configuration { const ADMIN_PASSWORD: string; const OTHER = "value"; }', path), false);
+    assert.equal(detect('const ADMIN_PASSWORD: string = "embedded-value";', path), true);
+    assert.equal(detect('const value = { ADMIN_PASSWORD: "embedded-value" } satisfies Record<string, string>;', path), true);
+    assert.equal(detect('const ADMIN_PASSWORD: string = ;', path), true);
+    assert.equal(detect('declare const ADMIN_PASSWORD = "embedded-value";', path), true);
+    assert.equal(detect('declare namespace Configuration { const ADMIN_PASSWORD = "embedded-value"; }', path), true);
+    assert.equal(detect('class Configuration { declare ADMIN_PASSWORD: string = "embedded-value"; }', path), true);
+  }
+});
+
 test("AST detector catches static and composed JavaScript password assignments", () => {
   const embeddedAssignments = [
     "const ADMIN_PASSWORD=\"embedded-value\";",
@@ -233,7 +248,7 @@ test("production scan excludes test and documentation fixtures but includes ship
   assert.equal(securityScan.isProductionTrackedPath("docs/plan.md"), false);
   assert.equal(securityScan.isProductionTrackedPath("README.md"), false);
   assert.equal(securityScan.isProductionTrackedPath("task-6-report.md"), false);
-  assert.equal(securityScan.isProductionTrackedPath("worker/auth.js"), true);
+  assert.equal(securityScan.isProductionTrackedPath("worker/auth.ts"), true);
   assert.equal(securityScan.isProductionTrackedPath("scripts/build-worker.mjs"), true);
   assert.equal(securityScan.isProductionTrackedPath(".env.example"), true);
   assert.equal(securityScan.isProductionTrackedPath("src/content/policy.md"), true);

@@ -4,9 +4,9 @@ import test from "node:test";
 import { parseHTML } from "linkedom";
 import { applyContent, isAllowedLink } from "../src/scripts/content-hydration.js";
 import { eventsForPublicGroup, renderArchive, renderDetail, renderEvents } from "../src/scripts/collections-hydration.js";
-import { escapeAttribute, rewriteMetadata } from "../worker/html-metadata.js";
-import { routeRequest } from "../worker/router.js";
-import { ARCHIVE_DEFAULTS, EVENT_DEFAULTS } from "../worker/collections-defaults.js";
+import { escapeAttribute, rewriteMetadata } from "../worker/html-metadata.ts";
+import { routeRequest } from "../worker/router.ts";
+import { ARCHIVE_DEFAULTS, EVENT_DEFAULTS } from "../worker/collections-defaults.ts";
 import { validMediaSources } from "../src/data/media-source.ts";
 
 test("public hydration accepts only relative, HTTPS, and mailto links", () => {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createTouchGesture, installTouchExplosion } from '../src/scripts/touch-explosion.js';
+import { createTouchGesture, installTouchExplosion } from '../src/scripts/touch-explosion.ts';
 import {parseHTML} from 'linkedom';
 
 test('only horizontal intent activates; vertical starts stay rejected',()=>{

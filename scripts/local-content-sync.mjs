@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 import { parseCanonicalMediaKey } from '../src/data/media-source.ts';
-import { inspectWebp, MAX_VARIANT_PIXELS } from '../worker/media.js';
+import { inspectWebp, MAX_VARIANT_PIXELS } from '../worker/media.ts';
 
 export const SITE = 'https://tutto-rifiuto.gabrielebaglioni55.chatgpt.site';
 const hash = value => createHash('sha256').update(value).digest('hex');

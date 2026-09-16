@@ -1,9 +1,9 @@
 // These values are deliberately plain data: the Worker must be able to return
 // them without importing Astro image modules. `fallbackAsset` keeps the source
 // mapping explicit while the Astro components retain their imported fallbacks.
-const fallbackUrl = (asset) => asset.replace("src/assets/optimized", "/fallback");
-const image = (fallbackAsset, alt) => ({ type: "image", src: fallbackUrl(fallbackAsset), fallbackAsset, alt });
-const video = (src, posterAsset, alt) => ({ type: "video", src, poster: fallbackUrl(posterAsset), posterAsset, alt });
+const fallbackUrl = (asset: string) => asset.replace("src/assets/optimized", "/fallback");
+const image = (fallbackAsset: string, alt: string) => ({ type: "image" as const, src: fallbackUrl(fallbackAsset), fallbackAsset, alt });
+const video = (src: string, posterAsset: string, alt: string) => ({ type: "video" as const, src, poster: fallbackUrl(posterAsset), posterAsset, alt });
 
 export const EVENT_DEFAULTS = [
   {
@@ -47,7 +47,7 @@ export const EVENT_DEFAULTS = [
   },
 ];
 
-const archive = (slug, title, code, imageAsset, position) => ({ slug, title, code, href: "/project", description: "", details: [], outro: "", seo: { title: `${title} — Tutto Rifiuto`, description: "" }, position, coverMedia: image(imageAsset, title), detailMedia: [] });
+const archive = (slug: string, title: string, code: string, imageAsset: string, position: number) => ({ slug, title, code, href: "/project", description: "", details: [], outro: "", seo: { title: `${title} — Tutto Rifiuto`, description: "" }, position, coverMedia: image(imageAsset, title), detailMedia: [] });
 export const ARCHIVE_DEFAULTS = [
   { ...archive("parole", "Parole", "TR—01", "src/assets/optimized/work/work_01.webp", 0), title: "Parole", description: "Parole Rotte è il primo pacchetto del collettivo: poesie, frammenti, lettere e collage raccolti nel tempo e fotocopiati fino a sporcarsi. Li impacchettiamo e li abbandoniamo per le strade di Roma, pronti ad essere raccolti, riciclati o solo ammirati in tutta la loro sporcizia.", details: [["Collettivo", "Tutto Rifiuto"], ["Contenuti", "Parole, poesie, collage, fotocopie"], ["Città", "Roma — strade varie"], ["Tiratura", "Sporca, infinita, non numerata"]], outro: "Il pacchetto rifiuta la qualità e la proprietà dei suoi contenuti: chi lo trova lo fa suo, lo spezza, lo rimescola, lo lascia marcire. È un invito a rovistare, un pretesto per ritrovarsi, una traccia di chi vuole creare senza doversi piegare a un mondo veloce e mercificante.", seo: { title: "Parole Rotte — Tutto Rifiuto", description: "Parole Rotte, pacchetto Tutto Rifiuto: poesie, frammenti, lettere e collage raccolti, fotocopiati e lasciati per Roma." }, detailMedia: [image("src/assets/optimized/project/project_1.webp", "Parole Rotte"), image("src/assets/optimized/project/project_4.webp", "Parole Rotte"), image("src/assets/optimized/project/project_5.webp", "Parole Rotte")] },
   archive("suoni", "Suoni", "TR—02", "src/assets/optimized/work/work_02.webp", 1),

@@ -1,38 +1,44 @@
 import { parseCanonicalMediaKey, validMediaSources } from "../src/data/media-source.ts";
-import { getSession } from "./auth.js";
+import { getSession } from "./auth.ts";
 import { isPublicEventStatus } from "../src/data/event-status.ts";
+import { isRecord, type MediaManifestRow, type MediaProjection, type MediaRow, type ParentRow, type WorkerEnv } from './types.ts';
+import type { MediaOwnerType } from '../src/data/media-source.ts';
+
+interface WebpChunk { type: string; start: number; size: number }
+interface Dimensions { width: number; height: number }
 
 export const VARIANTS = Object.freeze([
   { field: "small", width: 640 },
   { field: "medium", width: 1280 },
   { field: "large", width: 2048 },
-]);
+] as const);
 export const MAX_VARIANT_BYTES = 2_500_000;
 export const MAX_VARIANT_PIXELS = 25_000_000;
 
 const WEBP_SIGNATURE = [0x52, 0x49, 0x46, 0x46, undefined, undefined, undefined, undefined, 0x57, 0x45, 0x42, 0x50];
-function little32(bytes, offset) { return (bytes[offset] + (bytes[offset + 1] * 0x100) + (bytes[offset + 2] * 0x10000) + (bytes[offset + 3] * 0x1000000)); }
-function chunkName(bytes, offset) { return String.fromCharCode(...bytes.slice(offset, offset + 4)); }
-function little24(bytes, offset) { return bytes[offset] + (bytes[offset + 1] * 0x100) + (bytes[offset + 2] * 0x10000); }
+// Callers validate RIFF/chunk bounds before reading these fixed-width fields.
+function little32(bytes: Uint8Array, offset: number) { return (bytes[offset]! + (bytes[offset + 1]! * 0x100) + (bytes[offset + 2]! * 0x10000) + (bytes[offset + 3]! * 0x1000000)); }
+function chunkName(bytes: Uint8Array, offset: number) { return String.fromCharCode(...bytes.slice(offset, offset + 4)); }
+function little24(bytes: Uint8Array, offset: number) { return bytes[offset]! + (bytes[offset + 1]! * 0x100) + (bytes[offset + 2]! * 0x10000); }
 
-function validDimensions(width, height) {
+function validDimensions(width: number, height: number) {
   return Number.isSafeInteger(width) && Number.isSafeInteger(height) && width > 0 && height > 0;
 }
 
-function inspectVp8(bytes, chunk) {
+function inspectVp8(bytes: Uint8Array, chunk: WebpChunk): Dimensions | null {
   if (chunk.size < 10) return null;
   const start = chunk.start;
-  const frameTag = bytes[start] | (bytes[start + 1] << 8) | (bytes[start + 2] << 16);
+  const frameTag = bytes[start]! | (bytes[start + 1]! << 8) | (bytes[start + 2]! << 16);
   const version = (frameTag >>> 1) & 0x7;
   const firstPartitionSize = frameTag >>> 5;
   if ((frameTag & 1) !== 0 || version > 3 || (frameTag & 0x10) === 0 || firstPartitionSize === 0 || firstPartitionSize > chunk.size - 10) return null;
   if (bytes[start + 3] !== 0x9d || bytes[start + 4] !== 0x01 || bytes[start + 5] !== 0x2a) return null;
-  const width = (bytes[start + 6] | (bytes[start + 7] << 8)) & 0x3fff;
-  const height = (bytes[start + 8] | (bytes[start + 9] << 8)) & 0x3fff;
+  const width = (bytes[start + 6]! | (bytes[start + 7]! << 8)) & 0x3fff;
+  const height = (bytes[start + 8]! | (bytes[start + 9]! << 8)) & 0x3fff;
   return validDimensions(width, height) ? { width, height } : null;
 }
 
-function inspectVp8l(bytes, chunk) {
+function inspectVp8l(bytes: Uint8Array, chunk: WebpChunk): Dimensions | null {
   if (chunk.size < 6 || bytes[chunk.start] !== 0x2f) return null;
   const bits = little32(bytes, chunk.start + 1);
   if ((bits >>> 29) !== 0) return null;
@@ -41,11 +47,11 @@ function inspectVp8l(bytes, chunk) {
   return validDimensions(width, height) ? { width, height } : null;
 }
 
-function inspectVp8x(bytes, chunks) {
+function inspectVp8x(bytes: Uint8Array, chunks: readonly WebpChunk[]): Dimensions | null {
   const header = chunks[0];
-  if (header.size !== 10) return null;
+  if (!header || header.size !== 10) return null;
   const start = header.start;
-  const flags = bytes[start];
+  const flags = bytes[start]!;
   if ((flags & ~0x3e) !== 0 || (flags & 0x02) !== 0 || bytes[start + 1] !== 0 || bytes[start + 2] !== 0 || bytes[start + 3] !== 0) return null;
   const width = little24(bytes, start + 4) + 1;
   const height = little24(bytes, start + 7) + 1;
@@ -56,26 +62,28 @@ function inspectVp8x(bytes, chunks) {
   const images = body.filter((chunk) => chunk.type === "VP8 " || chunk.type === "VP8L");
   const alpha = body.filter((chunk) => chunk.type === "ALPH");
   if (images.length !== 1 || alpha.length > 1 || Boolean(flags & 0x10) !== Boolean(alpha.length)) return null;
-  for (const [flag, type] of [[0x20, "ICCP"], [0x08, "EXIF"], [0x04, "XMP"]]) {
+  for (const [flag, type] of [[0x20, "ICCP"], [0x08, "EXIF"], [0x04, "XMP"]] as const) {
     if (Boolean(flags & flag) !== (body.filter((chunk) => chunk.type === type).length === 1)) return null;
   }
-  const image = images[0];
+  const image = images[0]!; // Exactly one image was checked above.
   const imageIndex = chunks.indexOf(image);
   if (alpha.length) {
-    const alphaChunk = alpha[0];
-    const alphaHeader = bytes[alphaChunk.start];
+    const alphaChunk = alpha[0]!; // Non-empty alpha list in this branch.
+    const alphaHeader = bytes[alphaChunk.start]!;
     if (image.type !== "VP8 " || chunks.indexOf(alphaChunk) > imageIndex || alphaChunk.size < 2 || (alphaHeader & 0xc3) !== 0 || ((alphaHeader >>> 4) & 0x3) > 1) return null;
   }
   const dimensions = image.type === "VP8 " ? inspectVp8(bytes, image) : inspectVp8l(bytes, image);
   return dimensions && dimensions.width === width && dimensions.height === height ? dimensions : null;
 }
 
-export async function inspectWebp(file) {
-  if (!file || typeof file.arrayBuffer !== "function" || !Number.isSafeInteger(file.size) || file.size < 20) return null;
+export async function inspectWebp(file: unknown): Promise<Dimensions | null> {
+  if (!isRecord(file) || typeof file.arrayBuffer !== "function" || typeof file.size !== 'number' || !Number.isSafeInteger(file.size) || file.size < 20) return null;
   try {
-    const bytes = new Uint8Array(await file.arrayBuffer());
+    const buffer: unknown = await file.arrayBuffer();
+    if (!(buffer instanceof ArrayBuffer)) return null;
+    const bytes = new Uint8Array(buffer);
     if (bytes.length !== file.size || !WEBP_SIGNATURE.every((value, index) => value === undefined || bytes[index] === value) || little32(bytes, 4) + 8 !== bytes.length) return null;
-    const chunks = [];
+    const chunks: WebpChunk[] = [];
     for (let offset = 12; offset < bytes.length;) {
       if (offset + 8 > bytes.length) return null;
       const size = little32(bytes, offset + 4);
@@ -84,75 +92,77 @@ export async function inspectWebp(file) {
       chunks.push({ type: chunkName(bytes, offset), start: offset + 8, size });
       offset = end + (size % 2);
     }
-    if (!chunks.length) return null;
-    if (chunks[0].type === "VP8X") return inspectVp8x(bytes, chunks);
+    const first = chunks[0];
+    if (!first) return null;
+    if (first.type === "VP8X") return inspectVp8x(bytes, chunks);
     if (chunks.length !== 1) return null;
-    return chunks[0].type === "VP8 " ? inspectVp8(bytes, chunks[0]) : chunks[0].type === "VP8L" ? inspectVp8l(bytes, chunks[0]) : null;
+    return first.type === "VP8 " ? inspectVp8(bytes, first) : first.type === "VP8L" ? inspectVp8l(bytes, first) : null;
   } catch {
     return null;
   }
 }
 
-export async function validateVariant(file, maximum = MAX_VARIANT_BYTES) {
-  if (!file || typeof file.arrayBuffer !== "function" || file.type !== "image/webp" || !Number.isSafeInteger(file.size) || file.size > maximum) return false;
+export async function validateVariant(file: unknown, maximum = MAX_VARIANT_BYTES) {
+  if (!isRecord(file) || typeof file.arrayBuffer !== "function" || file.type !== "image/webp" || typeof file.size !== 'number' || !Number.isSafeInteger(file.size) || file.size > maximum) return false;
   const dimensions = await inspectWebp(file);
   return Boolean(dimensions && dimensions.width > 0 && dimensions.height > 0 && dimensions.width * dimensions.height <= MAX_VARIANT_PIXELS);
 }
 
-export function isSafeMediaKey(key) {
+export function isSafeMediaKey(key: unknown) {
   return Boolean(parseCanonicalMediaKey(key));
 }
 
-export function mediaUrl(key) {
+export function mediaUrl(key: string) {
   return `/media/${key.split("/").map(encodeURIComponent).join("/")}`;
 }
 
-export function keysForVariantSet(key, widths = VARIANTS.map((variant) => variant.width)) {
+export function keysForVariantSet(key: string, widths: readonly number[] = VARIANTS.map((variant) => variant.width)) {
   const parsed = parseCanonicalMediaKey(key);
   if (!parsed) return [key];
   return [...new Set(widths.filter((width) => Number.isInteger(width) && width > 0 && width <= 99_999).map((width) => `${parsed.family}/${width}.webp`))];
 }
 
-export function mediaJson(row, expected) {
+export function mediaJson(row: MediaManifestRow, expected: { ownerType: MediaOwnerType; ownerSlug: string; role: string }): MediaProjection | null {
   const primary = parseCanonicalMediaKey(row?.key);
   if (!primary || !expected || !["events", "archive"].includes(expected.ownerType) || !["cover", "detail"].includes(expected.role)
     || primary.ownerType !== expected.ownerType || primary.ownerSlug !== expected.ownerSlug || row.role !== expected.role) return null;
 
-  let widths;
+  let widths: unknown;
   try { widths = JSON.parse(row.widths_json); } catch { return null; }
-  if (!Array.isArray(widths) || !widths.length || !widths.every((width) => Number.isSafeInteger(width) && width > 0 && width <= 99_999) || new Set(widths).size !== widths.length) return null;
-  widths = [...widths].sort((left, right) => left - right);
+  if (!Array.isArray(widths) || !widths.length || !widths.every((width): width is number => typeof width === 'number' && Number.isSafeInteger(width) && width > 0 && width <= 99_999) || new Set(widths).size !== widths.length) return null;
+  const sortedWidths = [...widths].sort((left, right) => left - right);
 
-  let storedSources;
+  let storedSources: unknown;
   try { storedSources = row.sources_json === undefined ? [] : JSON.parse(row.sources_json); } catch { return null; }
   if (!Array.isArray(storedSources)) return null;
-  if (!storedSources.length) storedSources = keysForVariantSet(row.key, widths).map((key) => ({ key, width: parseCanonicalMediaKey(key)?.width }));
+  const sourceList: unknown[] = storedSources.length ? storedSources : keysForVariantSet(row.key, sortedWidths).map((key) => ({ key, width: parseCanonicalMediaKey(key)?.width }));
 
   const candidates = [];
-  for (const source of storedSources) {
+  for (const source of sourceList) {
+    if (!isRecord(source)) return null;
     const parsed = parseCanonicalMediaKey(source?.key);
     if (!parsed || !Number.isSafeInteger(source?.width) || source.width !== parsed.width || parsed.family !== primary.family) return null;
-    candidates.push({ src: mediaUrl(parsed.key), width: source.width });
+    candidates.push({ src: mediaUrl(parsed.key), width: parsed.width });
   }
   const sources = validMediaSources(candidates);
-  if (sources.length !== widths.length || !sources.every((source, index) => source.width === widths[index]) || !sources.some((source) => source.src === mediaUrl(row.key))) return null;
+  if (sources.length !== sortedWidths.length || !sources.every((source, index) => source.width === sortedWidths[index]) || !sources.some((source) => source.src === mediaUrl(row.key))) return null;
   return {
     id: row.id,
     key: row.key,
     role: row.role,
     alt: row.alt,
     position: row.position,
-    widths,
+    widths: sortedWidths,
     src: mediaUrl(row.key),
     sources,
   };
 }
 
-export async function serveMedia(request, env, key) {
+export async function serveMedia(request: Request, env: WorkerEnv, key: string) {
   const requested = parseCanonicalMediaKey(key);
   if (!requested) return new Response("Not found", { status: 404 });
   if (!env.MEDIA || !env.DB) return new Response("Media storage unavailable", { status: 500 });
-  let rows = [];
+  let rows: MediaRow[] = [];
   let privatePreview = false;
   const notFound = () => new Response("Not found", { status: 404, headers: { "cache-control": "private, no-store", "vary": "Cookie" } });
   try {
@@ -161,7 +171,7 @@ export async function serveMedia(request, env, key) {
       : { mediaTable: "archive_media", parentTable: "archive_items", parentColumn: "archive_item_id" };
     const columns = requested.ownerType === 'events' ? 'id, status, deleting' : 'id, deleting';
     const parent = await env.DB.prepare(`SELECT ${columns} FROM ${owner.parentTable} WHERE slug = ? LIMIT 1`)
-      .bind(requested.ownerSlug).first();
+      .bind(requested.ownerSlug).first<ParentRow>();
     if (!parent || parent.deleting) return notFound();
     if (requested.ownerType === 'events' && !isPublicEventStatus(parent.status)) {
       // Draft image URLs must not bypass the same session used by the admin.
@@ -171,7 +181,7 @@ export async function serveMedia(request, env, key) {
     if (parent?.id) {
       const result = await env.DB.prepare(`SELECT * FROM ${owner.mediaTable}
         WHERE ${owner.parentColumn} = ? AND state = 'active' ORDER BY position, id`)
-        .bind(parent.id).all();
+        .bind(parent.id).all<MediaRow>();
       rows = Array.isArray(result) ? result : Array.isArray(result?.results) ? result.results : [];
     }
   } catch {

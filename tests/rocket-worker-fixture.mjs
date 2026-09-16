@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, readdirSync } from 'node:fs';
-import { hashToken } from '../worker/auth.js';
-import { routeRequest } from '../worker/router.js';
+import { hashToken } from '../worker/auth.ts';
+import { routeRequest } from '../worker/router.ts';
 
 export async function rocketWorkerFixture() {
   const db = new DatabaseSync(':memory:');

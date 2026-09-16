@@ -32,7 +32,7 @@ for (const path of files) {
 }
 
 await build({
-  entryPoints: ["worker/index.js"],
+  entryPoints: ["worker/index.ts"],
   outfile: "dist/server/index.js",
   bundle: true,
   format: "esm",

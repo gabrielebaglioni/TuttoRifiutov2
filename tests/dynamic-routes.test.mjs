@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { parseHTML } from "linkedom";
-import { routeRequest, templatePathFor } from "../worker/router.js";
+import { routeRequest, templatePathFor } from "../worker/router.ts";
 import { detailIdentityFromPath, hydrateDetailTemplate, renderArchive } from "../src/scripts/collections-hydration.js";
 import { applyContent } from "../src/scripts/content-hydration.js";
 import { SITE_CONTENT } from "../src/data/site-content.ts";
-import { SITE_CONTENT as WORKER_CONTENT } from "../worker/content-defaults.js";
+import { SITE_CONTENT as WORKER_CONTENT } from "../worker/content-defaults.ts";
 import { adminSectionForContentKey } from "../src/scripts/admin.js";
 
 test("dynamic collection paths resolve only valid slugs to internal templates", () => {

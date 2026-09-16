@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import ts from "typescript";
 
-test("migration sources satisfy strict TypeScript contracts", () => {
-  const configPath = ts.findConfigFile(process.cwd(), ts.sys.fileExists, "tsconfig.migration.json");
+for (const configName of ["tsconfig.migration.json", "tsconfig.worker.json"]) {
+test(`${configName} sources satisfy strict TypeScript contracts`, () => {
+  const configPath = ts.findConfigFile(process.cwd(), ts.sys.fileExists, configName);
   assert.ok(configPath, "tsconfig.migration.json must exist");
 
   const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -15,6 +16,7 @@ test("migration sources satisfy strict TypeScript contracts", () => {
   const diagnostics = ts.getPreEmitDiagnostics(program);
   assert.equal(diagnostics.length, 0, ts.formatDiagnosticsWithColorAndContext(diagnostics, formatHost));
 });
+}
 
 const formatHost = {
   getCanonicalFileName: (fileName) => fileName,

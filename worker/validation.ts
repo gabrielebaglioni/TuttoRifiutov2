@@ -1,25 +1,25 @@
-import { SITE_CONTENT } from "./content-defaults.js";
+import { SITE_CONTENT } from "./content-defaults.ts";
 import { THEME_KEY, validatePalette } from '../src/data/theme.ts';
 
 export const MAX_CONTENT_STRING_LENGTH = 20_000;
 
-function hasOwn(object, key) {
+function hasOwn(object: object, key: PropertyKey) {
   return Object.prototype.hasOwnProperty.call(object, key);
 }
 
-function isLinkKey(key) {
+function isLinkKey(key: string) {
   return /(?:^|[._])(?:href|url|link)(?:$|[._])/.test(key);
 }
 
-function isNestedLink(key, path) {
+function isNestedLink(key: string, path: readonly number[]) {
   return key === "global.menu.items" && path.length === 2 && path[1] === 1;
 }
 
-export function isEditableContentKey(key, defaults = SITE_CONTENT) {
+export function isEditableContentKey(key: unknown, defaults: Readonly<Record<string, unknown>> = SITE_CONTENT): key is string {
   return typeof key === "string" && hasOwn(defaults, key);
 }
 
-export function isAllowedLink(value) {
+export function isAllowedLink(value: unknown): value is string {
   if (typeof value !== "string" || value.length === 0 || value.includes("\\")) return false;
   if (value.startsWith("/") && !value.startsWith("//")) return true;
   try {
@@ -30,7 +30,7 @@ export function isAllowedLink(value) {
   }
 }
 
-function matchesSchema(key, fallback, value, depth = 0, path = []) {
+function matchesSchema(key: string, fallback: unknown, value: unknown, depth = 0, path: readonly number[] = []): boolean {
   if (typeof fallback === "string") {
     const linkValue = (depth === 0 && isLinkKey(key)) || isNestedLink(key, path);
     return typeof value === "string"
@@ -50,7 +50,7 @@ function matchesSchema(key, fallback, value, depth = 0, path = []) {
     && value.every((item, index) => matchesSchema(key, fallback[index], item, depth + 1, [...path, index]));
 }
 
-export function validateContentValue(key, value, defaults = SITE_CONTENT) {
+export function validateContentValue(key: unknown, value: unknown, defaults: Readonly<Record<string, unknown>> = SITE_CONTENT): boolean {
   if (!isEditableContentKey(key, defaults)) return false;
   if (key === THEME_KEY) return validatePalette(value);
   return matchesSchema(key, defaults[key], value);

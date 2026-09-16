@@ -1,11 +1,12 @@
-import { getContentOverrides } from './db.js';
-import { SITE_CONTENT } from './content-defaults.js';
-import { mergeContent } from './handlers/content.js';
-import { publicItems } from './handlers/collections.js';
+import { getContentOverrides } from './db.ts';
+import { SITE_CONTENT } from './content-defaults.ts';
+import { mergeContent } from './handlers/content.ts';
+import { publicItems } from './handlers/collections.ts';
+import type { WorkerEnv } from './types.ts';
 
 // Only the public projection, never raw DB rows, sessions or unpublished events.
 // A storage error must fail export rather than overwrite backups with defaults.
-export async function publishedSnapshot(env) {
+export async function publishedSnapshot(env: WorkerEnv) {
   const headers = { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' };
   try {
     if (!env.DB) throw new Error('Missing storage');

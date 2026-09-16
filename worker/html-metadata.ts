@@ -1,25 +1,25 @@
-export function escapeAttribute(value) {
+export function escapeAttribute(value: unknown) {
   return String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-export function escapeText(value) {
+export function escapeText(value: unknown) {
   return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-function replaceContentAttribute(tag, value) {
-  return tag.replace(/(\bcontent\s*=\s*)(["'])[^"']*\2/i, (_match, prefix, quote) => `${prefix}${quote}${escapeAttribute(value)}${quote}`);
+function replaceContentAttribute(tag: string, value: unknown) {
+  return tag.replace(/(\bcontent\s*=\s*)(["'])[^"']*\2/i, (_match: string, prefix: string, quote: string) => `${prefix}${quote}${escapeAttribute(value)}${quote}`);
 }
 
-function replaceHrefAttribute(tag, value) {
-  return tag.replace(/(\bhref\s*=\s*)(["'])[^"']*\2/i, (_match, prefix, quote) => `${prefix}${quote}${escapeAttribute(value)}${quote}`);
+function replaceHrefAttribute(tag: string, value: unknown) {
+  return tag.replace(/(\bhref\s*=\s*)(["'])[^"']*\2/i, (_match: string, prefix: string, quote: string) => `${prefix}${quote}${escapeAttribute(value)}${quote}`);
 }
 
-function hasNamedAttribute(tag, attribute, value) {
+function hasNamedAttribute(tag: string, attribute: string, value: string) {
   const pattern = new RegExp(`\\b${attribute}\\s*=\\s*(["'])${value.replace(/[:]/g, "\\:")}\\1`, "i");
   return pattern.test(tag);
 }
 
-function replaceMeta(html, names, value) {
+function replaceMeta(html: string, names: readonly { attribute: string; name: string }[], value: unknown) {
   if (typeof value !== "string") return html;
   return html.replace(/<meta\b[^>]*>/gi, (tag) => (
     names.some(({ attribute, name }) => hasNamedAttribute(tag, attribute, name))
@@ -28,7 +28,7 @@ function replaceMeta(html, names, value) {
   ));
 }
 
-export function rewriteMetadata(html, metadata = {}) {
+export function rewriteMetadata(html: string, metadata: Readonly<Record<string, unknown>> = {}) {
   if (typeof html !== "string" || !metadata || typeof metadata !== "object") return html;
   let next = html;
   if (typeof metadata.title === "string") {

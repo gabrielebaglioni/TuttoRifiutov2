@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { hashToken } from "../worker/auth.js";
-import { isSlug, materializeCollectionItem, mergeCollection, validateCollectionPayload } from "../worker/handlers/collections.js";
-import { routeRequest } from "../worker/router.js";
-import { ARCHIVE_DEFAULTS, EVENT_DEFAULTS } from "../worker/collections-defaults.js";
+import { hashToken } from "../worker/auth.ts";
+import { isSlug, materializeCollectionItem, mergeCollection, validateCollectionPayload } from "../worker/handlers/collections.ts";
+import { routeRequest } from "../worker/router.ts";
+import { ARCHIVE_DEFAULTS, EVENT_DEFAULTS } from "../worker/collections-defaults.ts";
 
 test("collection overrides preserve defaults and ordering", () => {
   const defaults = [{ slug: "musica", title: "Musica", position: 2 }];
@@ -416,6 +416,20 @@ test("updating and deleting a fallback event creates and restores only its overr
   const remove = await routeRequest(new Request("https://site.test/api/admin/events/musica", { method: "DELETE", headers }), env, {});
   assert.equal(remove.status, 200);
   assert.equal((await (await routeRequest(new Request("https://site.test/api/events/musica"), env, {})).json()).title, fallback.title);
+});
+
+test("malformed legacy media without a safe key remains pending and retryable during parent deletion", async () => {
+  const env = await environmentWithSession();
+  const headers = { cookie: env.cookie, "content-type": "application/json", "x-csrf-token": env.csrfToken };
+  await routeRequest(new Request("https://site.test/api/admin/events", { method: "POST", headers, body: JSON.stringify(eventPayload) }), env, {});
+  const parent = env.DB.rows.events[0];
+  env.DB.media.events.push({ id: 77, event_id: parent.id, key: 'invalid', role: 'cover', alt: '', position: 0,
+    sources_json: '[]', widths_json: '{}', state: 'active', cleanup_attempts: 0 });
+  const response = await routeRequest(new Request("https://site.test/api/admin/events/nuovo-evento", { method: 'DELETE', headers }), env, {});
+  assert.equal(response.status, 202);
+  assert.equal((await response.json()).cleanupPending, true);
+  assert.ok(env.DB.media.events[0].cleanup_attempts >= 1);
+  assert.equal(env.DB.rows.events[0].deleting, 1);
 });
 
 test("a cleanup-pending deletion is immediately absent from public collection routes but remains retryable", async () => {

@@ -1,8 +1,9 @@
+declare const __STATIC_HTML_PAGES__: Readonly<Record<string, string>>;
 const pages = typeof __STATIC_HTML_PAGES__ === "undefined" ? {} : __STATIC_HTML_PAGES__;
 
 export const STATIC_HTML = Object.freeze(pages);
 
-export function embeddedHtmlResponse(request) {
+export function embeddedHtmlResponse(request: Request) {
   if (!request || !["GET", "HEAD"].includes(request.method)) return null;
   const html = STATIC_HTML[new URL(request.url).pathname];
   if (typeof html !== "string") return null;

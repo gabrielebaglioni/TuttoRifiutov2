@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { hashToken } from "../worker/auth.js";
-import { mergeContent } from "../worker/handlers/content.js";
-import { routeRequest } from "../worker/router.js";
+import { hashToken } from "../worker/auth.ts";
+import { mergeContent } from "../worker/handlers/content.ts";
+import { routeRequest } from "../worker/router.ts";
 import { SITE_CONTENT } from "../src/data/site-content.ts";
-import { validateContentValue } from "../worker/validation.js";
+import { validateContentValue } from "../worker/validation.ts";
 import { THEME_KEY, DEFAULT_PALETTE } from '../src/data/theme.ts';
 
 test('palette content writes reject invalid and CSRF-less values before persistence and save one complete object', async () => {

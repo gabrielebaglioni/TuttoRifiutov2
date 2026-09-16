@@ -4,7 +4,7 @@ import { mkdtemp, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { syncOnce, mediaPaths } from '../scripts/local-content-sync.mjs';
-import { publishedSnapshot } from '../worker/published-snapshot.js';
+import { publishedSnapshot } from '../worker/published-snapshot.ts';
 import { DatabaseSync } from 'node:sqlite';
 import { readdirSync, readFileSync } from 'node:fs';
 import sharp from 'sharp';

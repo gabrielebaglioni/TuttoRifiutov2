@@ -1,16 +1,17 @@
-import { deleteSession, getSession as findSession } from "./db.js";
-import { digest, equalBytes, bytesToHex, hmac } from "./crypto.js";
+import { deleteSession, getSession as findSession } from "./db.ts";
+import { digest, equalBytes, bytesToHex, hmac } from "./crypto.ts";
+import type { WorkerEnv } from './types.ts';
 
 const COOKIE_NAME = "tr_admin";
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILED_LOGINS = 5;
 
-function privateResponse(body, status) {
+function privateResponse(body: unknown, status: number) {
   return Response.json(body, { status, headers: { "cache-control": "no-store" } });
 }
 
-function readCookie(request, name) {
+function readCookie(request: Request, name: string) {
   const cookies = request.headers.get("cookie") ?? "";
   for (const part of cookies.split(";")) {
     const [key, ...value] = part.trim().split("=");
@@ -19,17 +20,17 @@ function readCookie(request, name) {
   return null;
 }
 
-function sessionSecret(env) {
+function sessionSecret(env: WorkerEnv) {
   return typeof env.SESSION_SECRET === "string" && env.SESSION_SECRET.length > 0
     ? env.SESSION_SECRET
     : null;
 }
 
-export function sessionCookie(token, maxAge = 28800) {
+export function sessionCookie(token: string, maxAge = 28800) {
   return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`;
 }
 
-export async function verifyCredentials(env, username, password) {
+export async function verifyCredentials(env: WorkerEnv, username: unknown, password: unknown) {
   if (
     typeof env.ADMIN_USERNAME !== "string"
     || env.ADMIN_USERNAME.length === 0
@@ -45,11 +46,11 @@ export async function verifyCredentials(env, username, password) {
   return Boolean(Number(equalBytes(givenUser, wantedUser)) & Number(equalBytes(givenPassword, wantedPassword)));
 }
 
-export async function hashToken(value, secret) {
+export async function hashToken(value: string, secret: string) {
   return bytesToHex(await hmac(value, secret));
 }
 
-export async function getSession(request, env) {
+export async function getSession(request: Request, env: WorkerEnv) {
   const token = readCookie(request, COOKIE_NAME);
   const secret = sessionSecret(env);
   if (!token || !secret || !env.DB) return null;
@@ -63,7 +64,7 @@ export async function getSession(request, env) {
   return stored;
 }
 
-export async function requireAdmin(request, env, { csrf = false } = {}) {
+export async function requireAdmin(request: Request, env: WorkerEnv, { csrf = false } = {}) {
   const stored = await getSession(request, env);
   if (!stored) return privateResponse({ error: "Authentication required" }, 401);
   if (!csrf) return stored;
@@ -75,7 +76,7 @@ export async function requireAdmin(request, env, { csrf = false } = {}) {
   return stored;
 }
 
-export async function hashClientIp(request, env) {
+export async function hashClientIp(request: Request, env: WorkerEnv) {
   const secret = sessionSecret(env);
   if (!secret) return null;
   const ip = request.headers.get("cf-connecting-ip") ?? "unknown";

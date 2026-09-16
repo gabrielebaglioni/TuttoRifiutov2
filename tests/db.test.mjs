@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { setContentOverride } from "../worker/db.js";
+import { setContentOverride } from "../worker/db.ts";
 
 test("content writes use a bound prepared statement", async () => {
   const calls = [];

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULT_PALETTE, validatePalette, themeCss, themeProperties } from '../src/data/theme.ts';
-import { validateContentValue } from '../worker/validation.js';
+import { validateContentValue } from '../worker/validation.ts';
 import { parseHTML } from 'linkedom';
-import { routeRequest } from '../worker/router.js';
+import { routeRequest } from '../worker/router.ts';
 
 test('initial public HTML contains stored theme even before client content hydration', async () => {
   const env = { DB: { prepare() { return { bind() { return this; }, all: async () => ({results:[{key:'global.theme.palette', value_json:JSON.stringify({...DEFAULT_PALETTE, accent:'#112233'})}]}) }; } }, ASSETS:{fetch:async()=>new Response('<html><head><title>Old</title></head><body></body></html>', {headers:{'content-type':'text/html'}})} };
