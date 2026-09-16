@@ -1,4 +1,5 @@
 import gsap from "gsap";
+import { prefersReducedMotion } from './motion-policy.ts';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -14,6 +15,10 @@ document.addEventListener("DOMContentLoaded", () => {
 // stats items slide in from right on scroll
 function initStatsAnimation() {
   const statItems = document.querySelectorAll(".stat-item");
+  if (prefersReducedMotion()) {
+    statItems.forEach((item) => gsap.set(item, { x: 0 }));
+    return;
+  }
 
   statItems.forEach((item) => {
     ScrollTrigger.create({

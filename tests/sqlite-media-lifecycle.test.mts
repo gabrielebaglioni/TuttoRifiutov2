@@ -587,6 +587,21 @@ test("a real SQLite active-slot unique index permits a collision-proof two-row s
   assert.equal(tooLarge.status, 400);
 });
 
+test("collection media ordering cannot collide with temporary slots inside the accepted position range", async (t) => {
+  const db = createDatabase();
+  t.after(() => db.close());
+  insertEvent(db, { slug: 'swap-me' });
+  insertEventMedia(db, { id: 1, key: eventKey(640), role: 'detail', position: 0, widths: '[640]' });
+  insertEventMedia(db, { id: 2, key: eventKey(640, '00000000-0000-4000-8000-000000000002'), role: 'detail', position: 1, widths: '[640]' });
+  const env = await adminEnvironment(db, objectStore());
+  const result = await routeRequest(new Request('https://site.test/api/admin/events/swap-me', {
+    method: 'PUT', headers: { cookie: env.cookie, 'x-csrf-token': env.csrfToken, 'content-type': 'application/json' },
+    body: JSON.stringify(eventPayload('swap-me', [{ id: 1, position: 5 }, { id: 2, position: 4 }])),
+  }), env, {});
+  assert.equal(result.status, 200);
+  assert.deepEqual(rows(db.prepare('SELECT id, position FROM event_media ORDER BY id').all()), [{ id: 1, position: 5 }, { id: 2, position: 4 }]);
+});
+
 test("the final SQLite schema allows an active cover only in its singular position-zero slot", () => {
   const db = createDatabase();
   insertEvent(db);

@@ -32,15 +32,17 @@ export function sessionCookie(token: string, maxAge = 28800) {
 
 export async function verifyCredentials(env: WorkerEnv, username: unknown, password: unknown) {
   if (
-    typeof env.ADMIN_USERNAME !== "string"
+    typeof username !== "string"
+    || typeof password !== "string"
+    || typeof env.ADMIN_USERNAME !== "string"
     || env.ADMIN_USERNAME.length === 0
     || typeof env.ADMIN_PASSWORD !== "string"
     || env.ADMIN_PASSWORD.length === 0
   ) return false;
   const [givenUser, wantedUser, givenPassword, wantedPassword] = await Promise.all([
-    digest(String(username)),
+    digest(username),
     digest(env.ADMIN_USERNAME),
-    digest(String(password)),
+    digest(password),
     digest(env.ADMIN_PASSWORD),
   ]);
   return Boolean(Number(equalBytes(givenUser, wantedUser)) & Number(equalBytes(givenPassword, wantedPassword)));

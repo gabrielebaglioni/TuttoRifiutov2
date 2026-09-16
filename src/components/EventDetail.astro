@@ -71,7 +71,7 @@ const { event } = Astro.props;
         {media.type === "video" ? (
           <video
             src={media.src}
-            poster={typeof media.poster === "string" ? undefined : media.poster.src}
+            poster={typeof media.poster === "string" ? media.poster : media.poster.src}
             controls
             preload="metadata"
             playsinline

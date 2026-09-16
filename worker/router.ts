@@ -99,6 +99,7 @@ async function rewriteStaticMetadata(request: Request, env: WorkerEnv, response:
   } catch {
     if (!dynamic) return response;
   }
+  const fallback = response.clone();
   try {
     let title = dynamic?.seo?.title ?? (page ? values[`seo.${page}.title`] : null);
     let description = dynamic?.seo?.description ?? (page ? values[`seo.${page}.description`] : null);
@@ -120,7 +121,7 @@ async function rewriteStaticMetadata(request: Request, env: WorkerEnv, response:
     const headers = freshRepresentationHeaders(response.headers);
     return new Response(body, { status: response.status, statusText: response.statusText, headers });
   } catch {
-    return response;
+    return fallback;
   }
 }
 

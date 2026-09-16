@@ -775,7 +775,7 @@ function collectionCard(kind: Kind, item: Item, index: number, collectionScope: 
       renderApp();
       return;
     }
-    if (!window.confirm("Eliminare questo elemento?")) return;
+    if (!window?.confirm?.("Eliminare questo elemento?")) return;
     const snapshots = parentResourceSnapshots(kind, item);
     try {
       await withBusy(resource, card, async () => {
@@ -906,7 +906,7 @@ async function loadEditor(session: Session, epoch = state.auth.capture()) {
       state.section = tab.dataset.adminSection;
       renderApp();
     }));
-    window.addEventListener?.("beforeunload", (event: BeforeUnloadEvent) => {
+    window?.addEventListener?.("beforeunload", (event: BeforeUnloadEvent) => {
       if (state.dirty.dirty) {
         event.preventDefault();
         event.returnValue = "";

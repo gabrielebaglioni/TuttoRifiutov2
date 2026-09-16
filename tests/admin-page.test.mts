@@ -24,6 +24,7 @@ test("admin implementation does not embed credentials or render server values as
 });
 
 test("production build publishes the isolated admin page", () => {
+  assert.ok(existsSync("dist/server/index.js"), "Run the production build before this assertion");
   assert.equal(existsSync("dist/client/admin/index.html"), false);
   assert.match(read("dist/server/index.js"), /id="admin-login"/);
 });

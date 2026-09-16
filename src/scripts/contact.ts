@@ -54,14 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // clock - updates all contact clocks with Rome time
+const romeClock = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit',
+  hourCycle: 'h23', timeZoneName: 'short',
+});
 function getRomeTime() {
-  const now = new Date();
-  const romeTime = new Date(
-    now.toLocaleString("en-US", { timeZone: "Europe/Rome" }),
-  );
-  const hours = String(romeTime.getHours()).padStart(2, "0");
-  const minutes = String(romeTime.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes} CET`;
+  const parts = romeClock.formatToParts(new Date());
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((entry) => entry.type === type)?.value ?? '';
+  return `${part('hour')}:${part('minute')} ${part('timeZoneName')}`;
 }
 
 function updateClocks() {

@@ -120,11 +120,14 @@ class WorkDistortion {
   }
 
   setupRenderer() {
-    if (this.isMobile) return;
+    if (this.isMobile || this.failed) return;
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    try { this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+    catch { this.showNativeImages(); return; }
     this.renderer?.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.domElement.addEventListener('webglcontextlost', () => this.showNativeImages());
+    this.renderer.debug.onShaderError = () => this.showNativeImages();
     this.renderer.domElement.style.position = "fixed";
     this.renderer.domElement.style.top = "0";
     this.renderer.domElement.style.left = "0";
@@ -160,14 +163,16 @@ class WorkDistortion {
 
     Promise.all(media.map(loadImage)).then((loadedImages) => {
       this.mediaStore = loadedImages.map((mediaElement) => {
-        mediaElement.style.opacity = this.isMobile ? "1" : "0";
+        mediaElement.style.opacity = "1";
 
         const bounds = mediaElement.getBoundingClientRect();
         const imageMaterial = material.clone();
         const imageMesh = new THREE.Mesh(geometry, imageMaterial);
+        imageMesh.visible = mediaElement.complete && mediaElement.naturalWidth > 0;
 
         const texture = new THREE.Texture(mediaElement);
         texture.needsUpdate = true;
+        texture.onUpdate = () => { this.needsGpuValidation = true; };
 
         imageMaterial.uniforms.uTexture.value = texture;
         imageMaterial.uniforms.uTextureSize.value.x =
@@ -181,7 +186,7 @@ class WorkDistortion {
 
         if (!this.isMobile) scene.add(imageMesh);
 
-        return {
+        const object: GalleryObject = {
           media: mediaElement,
           material: imageMaterial,
           mesh: imageMesh,
@@ -189,7 +194,10 @@ class WorkDistortion {
           height: bounds.height,
           top: bounds.top + scrollY,
           left: bounds.left,
+          drawn: false,
         };
+        imageMesh.onAfterRender = () => { object.drawn = true; };
+        return object;
       });
     });
   }
@@ -224,6 +232,7 @@ class WorkDistortion {
   }
 
   handleResize() {
+    if (this.failed) return;
     const wasMobile = this.isMobile;
     this.isMobile = window.innerWidth < 1000;
 
@@ -254,6 +263,7 @@ class WorkDistortion {
   }
 
   toggleMode() {
+    if (this.failed) return;
     const scene = this.scene;
     if (!scene) return;
     if (this.isMobile) {
@@ -263,16 +273,24 @@ class WorkDistortion {
       });
     } else {
       if (!this.renderer) this.setupRenderer();
+      if (this.failed) return;
       if (this.renderer) this.renderer.domElement.style.display = "block";
       this.mediaStore.forEach((object) => {
-        object.media.style.opacity = "0";
+        object.media.style.opacity = "1";
         if (!scene.children.includes(object.mesh))
           scene.add(object.mesh);
       });
     }
   }
 
+  showNativeImages() {
+    this.failed = true;
+    if (this.renderer) this.renderer.domElement.style.display = 'none';
+    document.querySelectorAll<HTMLImageElement>('.work-item img').forEach((image) => { image.style.opacity = '1'; });
+  }
+
   render() {
+    if (this.failed) return;
     if (this.isMobile) {
       requestAnimationFrame(() => this.render());
       return;
@@ -281,11 +299,21 @@ class WorkDistortion {
     this.smoothVelocity += (this.scrollVelocity - this.smoothVelocity) * 0.1;
 
     this.mediaStore.forEach((object) => {
+      object.drawn = false;
       object.material.uniforms.uScrollVelocity.value = this.smoothVelocity;
     });
 
     this.setPositions();
-    if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
+    try {
+      if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
+      if (this.needsGpuValidation && this.renderer) {
+        this.needsGpuValidation = false;
+        if (this.renderer.getContext().getError() !== 0) this.showNativeImages();
+      }
+      this.mediaStore.forEach((object) => {
+        object.media.style.opacity = !this.failed && object.mesh.visible && object.drawn ? '0' : '1';
+      });
+    } catch { this.showNativeImages(); }
     requestAnimationFrame(() => this.render());
   }
 }

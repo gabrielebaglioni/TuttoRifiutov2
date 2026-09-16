@@ -138,7 +138,7 @@ function mediaOrderingStatements(db: DatabaseReader, kind: CollectionKind, paren
   const byId = new Map(current.map((media) => [media.id, media]));
   const details = order.filter(({ id }) => byId.get(id)?.role === "detail");
   const maximum = Math.max(0, ...current.filter((media) => media.role === "detail").map((media) => media.position));
-  const temporaryBase = maximum + details.length + 1;
+  const temporaryBase = Math.max(MAX_COLLECTION_POSITION + 1, maximum + details.length + 1);
   if (!Number.isSafeInteger(temporaryBase)) throw new Error("Invalid media ordering");
   const temporary = details.map(({ id }, index) => db.prepare(`UPDATE ${config.mediaTable} SET position = ? WHERE id = ? AND ${config.parentColumn} = ?`).bind(temporaryBase + index, id, parentId));
   const final = order.map(({ id, position }) => db.prepare(`UPDATE ${config.mediaTable} SET position = ? WHERE id = ? AND ${config.parentColumn} = ?`).bind(position, id, parentId));

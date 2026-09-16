@@ -6,6 +6,12 @@ import test from "node:test";
 import { parseHTML } from "linkedom";
 import { createAdminController } from "../src/scripts/admin.ts";
 import { DEFAULT_PALETTE, THEME_KEY } from '../src/data/theme.ts';
+test('legacy admin can boot without an optional browser window', async () => {
+    const { document } = parseHTML(SHELL);
+    const controller = createAdminController({ document, fetch: async () => new Response('{}', { status: 401 }) });
+    assert.doesNotThrow(() => controller.boot());
+    await settled();
+});
 test('theme draft survives tab switch, validates before atomic CSRF save, cancels and restores', async () => {
     const { document, window } = parseHTML(SHELL);
     let palette = { ...DEFAULT_PALETTE };

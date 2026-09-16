@@ -13,7 +13,7 @@ const media = event.cardMedia;
       {media.type === "video" ? (
         <video
           src={media.src}
-          poster={typeof media.poster === "string" ? undefined : media.poster.src}
+          poster={typeof media.poster === "string" ? media.poster : media.poster.src}
           autoplay
           muted
           loop
