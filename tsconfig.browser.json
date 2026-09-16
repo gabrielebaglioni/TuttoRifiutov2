@@ -1,5 +1,40 @@
 {
   "extends": "./tsconfig.migration.json",
-  "compilerOptions": { "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": [] },
-  "include": ["tests/types/browser-contracts.ts", "src/scripts/transition.ts", "src/scripts/menu-audio.ts", "src/scripts/events-switch.ts", "src/scripts/nav.ts", "src/scripts/lenis-scroll.ts", "src/scripts/stats.ts", "src/scripts/footer.ts", "src/scripts/menuShaders.ts", "src/scripts/preloader.ts", "src/scripts/animated-copy.ts", "src/scripts/clients.ts", "src/scripts/lab.ts", "src/scripts/menu-library.ts", "src/types/browser.ts"]
+  "compilerOptions": {
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": []
+  },
+  "include": [
+    "tests/types/browser-contracts.ts",
+    "src/scripts/transition.ts",
+    "src/scripts/menu-audio.ts",
+    "src/scripts/events-switch.ts",
+    "src/scripts/nav.ts",
+    "src/scripts/lenis-scroll.ts",
+    "src/scripts/stats.ts",
+    "src/scripts/footer.ts",
+    "src/scripts/menuShaders.ts",
+    "src/scripts/preloader.ts",
+    "src/scripts/animated-copy.ts",
+    "src/scripts/clients.ts",
+    "src/scripts/lab.ts",
+    "src/scripts/menu-library.ts",
+    "src/types/browser.ts",
+    "src/scripts/collections-hydration.ts",
+    "src/scripts/contact.ts",
+    "src/scripts/menu-ring-grain.ts",
+    "src/scripts/menu.ts",
+    "src/scripts/particle-visual.ts",
+    "src/scripts/pie-transition.ts",
+    "src/scripts/project.ts",
+    "src/scripts/skyline.ts",
+    "src/scripts/work.ts",
+    "src/scripts/common.ts",
+    "src/scripts/home.ts",
+    "src/scripts/navigation-warmup.ts"
+  ]
 }

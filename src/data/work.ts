@@ -1,4 +1,5 @@
 import type { ImageMetadata } from "astro";
+import { plainImage } from "./static-media.ts";
 import work01 from "../assets/optimized/work/work_01.webp";
 import work02 from "../assets/optimized/work/work_02.webp";
 import work03 from "../assets/optimized/work/work_03.webp";
@@ -38,7 +39,7 @@ export const workItems: WorkItem[] = [
 
 export const archiveCollectionDefaults: ArchiveCollectionDefault[] = workItems.map((item, position) => {
   const isParole = item.code === "TR—01";
-  return JSON.parse(JSON.stringify({
+  return structuredClone<ArchiveCollectionDefault>({
     slug: item.title.toLowerCase(),
     title: item.title,
     code: item.code,
@@ -48,7 +49,7 @@ export const archiveCollectionDefaults: ArchiveCollectionDefault[] = workItems.m
     outro: isParole ? project.outro : "",
     seo: isParole ? project.seo : { title: `${item.title} — Tutto Rifiuto`, description: "" },
     position,
-    coverMedia: { type: "image", src: item.image, alt: item.title },
-    detailMedia: isParole ? project.images.map((src) => ({ type: "image", src, alt: project.title })) : [],
-  }));
+    coverMedia: { type: "image", src: plainImage(item.image), alt: item.title },
+    detailMedia: isParole ? project.images.map((src) => ({ type: "image", src: plainImage(src), alt: project.title })) : [],
+  });
 });

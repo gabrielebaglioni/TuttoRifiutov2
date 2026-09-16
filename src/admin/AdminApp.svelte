@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { createAdminStore, sections, sectionFor, collectionKey, type Section, type Kind } from './store';
-  import { contentLabel } from '../scripts/admin-labels.js';
+  import { contentLabel } from '../scripts/admin-labels.ts';
+  import { stringPalette } from '../scripts/admin-types.ts';
   import { THEME_KEY } from '../data/theme.ts';
   import ValueEditor from './ValueEditor.svelte';
   import ThemeEditor from './ThemeEditor.svelte';
   import CollectionEditor from './CollectionEditor.svelte';
+  function sectionForTab(key: string): Section { if(key === 'home' || key === 'archive' || key === 'events' || key === 'project' || key === 'contact' || key === 'global' || key === 'colors') return key; throw new Error('Sezione non valida'); }
   const store = createAdminStore();
   // Store snapshots are immutable at the UI boundary; do not proxy CMS drafts.
   let ui = $state.raw({ ...store.state });
@@ -36,7 +38,7 @@
   <details class="admin-card admin-disclosure" open={key === THEME_KEY}>
     <summary><h3>{key === THEME_KEY ? 'Palette del sito' : contentLabel(key)}</h3></summary>
     <p class="admin-key">{key}</p>
-    {#if key === THEME_KEY}<ThemeEditor value={value as Record<string, string>} onchange={(next, path) => store.edit(`content:${key}`, path, next)} />
+    {#if key === THEME_KEY}<ThemeEditor value={stringPalette(value)} onchange={(next, path) => store.edit(`content:${key}`, path, next)} />
     {:else}<ValueEditor {value} path={key} onchange={(next, path) => store.edit(`content:${key}`, path, next)} />{/if}
     <div class="admin-actions">
       <button type="button" onclick={() => store.saveContent(key)}>Salva</button>
@@ -62,13 +64,13 @@
   {:else}
     <section class="admin-editor" id="admin-editor" aria-labelledby="admin-title" aria-busy={ui.busy}>
       <header class="admin-header"><div><p class="admin-kicker">Tutto Rifiuto / CMS</p><h1 id="admin-title" tabindex="-1">Contenuti</h1></div><button type="button" disabled={ui.busy} onclick={() => store.logout()}>Esci</button></header>
-      <nav class="admin-tabs" aria-label="Sezioni editor">{#each Object.entries(sections) as [key, title]}<button type="button" disabled={ui.busy} aria-current={ui.section === key ? 'page' : undefined} onclick={() => store.select(key as Section)}>{title}</button>{/each}</nav>
+      <nav class="admin-tabs" aria-label="Sezioni editor">{#each Object.entries(sections) as [key, title]}<button type="button" disabled={ui.busy} aria-current={ui.section === key ? 'page' : undefined} onclick={() => store.select(sectionForTab(key))}>{title}</button>{/each}</nav>
       <p class="admin-status" role="alert" data-kind={ui.error ? 'error' : undefined}>{ui.message}</p>
       <p aria-live="polite">{ui.dirty ? `${ui.dirty} modifiche non salvate` : 'Nessuna modifica non salvata'}</p>
       <fieldset disabled={ui.busy} id="admin-panels">
         {#each keys.filter(key => !key.startsWith('seo.')) as key (key)}{@render contentCard(key)}{/each}
         {#if ui.section === 'events' || ui.section === 'archive'}
-          {@const kind = ui.section as Kind}
+          {@const kind = ui.section}
           <section class="admin-panel"><h2>{sections[kind]}</h2><button type="button" onclick={() => store.add(kind)}>Crea nuovo {kind === 'events' ? 'evento' : 'pacchetto'}</button>
             {#each ui.collections[kind] as item, index (collectionKey(kind, item))}<CollectionEditor {store} revision={ui.revision} {kind} {item} {index} />{/each}
           </section>

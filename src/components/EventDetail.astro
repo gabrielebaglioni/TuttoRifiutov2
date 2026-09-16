@@ -1,4 +1,6 @@
 ---
+import type { EventRecord } from "../data/events.ts";
+interface Props { event: Omit<EventRecord, "cardMedia"> }
 import ResponsiveMedia from "./ResponsiveMedia.astro";
 
 const { event } = Astro.props;
@@ -69,7 +71,7 @@ const { event } = Astro.props;
         {media.type === "video" ? (
           <video
             src={media.src}
-            poster={media.poster?.src}
+            poster={typeof media.poster === "string" ? undefined : media.poster.src}
             controls
             preload="metadata"
             playsinline

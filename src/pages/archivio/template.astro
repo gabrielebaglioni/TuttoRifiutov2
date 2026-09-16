@@ -1,11 +1,12 @@
 ---
+import type { ArchiveCollectionDefault } from "../../data/work.ts";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ArchiveDetail from "../../components/ArchiveDetail.astro";
 import fallbackCover from "../../assets/optimized/work/work_01.webp";
 import fallbackDetail from "../../assets/optimized/project/project_1.webp";
 import "../../styles/site/project.css";
 
-const fallback = {
+const fallback: Omit<ArchiveCollectionDefault, "href" | "position"> = {
   slug: "template",
   title: "Archivio Tutto Rifiuto",
   code: "TR—00",
@@ -20,5 +21,5 @@ const fallback = {
 
 <BaseLayout title={fallback.seo.title} description={fallback.seo.description}>
   <div data-public-detail-template="archive"><ArchiveDetail item={fallback} /></div>
-  <script src="../../scripts/project.js"></script>
+  <script src="../../scripts/project.ts"></script>
 </BaseLayout>

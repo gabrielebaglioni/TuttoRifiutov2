@@ -1,4 +1,5 @@
 ---
+interface Props { name: string; class?: string }
 import { getIconSvg } from "../scripts/icons.ts";
 
 const { name, class: className = "" } = Astro.props;

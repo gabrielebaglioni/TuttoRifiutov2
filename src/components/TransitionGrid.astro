@@ -1,4 +1,5 @@
 ---
+interface Props { small?: boolean }
 const { small = false } = Astro.props;
 const blocks = Array.from({ length: small ? 0 : 12 });
 ---

@@ -1,8 +1,8 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
+    "allowJs": false,
+    "checkJs": false,
     "exactOptionalPropertyTypes": true,
     "noEmit": true,
     "noImplicitOverride": true,

@@ -1,15 +1,16 @@
 <script lang="ts">
   import { untrack } from 'svelte';
-  import { fieldLabel } from '../scripts/admin-labels.js';
+  import { fieldLabel } from '../scripts/admin-labels.ts';
   import type { Value } from './store';
   import ValueEditor from './ValueEditor.svelte';
-  let { value, path, onchange, readonly = false }: { value: Value; path: string; onchange: (value: Value, path: (string | number)[]) => void; readonly?: boolean } = $props();
+  let { value, path, onchange, readonly = false }: { value: unknown; path: string; onchange: (value: unknown, path: (string | number)[]) => void; readonly?: boolean } = $props();
   // A keystroke must never replace its own focused control at the length limit.
   const multiline = untrack(() => typeof value === 'string' && (value.length > 130 || value.includes('\n')));
   function reorder(index: number, direction: number) {
     if (!Array.isArray(value)) return;
-    const copy = value.slice(); [copy[index], copy[index + direction]] = [copy[index + direction], copy[index]]; onchange(copy, []);
+    const copy: unknown[] = value.slice(); const left = copy[index], right = copy[index + direction]; if(index < 0 || index >= copy.length || index + direction < 0 || index + direction >= copy.length) return; copy[index] = right; copy[index + direction] = left; onchange(copy, []);
   }
+  function removeRow(index: number): unknown[] { return Array.isArray(value) ? value.filter((_, row) => row !== index) : []; }
   function append() {
     if (!Array.isArray(value)) return;
     const sample = value[0] ?? (/(details|items|rows)$/.test(path) ? ['', ''] : /(info|outroInfo)$/.test(path) ? [['', '']] : '');
@@ -37,7 +38,7 @@
         <div class="admin-array-tools">
           <button type="button" class="admin-quiet" disabled={index === 0} onclick={() => reorder(index, -1)}>Sposta ↑</button>
           <button type="button" class="admin-quiet" disabled={index === value.length - 1} onclick={() => reorder(index, 1)}>Sposta ↓</button>
-          <button type="button" class="admin-quiet" onclick={() => onchange((value as Value[]).filter((_, row) => row !== index), [])}>Rimuovi riga</button>
+          <button type="button" class="admin-quiet" onclick={() => onchange(removeRow(index), [])}>Rimuovi riga</button>
         </div>
       </li>
     {/each}

@@ -1,11 +1,12 @@
 ---
+import type { EventRecord } from "../../data/events.ts";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import EventDetail from "../../components/EventDetail.astro";
 import fallbackCover from "../../assets/optimized/work/work_01.webp";
 import fallbackDetail from "../../assets/optimized/work/work_02.webp";
 import "../../styles/site/project.css";
 
-const fallback = {
+const fallback: Omit<EventRecord, "cardMedia"> = {
   slug: "template",
   title: "Evento Tutto Rifiuto",
   code: "TR·E",
@@ -24,5 +25,5 @@ const fallback = {
 
 <BaseLayout title={fallback.seo.title} description={fallback.seo.description}>
   <div data-public-detail-template="events"><EventDetail event={fallback} /></div>
-  <script src="../../scripts/project.js"></script>
+  <script src="../../scripts/project.ts"></script>
 </BaseLayout>

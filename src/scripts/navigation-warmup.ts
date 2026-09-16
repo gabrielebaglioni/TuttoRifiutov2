@@ -1,12 +1,12 @@
 // Warm immutable code, not HTML/content: admin changes must remain immediately fresh.
 type WarmupView = {
   location: { href: string };
-  navigator?: { connection?: { saveData?: boolean; effectiveType?: string } };
+  navigator?: { userAgent?: string; connection?: { saveData?: boolean; effectiveType?: string } };
   DOMParser: typeof DOMParser;
 };
 type WarmupOptions = { doc?: Document; view?: WarmupView; fetchPage?: typeof fetch };
-export function installNavigationWarmup({doc=document,view=window as unknown as WarmupView,fetchPage=fetch}: WarmupOptions = {}): () => void {
-  const pages=new Set(),assets=new Set();
+export function installNavigationWarmup({doc=document,view={ location: window.location, DOMParser, navigator: window.navigator },fetchPage=fetch}: WarmupOptions = {}): () => void {
+  const pages=new Set<string>(),assets=new Set<string>();
   const controllers = new Set<AbortController>();
   let disposed = false;
   const base=new URL(view.location.href);
@@ -40,11 +40,13 @@ export function installNavigationWarmup({doc=document,view=window as unknown as 
     finally {clearTimeout(timeout);controllers.delete(controller);}
   }
   function intent(event: Event){
-    const target = event.target as Element | null;
+    const target = event.target;
+    const ElementType = doc.defaultView?.Element;
+    if (!ElementType || !(target instanceof ElementType)) return;
     if(target?.closest?.('.menu-toggle-btn')?.getAttribute('aria-expanded')!=='true' && target?.closest?.('.menu-toggle-btn')){
       routes.forEach(warm);return;
     }
-    const link=target?.closest?.('a[href]') as HTMLAnchorElement | null;
+    const link=target.closest<HTMLAnchorElement>('a[href]');
     if(!link || link.hasAttribute('download') || (link.target && link.target!=='_self'))return;
     try {const url=new URL(link.getAttribute('href')||'',base);if(url.origin===base.origin&&!url.search)warm(url.pathname);}catch{}
   }

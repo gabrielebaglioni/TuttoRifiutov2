@@ -367,3 +367,4 @@ export async function deleteCollectionItem(request: Request, env: WorkerEnv, kin
     return jsonResponse({ slug, deleted: Boolean(stored), restored: Boolean(fallback) }, { headers: HEADERS });
   } catch { return error("Collection storage unavailable", 500); }
 }
+import type { D1PreparedStatement } from '@cloudflare/workers-types/index.ts';

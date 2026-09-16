@@ -1,4 +1,6 @@
 ---
+import type { EventRecord } from "../data/events.ts";
+interface Props { events: EventRecord[]; status: 'upcoming' | 'past'; active?: boolean }
 import EventCard from "./EventCard.astro";
 
 const { events, status, active = false } = Astro.props;

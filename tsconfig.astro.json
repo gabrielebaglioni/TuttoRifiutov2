@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.migration.json",
+  "compilerOptions": { "types": ["astro/client"], "lib": ["ES2022", "DOM", "DOM.Iterable"] },
+  "include": [".astro/types.d.ts", "src/**/*.astro", "src/types/*.ts"],
+  "exclude": ["dist", "node_modules", "tests", "scripts"]
+}

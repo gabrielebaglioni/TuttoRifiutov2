@@ -1,4 +1,6 @@
 ---
+import type { ProjectRecord } from "../data/project.ts";
+interface Props { project: ProjectRecord }
 import ResponsiveMedia from "./ResponsiveMedia.astro";
 
 const { project } = Astro.props;

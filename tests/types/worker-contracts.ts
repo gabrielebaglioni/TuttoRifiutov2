@@ -32,5 +32,6 @@ export type InvalidMediaStore = Expect<Equal<Assignable<{ MEDIA: { put: string }
 export type InvalidRole = Expect<Equal<Assignable<{ role: 'other'; alt: string; position: number }, MediaMetadata>, false>>;
 export type InvalidPosition = Expect<Equal<Assignable<{ role: 'cover'; alt: string; position: string }, MediaMetadata>, false>>;
 export type PlatformBindings = Expect<Assignable<{ DB: D1Database; MEDIA: R2Bucket }, WorkerEnv>>;
+export type PlatformAssets = Expect<Assignable<{ ASSETS: Fetcher }, WorkerEnv>>;
 export type UploadBindings = Expect<Equal<Parameters<typeof uploadMedia>[1], WorkerEnv>>;
 export type RouterRequest = Expect<Equal<Parameters<typeof routeRequest>[0], Request>>;

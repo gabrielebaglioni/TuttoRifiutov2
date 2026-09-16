@@ -1,4 +1,6 @@
 ---
+import type { ArchiveCollectionDefault } from "../data/work.ts";
+interface Props { item: Omit<ArchiveCollectionDefault, "href" | "position"> }
 import ResponsiveMedia from "./ResponsiveMedia.astro";
 import { SITE_CONTENT } from "../data/site-content.ts";
 

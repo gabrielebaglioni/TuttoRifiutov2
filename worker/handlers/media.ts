@@ -465,3 +465,4 @@ export async function reorderMediaHandler(request: Request, env: WorkerEnv) {
 }
 
 export { serveMedia };
+import type { D1PreparedStatement } from '@cloudflare/workers-types/index.ts';

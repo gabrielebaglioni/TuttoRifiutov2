@@ -1,6 +1,6 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": { "allowJs": true, "checkJs": false, "noEmit": true },
-  "include": ["src/admin/**/*.ts", "src/admin/**/*.svelte", "src/scripts/navigation-warmup.ts"],
+  "extends": "./tsconfig.migration.json",
+  "compilerOptions": { "allowJs": false, "checkJs": false, "noEmit": true, "types": ["astro/client"], "lib": ["ES2022", "DOM", "DOM.Iterable"] },
+  "include": ["src/admin/**/*.ts", "src/admin/**/*.svelte", "src/scripts/admin*.ts"],
   "exclude": ["dist", "node_modules"]
 }

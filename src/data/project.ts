@@ -1,4 +1,5 @@
 import type { ImageMetadata } from "astro";
+import { plainImage } from "./static-media.ts";
 import hero from "../assets/optimized/project/project_1.webp";
 import project01 from "../assets/optimized/project/project_1.webp";
 import project04 from "../assets/optimized/project/project_4.webp";
@@ -27,4 +28,6 @@ export const project: ProjectRecord = {
   outro: SITE_CONTENT["project.outro"], outroInfo: SITE_CONTENT["project.outroInfo"],
 };
 
-export const projectCollectionDefault: ProjectRecord = JSON.parse(JSON.stringify(project));
+export const projectCollectionDefault: ProjectRecord = structuredClone({
+  ...project, hero: plainImage(project.hero), images: project.images.map((image) => plainImage(image)),
+});

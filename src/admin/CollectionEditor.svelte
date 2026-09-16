@@ -1,11 +1,11 @@
 <script lang="ts">
   import { collectionKey, fields, mediaKey, type AdminStore, type Item, type Kind } from './store';
-  import { mergeMediaSlots } from '../scripts/admin-model.js';
+  import { mergeMediaSlots } from '../scripts/admin-model.ts';
   import ValueEditor from './ValueEditor.svelte';
   import MediaEditor from './MediaEditor.svelte';
   let { store, revision, kind, item, index }: { store: AdminStore; revision: number; kind: Kind; item: Item; index: number } = $props();
   const resource = $derived(collectionKey(kind, item));
-  const draft = $derived.by(() => { revision; return store.draft(resource, item); });
+  const draft = $derived.by(() => { revision; return store.itemDraft(resource, item); });
   const media = $derived(mergeMediaSlots(draft));
   const cover = $derived(media.find(entry => entry.role === 'cover') || { role: 'cover', position: 0, alt: '' });
   const gallery = $derived(media.filter(entry => entry.role === 'detail'));

@@ -1,4 +1,5 @@
 import type { ImageMetadata } from "astro";
+import { plainImage } from "./static-media.ts";
 import bruciaRifiuti from "../assets/optimized/eventi/bruciaRifiuti.webp";
 import attachinoMorto from "../assets/optimized/eventi/attachinoMorto.webp";
 import saltaRifiuti from "../assets/optimized/eventi/saltaRifiuti.webp";
@@ -217,5 +218,14 @@ export function getEventBySlug(slug: string): EventRecord | undefined {
 // image objects used by the server-rendered fallback components.
 export type EventCollectionDefault = EventRecord & { position: number };
 export const eventCollectionDefaults: EventCollectionDefault[] = events.map((event, position) =>
-  JSON.parse(JSON.stringify({ ...event, position })),
+  structuredClone({
+    ...event, position,
+    heroMedia: { ...event.heroMedia, src: plainImage(event.heroMedia.src) },
+    cardMedia: event.cardMedia.type === "image"
+      ? { ...event.cardMedia, src: plainImage(event.cardMedia.src) }
+      : { ...event.cardMedia, poster: plainImage(event.cardMedia.poster) },
+    detailMedia: event.detailMedia.map((media) => media.type === "image"
+      ? { ...media, src: plainImage(media.src) }
+      : { ...media, poster: plainImage(media.poster) }),
+  }),
 );

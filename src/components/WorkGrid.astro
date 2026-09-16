@@ -1,4 +1,6 @@
 ---
+import type { WorkItem } from "../data/work.ts";
+interface Props { items: WorkItem[]; publicArchive?: boolean }
 import ResponsiveMedia from "./ResponsiveMedia.astro";
 
 const { items, publicArchive = false } = Astro.props;

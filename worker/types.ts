@@ -1,3 +1,4 @@
+import type { D1Database, ExecutionContext, R2PutOptions } from '@cloudflare/workers-types/index.ts';
 import type { MediaOwnerType, MediaSource } from '../src/data/media-source.ts';
 import type { SiteContentValue } from '../src/data/site-content.ts';
 
@@ -7,11 +8,18 @@ export type WorkerDatabase = Pick<D1Database, 'prepare' | 'batch'> &
   Partial<Pick<D1Database, 'withSession'>>;
 export type DatabaseReader = Pick<D1Database, 'prepare'>;
 export type WorkerContext = Partial<Pick<ExecutionContext, 'waitUntil'>>;
-export type MediaStore = Pick<R2Bucket, 'get' | 'put' | 'delete'>;
+// Portable ports describe only the platform operations the application consumes.
+// Worker compile fixtures verify that real R2/Assets bindings satisfy these ports.
+export interface MediaStore {
+  get(key: string): Promise<{ body: ReadableStream<Uint8Array>; httpEtag: string; writeHttpMetadata(headers: Headers): void } | null>;
+  put(key: string, value: Blob | ArrayBuffer, options?: R2PutOptions): Promise<unknown>;
+  delete(key: string | string[]): Promise<void>;
+}
+export interface AssetStore { fetch(request: Request): Promise<Response> }
 export interface WorkerEnv {
   DB?: WorkerDatabase;
   MEDIA?: MediaStore;
-  ASSETS?: Pick<Fetcher, 'fetch'>;
+  ASSETS?: AssetStore;
   ADMIN_USERNAME?: string;
   ADMIN_PASSWORD?: string;
   SESSION_SECRET?: string;

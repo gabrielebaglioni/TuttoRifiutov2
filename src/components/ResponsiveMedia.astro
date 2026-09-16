@@ -1,17 +1,32 @@
 ---
 import { Image } from "astro:assets";
 import { validMediaSources } from "../data/media-source.ts";
+import type { EventMedia } from "../data/events.ts";
+
+interface Props {
+  media: EventMedia & { sources?: unknown; controls?: boolean; autoplay?: boolean; muted?: boolean; loop?: boolean };
+  width: number;
+  height: number;
+  loading?: "lazy" | "eager";
+  sizes?: string;
+  class?: string;
+}
 
 const { media, width, height, loading = "lazy", sizes = "(max-width: 1000px) 100vw, 40vw", class: className = "" } = Astro.props;
 const isVideo = media?.type === "video";
 const sources = validMediaSources(media?.sources);
+const largestSource = sources.at(-1);
+// Keep Astro's remote/local image discriminant intact instead of asserting its props.
+const imageSource = typeof media.src === "string"
+  ? { src: media.src, width, height }
+  : { src: media.src, width, height };
 ---
 
 {isVideo ? (
   <video
     class={className}
     src={media.src}
-    poster={media.poster?.src ?? media.poster}
+    poster={typeof media.poster === "string" ? media.poster : media.poster.src}
     controls={media.controls}
     autoplay={media.autoplay}
     muted={media.muted}
@@ -22,19 +37,19 @@ const sources = validMediaSources(media?.sources);
     width={width}
     height={height}
   ></video>
-) : sources.length ? (
+) : largestSource ? (
   <>
   <picture class={className} data-media-remote>
     <source type="image/webp" srcset={sources.map((source) => `${source.src} ${source.width}w`).join(", ")} sizes={sizes} />
-    <img src={sources.at(-1).src} alt={media.alt} width={width} height={height} loading={loading} decoding="async" sizes={sizes} />
+    <img src={largestSource.src} alt={media.alt} width={width} height={height} loading={loading} decoding="async" sizes={sizes} />
   </picture>
   {media.src && <picture class={className} data-media-fallback="local" hidden>
-    <Image src={media.src} alt={media.alt} width={width} height={height} loading={loading} decoding="async" format="webp" densities={[1, 2]} />
+    <Image {...imageSource} alt={media.alt} loading={loading} decoding="async" format="webp" densities={[1, 2]} />
   </picture>}
   </>
 ) : (
   <picture class={className} data-media-fallback="local">
-    <Image src={media.src} alt={media.alt} width={width} height={height} loading={loading} decoding="async" format="webp" densities={[1, 2]} />
+    <Image {...imageSource} alt={media.alt} loading={loading} decoding="async" format="webp" densities={[1, 2]} />
   </picture>
 )}
 
@@ -44,7 +59,7 @@ const sources = validMediaSources(media?.sources);
     if (!(image instanceof HTMLImageElement)) return;
     const remote = image.closest("[data-media-remote]");
     const fallback = remote?.nextElementSibling;
-    if (fallback?.hasAttribute("data-media-fallback")) {
+    if (remote && fallback?.hasAttribute("data-media-fallback")) {
       fallback.removeAttribute("hidden");
       remote.replaceWith(fallback);
     }

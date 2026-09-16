@@ -7,7 +7,7 @@
 <div class="admin-theme">
   {#each Object.entries(THEME_TOKENS) as [key, token] (key)}
     <div class="admin-theme-row">
-      <label>{token.label}<input type="color" value={/^#[\da-f]{6}$/i.test(value[key]) ? value[key] : token.color} oninput={event => onchange(event.currentTarget.value, [key])} /></label>
+      <label>{token.label}<input type="color" value={/^#[\da-f]{6}$/i.test(value[key] ?? "") ? value[key] : token.color} oninput={event => onchange(event.currentTarget.value, [key])} /></label>
       <input aria-label={`${token.label} esadecimale`} maxlength="7" spellcheck="false" value={value[key]} oninput={event => onchange(event.currentTarget.value, [key])} />
       <p>{token.uses}. Collegamenti: {token.properties.join(', ')}</p>
     </div>

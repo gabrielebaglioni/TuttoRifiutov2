@@ -1,4 +1,6 @@
 ---
+import type { EventRecord } from "../data/events.ts";
+interface Props { event: EventRecord; index?: number }
 import ResponsiveMedia from "./ResponsiveMedia.astro";
 
 const { event, index = 0 } = Astro.props;
@@ -11,7 +13,7 @@ const media = event.cardMedia;
       {media.type === "video" ? (
         <video
           src={media.src}
-          poster={media.poster?.src}
+          poster={typeof media.poster === "string" ? undefined : media.poster.src}
           autoplay
           muted
           loop

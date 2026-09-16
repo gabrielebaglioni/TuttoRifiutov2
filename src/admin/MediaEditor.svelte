@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { mediaKey, type AdminStore, type Item, type Kind } from './store';
-  import { mediaPreviewKind } from '../scripts/admin-model.js';
-  let { store, revision, kind, item, media }: { store: AdminStore; revision: number; kind: Kind; item: Item; media: any } = $props();
+  import { mediaKey, type AdminStore, type Item, type Kind, type Media } from './store';
+  import { mediaPreviewKind } from '../scripts/admin-model.ts';
+  let { store, revision, kind, item, media }: { store: AdminStore; revision: number; kind: Kind; item: Item; media: Media } = $props();
   const resource = $derived(mediaKey(kind, item, media));
-  const draft = $derived.by(() => { revision; return store.draft(resource, { role: media.role, alt: media.alt || '', position: media.role === 'cover' ? 0 : media.position }); });
-  function upload(event: Event) { const input = event.currentTarget as HTMLInputElement; const file = input.files?.[0]; if (file) void store.upload(kind, item, media, file); input.value = ''; }
+  const draft = $derived.by(() => { revision; return store.mediaDraft(resource, { role: media.role, alt: media.alt || '', position: media.role === 'cover' ? 0 : media.position }); });
+  function upload(event: Event) { const input = event.currentTarget; if (!(input instanceof HTMLInputElement)) return; const file = input.files?.[0]; if (file) void store.upload(kind, item, media, file); input.value = ''; }
 </script>
 <section class="admin-media">
   {#if media.src}
