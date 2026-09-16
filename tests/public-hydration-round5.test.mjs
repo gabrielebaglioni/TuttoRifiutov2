@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { parseHTML } from "linkedom";
-import { applyContent, hydrateContent } from "../src/scripts/content-hydration.js";
+import { applyContent, hydrateContent } from "../src/scripts/content-hydration.ts";
 import { renderDetail } from "../src/scripts/collections-hydration.js";
 import { SITE_CONTENT } from "../src/data/site-content.ts";
 import { validMediaSources } from "../src/data/media-source.ts";

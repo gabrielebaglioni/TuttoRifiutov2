@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readBrowserScript } from './read-browser-script.mjs';
 import {readFileSync} from 'node:fs';
 import {parse} from 'acorn';
 import vm from 'node:vm';
 import * as policy from '../src/scripts/motion-policy.ts';
 import {parseHTML} from 'linkedom';
 import {bindThemeUniforms} from '../src/scripts/theme.ts';
-function functions(file,names){const s=readFileSync(new URL('../src/scripts/'+file,import.meta.url),'utf8');return parse(s,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type==='FunctionDeclaration'&&names.includes(n.id.name)).map(n=>s.slice(n.start,n.end)).join('\n');}
+function functions(file,names){const s=readBrowserScript(new URL('../src/scripts/'+file,import.meta.url));return parse(s,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type==='FunctionDeclaration'&&names.includes(n.id.name)).map(n=>s.slice(n.start,n.end)).join('\n');}
 test('Apple scroll policy includes Chrome iPhone and iPad, excludes Android and desktop',()=>{
  assert.equal(typeof policy.appleHeroScrollMode,'function');
  for(const [ua,touch,expected] of [['iPhone CriOS/140',5,'native'],['iPad',5,'native'],['Macintosh',5,'native'],['Android Redmi',5,'standard'],['Macintosh',0,'standard']]) {
@@ -19,7 +20,7 @@ test('Apple homepage has one scroll owner: native timeline or normalizer, never 
   let lenisStarts=0,normalized=0;
   const context={window:{},document:{querySelector:()=>({})},prefersReducedMotion:()=>false,appleHeroScrollMode:()=>mode,usesTouchLayout:()=>true,lenis:null,
    Lenis:class{constructor(){lenisStarts++;}on(){}},gsap:{ticker:{add(){},lagSmoothing(){}}},ScrollTrigger:{normalizeScroll:()=>normalized++,update(){}}};
-  vm.runInNewContext(functions('lenis-scroll.js',['initLenisScroll'])+';initLenisScroll();',context);
+  vm.runInNewContext(functions('lenis-scroll.ts',['initLenisScroll'])+';initLenisScroll();',context);
   assert.equal(lenisStarts,mode==='standard'?1:0);assert.equal(normalized,mode==='normalized'?1:0);
  }
 });
@@ -37,7 +38,7 @@ test('touch shader allocation is capped while keeping the viewport aspect ratio'
 });
 test('native Apple reveal delegates both layers to CSS without competing GSAP writes',()=>{
  const {document}=parseHTML('<section class="lab-hero"></section>');let tweens=0;
- const s=readFileSync(new URL('../src/scripts/lab.js',import.meta.url),'utf8');
+ const s=readFileSync(new URL('../src/scripts/lab.ts',import.meta.url),'utf8');
  const executable=parse(s,{ecmaVersion:'latest',sourceType:'module'}).body.filter(n=>n.type!=='ImportDeclaration').map(n=>s.slice(n.start,n.end)).join('\n');
  vm.runInNewContext(executable,{document,prefersReducedMotion:()=>false,lockHeroViewport(){},appleHeroScrollMode:()=> 'native',usesTouchLayout:()=>true,ScrollTrigger:{},gsap:{registerPlugin(){},to(){tweens++;},fromTo(){tweens++;}}});
  assert.equal(tweens,0);assert.ok(document.querySelector('.lab-hero').classList.contains('has-native-hero-scroll'));

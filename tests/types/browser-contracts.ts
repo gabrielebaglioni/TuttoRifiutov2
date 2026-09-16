@@ -5,6 +5,7 @@ import { getIconSvg } from '../../src/scripts/icons.ts';
 import { createGrainFragmentShader } from '../../src/scripts/grain-yellow-shader.ts';
 import { grainPixels } from '../../src/scripts/grain-background.ts';
 import { createPieCanvas } from '../../src/scripts/pie-canvas.ts';
+import { applyContent, fetchJson } from '../../src/scripts/content-hydration.ts';
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
 type Expect<T extends true> = T;
 export type Progress = Expect<Equal<Parameters<Parameters<typeof waitForInitialResources>[0]['onProgress']>, [value: number]>>;
@@ -16,3 +17,5 @@ export type GrainOptions = Expect<Equal<Parameters<typeof createGrainFragmentSha
 export type GrainInk = Expect<Equal<Parameters<typeof grainPixels>, [ink: string]>>;
 export type PieContainer = Expect<Equal<Parameters<typeof createPieCanvas>[0], HTMLElement>>;
 export type PieDraw = Expect<Equal<Parameters<NonNullable<ReturnType<typeof createPieCanvas>>['draw']>, [progress: number, multiplier: number]>>;
+export type ContentInput = Expect<Equal<Parameters<typeof applyContent>[1], unknown>>;
+export type RemotePayload = Expect<Equal<Awaited<ReturnType<typeof fetchJson>>, unknown>>;

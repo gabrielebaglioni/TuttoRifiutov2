@@ -66,7 +66,7 @@ test("array overrides match list element schemas and nested tuple arity", () => 
 
 test("client-generated menu and client-list copy use editable content schemas", () => {
   const menu = readFileSync("src/scripts/menu.js", "utf8");
-  const clients = readFileSync("src/scripts/clients.js", "utf8");
+  const clients = readFileSync("src/scripts/clients.ts", "utf8");
   const logo = readFileSync("src/components/SiteLogo.astro", "utf8");
 
   assert.deepEqual(SITE_CONTENT["global.menu.items"], [

@@ -137,14 +137,14 @@ test('mobile about reveal animates a composited transform rather than repainting
     to(target,options){if(target==='.lab-about-revealer')animation=options;},
     fromTo(target,from,options){if(target==='.lab-about-revealer')animation=options;},
   }};
-  vm.runInNewContext(script('lab.js'),context);
+  vm.runInNewContext(script('lab.ts'),context);
   assert.equal(animation.scaleY,1);
   assert.equal(animation.clipPath,undefined);
 });
 
 test('footer initialization requests a scroll-safe refresh, not a forced refresh during a swipe', () => {
   let safe;
-  vm.runInNewContext(script('footer.js'),{
+  vm.runInNewContext(script('footer.ts'),{
     gsap:{registerPlugin(){}},ScrollTrigger:{refresh:value=>safe=value},
     document:{addEventListener:(event,fn)=>fn(),querySelector:()=>null},setTimeout:fn=>fn(),
   });

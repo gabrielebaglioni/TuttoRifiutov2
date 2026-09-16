@@ -5,7 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
 
-let lenis = null;
+let lenis: Lenis | null = null;
 
 // initialization
 document.addEventListener("DOMContentLoaded", () => initLenisScroll());
@@ -25,7 +25,7 @@ function initLenisScroll() {
   }
   const isMobile = usesTouchLayout();
 
-  lenis = new Lenis({
+  const scroll = new Lenis({
     duration: isMobile ? 0.8 : 1.2,
     lerp: isMobile ? 0.075 : 0.1,
     smoothWheel: true,
@@ -33,8 +33,9 @@ function initLenisScroll() {
     touchMultiplier: isMobile ? 1.5 : 2,
   });
 
-  lenis.on("scroll", ScrollTrigger.update);
-  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  lenis = scroll;
+  scroll.on("scroll", ScrollTrigger.update);
+  gsap.ticker.add((time) => scroll.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
 
   window.lenis = lenis;

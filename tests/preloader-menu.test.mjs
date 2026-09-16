@@ -4,11 +4,12 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { parse } from 'acorn';
 import { parseHTML } from 'linkedom';
+import { readBrowserScript } from './read-browser-script.mjs';
 
 test('loading progress waits for actual resource completion and renders one percentage symbol', async () => {
   const markup = readFileSync(new URL('../src/components/Preloader.astro', import.meta.url), 'utf8').split('---').slice(2).join('---');
   const { document } = parseHTML(markup);
-  const source = readFileSync(new URL('../src/scripts/preloader.js', import.meta.url), 'utf8');
+  const source = readBrowserScript(new URL('../src/scripts/preloader.ts', import.meta.url));
   const functions = parse(source, { ecmaVersion: 'latest', sourceType: 'module' }).body
     .filter(n => n.type === 'FunctionDeclaration' && ['startSequence', 'generateRandomIncrements'].includes(n.id.name))
     .map(n => source.slice(n.start, n.end)).join('\n');

@@ -1,14 +1,14 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SITE_CONTENT } from "../data/site-content.ts";
-import { contentReady } from "./content-hydration.js";
+import { contentReady } from "./content-hydration.ts";
 import { clientMotion, prefersReducedMotion } from "./motion-policy.ts";
 
 gsap.registerPlugin(ScrollTrigger);
 
 // pacchetti lasciati per le strade — nome & luogo del drop
 let clientsData = SITE_CONTENT["home.clients.rows"].map(([name, project]) => ({ name, project }));
-let clientTriggers = [];
+let clientTriggers: ScrollTrigger[] = [];
 
 // initialization
 document.addEventListener("DOMContentLoaded", () => {
@@ -33,11 +33,11 @@ function generateClientsList() {
 
     const nameP = document.createElement("p");
     nameP.className = "type-mono";
-    nameP.textContent = client.name;
+    nameP.textContent = client.name ?? '';
 
     const projectP = document.createElement("p");
     projectP.className = "type-mono";
-    projectP.textContent = client.project;
+    projectP.textContent = client.project ?? '';
 
     row.appendChild(nameP);
     row.appendChild(projectP);
@@ -47,7 +47,7 @@ function generateClientsList() {
 
 document.addEventListener("tutto-rifiuto:content", (event) => {
   const rows = event.detail?.["home.clients.rows"];
-  if (!Array.isArray(rows) || !rows.every((row) => Array.isArray(row) && row.length === 2 && row.every((value) => typeof value === "string"))) return;
+  if (!Array.isArray(rows) || !rows.every((row: unknown): row is [string, string] => Array.isArray(row) && row.length === 2 && row.every((value: unknown) => typeof value === "string"))) return;
   clientsData = rows.map(([name, project]) => ({ name, project }));
   generateClientsList();
   initClientsAnimation();
@@ -66,12 +66,14 @@ function initClientsAnimation() {
 
   clientRows.forEach((row) => {
     const paragraphs = row.querySelectorAll("p");
+    const [left, right] = paragraphs;
+    if (!left || !right) return;
 
     let width = row.clientWidth;
-    const render = (self) => {
+    const render = (self: ScrollTrigger) => {
       const { opacity, offset } = clientMotion(0.95 - self.progress * 0.3);
-      gsap.set(paragraphs[0], { opacity, x: -width * offset / 100 });
-      gsap.set(paragraphs[1], { opacity, x: width * offset / 100 });
+      gsap.set(left, { opacity, x: -width * offset / 100 });
+      gsap.set(right, { opacity, x: width * offset / 100 });
     };
     clientTriggers.push(ScrollTrigger.create({
       trigger: row,

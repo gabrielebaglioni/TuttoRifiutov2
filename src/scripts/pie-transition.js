@@ -1,7 +1,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
-import { contentReady } from "./content-hydration.js";
+import { contentReady } from "./content-hydration.ts";
 import { createPieCanvas } from "./pie-canvas.ts";
 import { publicTheme } from './theme.ts';
 import { meaningfulResize, pieFrame, usesTouchLayout, prefersReducedMotion } from "./motion-policy.ts";

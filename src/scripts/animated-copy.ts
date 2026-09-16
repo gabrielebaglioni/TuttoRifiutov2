@@ -2,9 +2,9 @@ import gsap from "gsap";
 import { prefersReducedMotion } from './motion-policy.ts';
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
-import { contentReady } from "./content-hydration.js";
+import { contentReady } from "./content-hydration.ts";
 import { ensureCollectionsReadiness } from "./collections-readiness.ts";
-import { preloaderReady } from "./preloader.js";
+import { preloaderReady } from "./preloader.ts";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -43,18 +43,19 @@ function initAnimatedCopy() {
 }
 
 // slide - line/word reveal with mask
-function initSlideAnimation(element) {
+function initSlideAnimation(element: Element) {
   const animateOnScroll =
     element.getAttribute("data-animate-on-scroll") !== "false";
   const stagger =
-    parseFloat(element.getAttribute("data-animate-stagger")) || 0.1;
+    parseFloat(element.getAttribute("data-animate-stagger") ?? '') || 0.1;
   const slideType = element.getAttribute("data-animate-type") || "lines";
-  let delay = parseFloat(element.getAttribute("data-animate-delay")) || 0;
+  let delay = parseFloat(element.getAttribute("data-animate-delay") ?? '') || 0;
 
 
   SplitText.create(element, {
     type: slideType,
-    mask: slideType,
+    // SplitText creates masks only for a concrete supported split collection.
+    ...(slideType === 'lines' || slideType === 'words' || slideType === 'chars' ? { mask: slideType } : {}),
     autoSplit: true,
     linesClass: "line",
     wordsClass: "word",
@@ -89,10 +90,10 @@ function initSlideAnimation(element) {
 }
 
 // flicker - random character reveal
-function initFlickerAnimation(element) {
+function initFlickerAnimation(element: Element) {
   const animateOnScroll =
     element.getAttribute("data-animate-on-scroll") !== "false";
-  let delay = parseFloat(element.getAttribute("data-animate-delay")) || 0;
+  let delay = parseFloat(element.getAttribute("data-animate-delay") ?? '') || 0;
 
 
   SplitText.create(element, {
@@ -127,10 +128,10 @@ function initFlickerAnimation(element) {
 }
 
 // diffuse - word blur reveal
-function initDiffuseAnimation(element) {
+function initDiffuseAnimation(element: Element) {
   const animateOnScroll =
     element.getAttribute("data-animate-on-scroll") !== "false";
-  let delay = parseFloat(element.getAttribute("data-animate-delay")) || 0;
+  let delay = parseFloat(element.getAttribute("data-animate-delay") ?? '') || 0;
 
 
   SplitText.create(element, {

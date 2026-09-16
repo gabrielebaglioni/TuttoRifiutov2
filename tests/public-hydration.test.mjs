@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { parseHTML } from "linkedom";
-import { applyContent, isAllowedLink } from "../src/scripts/content-hydration.js";
+import { applyContent, isAllowedLink } from "../src/scripts/content-hydration.ts";
 import { eventsForPublicGroup, renderArchive, renderDetail, renderEvents } from "../src/scripts/collections-hydration.js";
 import { escapeAttribute, rewriteMetadata } from "../worker/html-metadata.ts";
 import { routeRequest } from "../worker/router.ts";
@@ -203,7 +203,7 @@ test("SEO asset fetch strips conditional range headers and drops stale represent
 });
 
 test("live clock targets its marked text nodes after hydration markers are added", () => {
-  const source = readFileSync("src/scripts/nav.js", "utf8");
+  const source = readFileSync("src/scripts/nav.ts", "utf8");
   assert.match(source, /\[data-content-key="global\.nav\.clock_hours"\]/);
   assert.match(source, /\[data-content-key="global\.nav\.clock_minutes"\]/);
   assert.match(source, /\[data-content-key="global\.nav\.clock_timezone"\]/);

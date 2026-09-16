@@ -1,11 +1,11 @@
-import "./content-hydration.js";
+import "./content-hydration.ts";
 import "./grain-background.ts";
 import "./collections-hydration.js";
-import "./preloader.js";
-import "./lenis-scroll.js";
+import "./preloader.ts";
+import "./lenis-scroll.ts";
 import "./transition.ts";
 import "./navigation-warmup.ts";
-import "./nav.js";
+import "./nav.ts";
 import "./menu.js";
-import "./animated-copy.js";
-import "./footer.js";
+import "./animated-copy.ts";
+import "./footer.ts";

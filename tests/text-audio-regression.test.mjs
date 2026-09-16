@@ -40,7 +40,7 @@ test("diffuse words stay readable after completion on home, archive and events",
         },
       },
     });
-    vm.runInContext(functionSource("../src/scripts/animated-copy.js", "initDiffuseAnimation") + "\ninitDiffuseAnimation(element);", context);
+    vm.runInContext(functionSource("../src/scripts/animated-copy.ts", "initDiffuseAnimation") + "\ninitDiffuseAnimation(element);", context);
     assert.equal(word.style.opacity, "0", "reveal starts hidden");
     finish();
     const computed = (property) => {

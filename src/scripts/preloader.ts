@@ -1,14 +1,14 @@
 import gsap from "gsap";
 import { prefersReducedMotion } from './motion-policy.ts';
-import { contentReady } from './content-hydration.js';
+import { contentReady } from './content-hydration.ts';
 import { ensureCollectionsReadiness } from './collections-readiness.ts';
 import { waitForInitialResources } from './loading-readiness.ts';
 
-function trackInitialLoad(onProgress) {
+function trackInitialLoad(onProgress: (percent: number) => void) {
   return waitForInitialResources({ documentRef: document, readiness: [document.fonts?.ready, contentReady, ensureCollectionsReadiness(window).promise], onProgress });
 }
-let resolvePreloader;
-export const preloaderReady = new Promise((resolve) => { resolvePreloader = resolve; });
+let resolvePreloader: () => void;
+export const preloaderReady = new Promise<void>((resolve) => { resolvePreloader = resolve; });
 
 // initialization
 document.addEventListener("DOMContentLoaded", init);
@@ -17,7 +17,7 @@ function init() {
   let hasSeenPreloader = false;
   try { hasSeenPreloader = sessionStorage.getItem("preloaderSeen") === "true"; }
   catch { /* Storage is optional in private/embedded browser contexts. */ }
-  const preloader = document.querySelector(".preloader");
+  const preloader = document.querySelector<HTMLElement>(".preloader");
 
   if (!preloader) { resolvePreloader(); return; }
 
@@ -32,7 +32,7 @@ function init() {
 
 // The percentage measures completed initial-readiness tasks, never elapsed time.
 function startSequence() {
-  const progressIndicator = document.querySelector(".progress-bar-indicator");
+  const progressIndicator = document.querySelector<HTMLElement>(".progress-bar-indicator");
   const progressText = document.querySelector(".progress-bar-copy span");
   const progressBar = document.querySelector(".progress-bar");
   if (!progressIndicator || !progressText || !progressBar) {
@@ -52,7 +52,7 @@ function startSequence() {
 
 // complete and remove preloader with flicker animations
 function complete() {
-  const preloader = document.querySelector(".preloader");
+  const preloader = document.querySelector<HTMLElement>(".preloader");
   const progressBar = document.querySelector(".progress-bar");
   const preloaderBlocks = document.querySelectorAll(".preloader-block");
 

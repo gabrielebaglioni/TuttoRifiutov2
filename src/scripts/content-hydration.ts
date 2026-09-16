@@ -3,9 +3,33 @@ import { THEME_KEY } from '../data/theme.ts';
 import { publicTheme } from './theme.ts';
 
 const REQUEST_TIMEOUT_MS = 4_000;
-const menuValuesByRoot = new WeakMap();
+type ContentRoot = Document | Element;
+export type ContentChanges = Record<string, unknown>;
+type Pair = [string, string];
+type Triple = [string, string, string];
+const menuValuesByRoot = new WeakMap<ContentRoot, Pair[]>();
+const fallbackContent: Readonly<Record<string, unknown>> = SITE_CONTENT;
 
-export function isAllowedLink(value) {
+function isUnknownArray(value: unknown): value is unknown[] {
+  return Array.isArray(value);
+}
+
+function isContentMap(value: unknown): value is ContentChanges {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function cloneElement(element: Element): Element {
+  const clone = element.cloneNode(true);
+  // cloneNode preserves an Element's node type, including in another DOM realm.
+  if (!isElement(clone)) throw new TypeError("Expected an element clone");
+  return clone;
+}
+
+function isElement(node: Node): node is Element {
+  return node.nodeType === 1;
+}
+
+export function isAllowedLink(value: unknown): value is string {
   if (typeof value !== "string" || !value || value.includes("\\")) return false;
   if (value.startsWith("/")) return !value.startsWith("//");
   try {
@@ -16,25 +40,25 @@ export function isAllowedLink(value) {
   }
 }
 
-function valueAtPath(value, path) {
+function valueAtPath(value: unknown, path: string | undefined): unknown {
   if (!path) return value;
-  return path.split(".").reduce((current, part) => (
-    Array.isArray(current) && /^\d+$/.test(part) ? current[Number(part)] : undefined
+  return path.split(".").reduce<unknown>((current, part) => (
+    isUnknownArray(current) && /^\d+$/.test(part) ? current[Number(part)] : undefined
   ), value);
 }
 
 // Astro adds indentation-only text nodes around nested spans. Those nodes do
 // not represent editorial copy; regular spaces and all non-empty text remain
 // literal so a CMS update cannot accidentally normalize prose.
-function isAstroFormattingWhitespace(value) {
+function isAstroFormattingWhitespace(value: string): boolean {
   return /^[\t\f\r\n ]*$/.test(value) && /[\r\n]/.test(value);
 }
 
-function semanticText(node) {
+function semanticText(node: Node | null | undefined): string {
   let value = "";
-  const visit = (current) => {
+  const visit = (current: Node | null | undefined): void => {
     if (current?.nodeType === 3) {
-      const text = current.data ?? current.textContent ?? "";
+      const text = ("data" in current && typeof current.data === "string" ? current.data : current.textContent) ?? "";
       if (!isAstroFormattingWhitespace(text)) value += text;
       return;
     }
@@ -44,56 +68,60 @@ function semanticText(node) {
   return value;
 }
 
-function equalValues(left, right) {
+function equalValues(left: unknown, right: unknown): boolean {
   if (typeof left === "string" || typeof right === "string") return typeof left === "string" && left === right;
-  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  if (!isUnknownArray(left) || !isUnknownArray(right) || left.length !== right.length) return false;
   return left.every((value, index) => equalValues(value, right[index]));
 }
 
-function setText(node, value) {
+function setText(node: Element, value: unknown): boolean {
   if (typeof value !== "string" || semanticText(node) === value) return false;
   node.textContent = value;
   return true;
 }
 
-function setLink(node, value) {
+function setLink(node: Element, value: unknown): boolean {
   if (typeof value !== "string" || !isAllowedLink(value) || node.getAttribute("href") === value) return false;
   node.setAttribute("href", value);
   return true;
 }
 
-function stringRows(value, width) {
-  return Array.isArray(value) && value.every((row) => Array.isArray(row) && row.length === width && row.every((part) => typeof part === "string"));
+function stringRows(value: unknown, width: 2): value is Pair[];
+function stringRows(value: unknown, width: 3): value is Triple[];
+function stringRows(value: unknown, width: number): value is string[][] {
+  return isUnknownArray(value) && value.every((row) => isUnknownArray(row) && row.length === width && row.every((part) => typeof part === "string"));
 }
 
-function element(document, tag, className, text) {
+function element<K extends keyof HTMLElementTagNameMap>(document: Document, tag: K, className: string, text: string | undefined): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (typeof text === "string") node.textContent = text;
   return node;
 }
 
-function directChildren(node, selector) {
+function directChildren(node: Element, selector: string): Element[] {
   return [...node.children].filter((child) => child.matches(selector));
 }
 
-function markedTarget(node) {
+function markedTarget(node: Element): Element;
+function markedTarget(node: Element | null | undefined): Element | null | undefined;
+function markedTarget(node: Element | null | undefined): Element | null | undefined {
   if (node?.matches?.("[data-content-path]")) return node;
   return node?.querySelector?.("[data-content-path]") ?? node;
 }
 
-function writePreservingMarker(node, value) {
+function writePreservingMarker(node: Element | null | undefined, value: unknown): boolean {
   return node ? setText(markedTarget(node), value) : false;
 }
 
-function markedLeaves(node) {
-  const leaves = [];
+function markedLeaves(node: Element | null | undefined): Element[] {
+  const leaves: Element[] = [];
   if (node?.matches?.("[data-content-path]")) leaves.push(node);
   leaves.push(...(node?.querySelectorAll?.("[data-content-path]") ?? []));
   return leaves;
 }
 
-function rewritePaths(child, index) {
+function rewritePaths(child: Element, index: number): void {
   for (const leaf of markedLeaves(child)) {
     const current = leaf.getAttribute("data-content-path");
     if (!current) continue;
@@ -103,31 +131,39 @@ function rewritePaths(child, index) {
   }
 }
 
-function reconcile(node, values, selector, read, write, create) {
+function reconcile<T>(
+  node: Element,
+  values: readonly T[],
+  selector: string,
+  read: (child: Element) => unknown,
+  write: (child: Element, value: T, index: number) => unknown,
+  create: (value: T, index: number) => Element,
+): boolean {
   const existing = directChildren(node, selector);
   const current = existing.map(read);
   if (equalValues(current, values)) return false;
   const template = existing[0] ?? null;
+  // Indexed entries below exist by the loop bounds over these dense DOM/JSON arrays.
   const reused = Math.min(existing.length, values.length);
-  for (let index = 0; index < reused; index += 1) write(existing[index], values[index], index);
+  for (let index = 0; index < reused; index += 1) write(existing[index]!, values[index]!, index);
   for (let index = reused; index < values.length; index += 1) {
-    const child = template ? template.cloneNode(true) : create(values[index], index);
+    const child = template ? cloneElement(template) : create(values[index]!, index);
     rewritePaths(child, index);
-    write(child, values[index], index);
+    write(child, values[index]!, index);
     node.appendChild(child);
   }
-  for (let index = values.length; index < existing.length; index += 1) existing[index].remove();
+  for (let index = values.length; index < existing.length; index += 1) existing[index]!.remove();
   return true;
 }
 
-function clientRows(node) {
+function clientRows(node: Element): string[][] {
   return directChildren(node, ".client-row").map((row) => [...row.querySelectorAll("p")].map(semanticText));
 }
 
-function renderClients(node, rows, key) {
+function renderClients(node: Element, rows: unknown, key: string): boolean {
   if (!stringRows(rows, 2)) return false;
   const current = clientRows(node);
-  if (!current.length && equalValues(SITE_CONTENT[key], rows)) return false;
+  if (!current.length && equalValues(fallbackContent[key], rows)) return false;
   return reconcile(node, rows, ".client-row", (row) => [...row.querySelectorAll("p")].map(semanticText), (row, [name, place]) => {
     const parts = row.querySelectorAll("p");
     writePreservingMarker(parts[0], name);
@@ -143,7 +179,7 @@ function renderClients(node, rows, key) {
   });
 }
 
-function renderMenu(node, rows, key, root) {
+function renderMenu(node: Element, rows: unknown, key: string, root: ContentRoot): boolean {
   if (!stringRows(rows, 2) || !rows.every(([, href]) => isAllowedLink(href))) return false;
   const remembered = menuValuesByRoot.get(root);
   if (remembered) {
@@ -154,13 +190,13 @@ function renderMenu(node, rows, key, root) {
   const current = directChildren(node, ".menu-segment").map((segment) => [semanticText(segment), segment.getAttribute("href")]);
   // Menu owns its rich, animated DOM. Hydration only reports a changed data
   // set; menu.js receives that exact key and rebuilds it when necessary.
-  const changed = current.length ? !equalValues(current, rows) : !equalValues(SITE_CONTENT[key], rows);
+  const changed = current.length ? !equalValues(current, rows) : !equalValues(fallbackContent[key], rows);
   menuValuesByRoot.set(root, rows.map((row) => [...row]));
   return changed;
 }
 
-function renderAbout(node, values) {
-  if (!Array.isArray(values) || !values.every((value) => typeof value === "string")) return false;
+function renderAbout(node: Element, values: unknown): boolean {
+  if (!isUnknownArray(values) || !values.every((value) => typeof value === "string")) return false;
   return reconcile(node, values, "h3", (child) => semanticText(markedTarget(child)), writePreservingMarker, (value, index) => {
     const child = element(node.ownerDocument, "h3", "type-var-2", value);
     child.setAttribute("data-content-path", String(index));
@@ -168,10 +204,10 @@ function renderAbout(node, values) {
   });
 }
 
-function renderStats(node, values) {
+function renderStats(node: Element, values: unknown): boolean {
   if (!stringRows(values, 3)) return false;
   const document = node.ownerDocument;
-  const create = ([count, text, label], index) => {
+  const create = ([count, text, label]: Triple, index: number): Element => {
     const item = element(document, "div", "stat-item", "");
     const countBox = element(document, "div", "stat-count", "");
     const countNode = element(document, "h1", "", count); countNode.setAttribute("data-content-path", `${index}.0`); countBox.appendChild(countNode);
@@ -193,20 +229,20 @@ function renderStats(node, values) {
   }, create);
 }
 
-function contactClockPartIndex(template) {
-  const parts = [...template?.querySelectorAll?.("p") ?? []];
+function contactClockPartIndex(template: Element | null): number {
+  const parts: Element[] = [...template?.querySelectorAll?.("p") ?? []];
   const clock = template?.querySelector?.(".contact-clock");
-  const index = parts.indexOf(clock);
+  const index = clock ? parts.indexOf(clock) : -1;
   return index >= 0 ? index : 1;
 }
 
-function normalizeContactClock(node, clockPartIndex) {
+function normalizeContactClock(node: Element, clockPartIndex: number): void {
   for (const [rowIndex, row] of directChildren(node, ".contact-info-row").entries()) {
     [...row.querySelectorAll("p")].forEach((part, partIndex) => part.classList.toggle("contact-clock", rowIndex === 0 && partIndex === clockPartIndex));
   }
 }
 
-function renderContactRows(node, values) {
+function renderContactRows(node: Element, values: unknown): boolean {
   if (!stringRows(values, 2)) return false;
   const template = directChildren(node, ".contact-info-row")[0] ?? null;
   const clockPartIndex = contactClockPartIndex(template);
@@ -227,8 +263,8 @@ function renderContactRows(node, values) {
   return changed;
 }
 
-function renderProjectMeta(node, values) {
-  if (!Array.isArray(values) || !values.every((value) => typeof value === "string")) return false;
+function renderProjectMeta(node: Element, values: unknown): boolean {
+  if (!isUnknownArray(values) || !values.every((value) => typeof value === "string")) return false;
   return reconcile(node, values, "p", (child) => semanticText(markedTarget(child)), writePreservingMarker, (value, index) => {
     const child = element(node.ownerDocument, "p", "type-mono", value);
     child.setAttribute("data-content-path", String(index));
@@ -236,28 +272,29 @@ function renderProjectMeta(node, values) {
   });
 }
 
-function columnPairs(column) {
+function columnPairs(column: Element): Pair[] {
   const leaves = [...column.querySelectorAll("p")].map(markedTarget);
   if (leaves.length % 2) return [];
-  const rows = [];
+  const rows: Pair[] = [];
   for (let index = 0; index < leaves.length; index += 2) rows.push([semanticText(leaves[index]), semanticText(leaves[index + 1])]);
   return rows;
 }
 
-function columnBreak(column, index) {
+function columnBreak(column: Element, index: number): Node {
   const existing = [...column.children].filter((child) => child.tagName === "BR");
   return existing[index]?.cloneNode(true) ?? column.ownerDocument.createElement("br");
 }
 
-function writeColumn(column, pairs, columnIndex) {
+function writeColumn(column: Element, pairs: readonly Pair[], columnIndex: number): void {
   const leaves = [...column.querySelectorAll("p")];
-  const labelTemplate = leaves[0]?.cloneNode(true) ?? element(column.ownerDocument, "p", "type-mono", "");
-  const valueTemplate = leaves[1]?.cloneNode(true) ?? element(column.ownerDocument, "p", "", "");
-  const children = [];
+  const labelTemplate = (leaves[0] ? cloneElement(leaves[0]) : undefined) ?? element(column.ownerDocument, "p", "type-mono", "");
+  const valueTemplate = (leaves[1] ? cloneElement(leaves[1]) : undefined) ?? element(column.ownerDocument, "p", "", "");
+  const children: Node[] = [];
+  // Each indexed pair exists by the loop bound over the validated rows.
   for (let rowIndex = 0; rowIndex < pairs.length; rowIndex += 1) {
-    const [label, value] = pairs[rowIndex];
-    const labelNode = leaves[rowIndex * 2] ?? labelTemplate.cloneNode(true);
-    const valueNode = leaves[rowIndex * 2 + 1] ?? valueTemplate.cloneNode(true);
+    const [label, value] = pairs[rowIndex]!;
+    const labelNode = leaves[rowIndex * 2] ?? cloneElement(labelTemplate);
+    const valueNode = leaves[rowIndex * 2 + 1] ?? cloneElement(valueTemplate);
     writePreservingMarker(labelNode, label);
     writePreservingMarker(valueNode, value);
     markedTarget(labelNode).setAttribute("data-content-path", `${columnIndex}.${rowIndex}.0`);
@@ -267,26 +304,26 @@ function writeColumn(column, pairs, columnIndex) {
   column.replaceChildren(...children);
 }
 
-function renderColumns(node, values) {
-  if (!Array.isArray(values) || !values.every((column) => stringRows(column, 2))) return false;
+function renderColumns(node: Element, values: unknown): boolean {
+  if (!isUnknownArray(values) || !values.every((column) => stringRows(column, 2))) return false;
   const existing = directChildren(node, ".project-info-sub-col");
   const current = existing.map(columnPairs);
   if (equalValues(current, values)) return false;
   const template = existing[0] ?? null;
   const reused = Math.min(existing.length, values.length);
   for (let index = 0; index < reused; index += 1) {
-    if (!equalValues(columnPairs(existing[index]), values[index])) writeColumn(existing[index], values[index], index);
+    if (!equalValues(columnPairs(existing[index]!), values[index]!)) writeColumn(existing[index]!, values[index]!, index);
   }
   for (let index = reused; index < values.length; index += 1) {
-    const column = template ? template.cloneNode(true) : element(node.ownerDocument, "div", "project-info-sub-col", "");
-    writeColumn(column, values[index], index);
+    const column = template ? cloneElement(template) : element(node.ownerDocument, "div", "project-info-sub-col", "");
+    writeColumn(column, values[index]!, index);
     node.appendChild(column);
   }
-  for (let index = values.length; index < existing.length; index += 1) existing[index].remove();
+  for (let index = values.length; index < existing.length; index += 1) existing[index]!.remove();
   return true;
 }
 
-function renderContentValue(node, value, key, root) {
+function renderContentValue(node: HTMLElement, value: unknown, key: string, root: ContentRoot): boolean {
   const renderer = node.dataset.contentRender;
   if (renderer === "clients") return renderClients(node, value, key);
   if (renderer === "menu") return renderMenu(node, value, key, root);
@@ -299,7 +336,7 @@ function renderContentValue(node, value, key, root) {
   return setText(node, value);
 }
 
-function isNestedRendererMarker(node, key) {
+function isNestedRendererMarker(node: HTMLElement, key: string): boolean {
   let parent = node.parentElement;
   while (parent) {
     if (parent.dataset?.contentRender && parent.dataset.contentKey === key) return true;
@@ -308,12 +345,12 @@ function isNestedRendererMarker(node, key) {
   return false;
 }
 
-function applyContentChanges(root, values) {
-  if (!root || !values || typeof values !== "object" || Array.isArray(values)) return {};
-  const changed = {};
-  const documentRoot = root.documentElement ? root : root.ownerDocument;
+function applyContentChanges(root: ContentRoot | null | undefined, values: unknown): ContentChanges {
+  if (!root || !isContentMap(values)) return {};
+  const changed: ContentChanges = {};
+  const documentRoot = "documentElement" in root ? root : root.ownerDocument;
   if (documentRoot && Object.hasOwn(values, THEME_KEY) && publicTheme(documentRoot).apply(values[THEME_KEY])) changed[THEME_KEY] = values[THEME_KEY];
-  for (const node of root.querySelectorAll("[data-content-key]")) {
+  for (const node of root.querySelectorAll<HTMLElement>("[data-content-key]")) {
     const key = node.dataset.contentKey;
     if (!key || !Object.prototype.hasOwnProperty.call(values, key) || isNestedRendererMarker(node, key)) continue;
     const value = valueAtPath(values[key], node.dataset.contentPath);
@@ -322,17 +359,25 @@ function applyContentChanges(root, values) {
   return changed;
 }
 
-export function applyContent(root, values) {
+export function applyContent(root: ContentRoot | null | undefined, values: unknown): boolean {
   return Object.keys(applyContentChanges(root, values)).length > 0;
 }
 
-export async function fetchJson(path, { timeoutMs = REQUEST_TIMEOUT_MS, array = false } = {}) {
+export interface FetchJsonOptions {
+  timeoutMs?: number;
+  array?: boolean;
+}
+
+export async function fetchJson(
+  path: string,
+  { timeoutMs = REQUEST_TIMEOUT_MS, array = false }: FetchJsonOptions = {},
+): Promise<unknown> {
   const controller = new AbortController();
   const timer = globalThis.setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(path, { signal: controller.signal, headers: { accept: "application/json" } });
     if (!response.ok) return null;
-    const payload = await response.json();
+    const payload: unknown = await response.json();
     return payload && typeof payload === "object" && (array || !Array.isArray(payload)) ? payload : null;
   } catch {
     return null;
@@ -341,12 +386,12 @@ export async function fetchJson(path, { timeoutMs = REQUEST_TIMEOUT_MS, array = 
   }
 }
 
-function contentEvent(root, detail) {
-  const EventType = root?.defaultView?.CustomEvent ?? root?.ownerDocument?.defaultView?.CustomEvent ?? globalThis.CustomEvent;
+function contentEvent(root: ContentRoot, detail: ContentChanges): CustomEvent<ContentChanges> | null {
+  const EventType = ("defaultView" in root ? root.defaultView?.CustomEvent : undefined) ?? root.ownerDocument?.defaultView?.CustomEvent ?? globalThis.CustomEvent;
   return typeof EventType === "function" ? new EventType("tutto-rifiuto:content", { detail }) : null;
 }
 
-export async function hydrateContent(root = document) {
+export async function hydrateContent(root: ContentRoot = document): Promise<boolean> {
   const values = await fetchJson("/api/content");
   if (!values) return false;
   const changed = applyContentChanges(root, values);
@@ -357,9 +402,9 @@ export async function hydrateContent(root = document) {
   return Object.keys(changed).length > 0;
 }
 
-let resolveContentReady;
-export const contentReady = new Promise((resolve) => { resolveContentReady = resolve; });
-function start() {
+let resolveContentReady: () => void;
+export const contentReady = new Promise<void>((resolve) => { resolveContentReady = resolve; });
+function start(): void {
   hydrateContent().catch(() => {}).finally(() => resolveContentReady());
 }
 

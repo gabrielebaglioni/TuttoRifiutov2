@@ -34,7 +34,7 @@ for(const denied of ['read','write']) test(`preloader resolves and uncovers cont
  c.contentReady=Promise.resolve();
  c.ensureCollectionsReadiness=()=>({promise:Promise.resolve()});
  c.sessionStorage={getItem(){if(denied==='read')throw new Error('SecurityError');return null;},setItem(){throw new Error('QuotaExceededError');}};
- vm.runInNewContext(script('preloader.js')+';globalThis.ready=preloaderReady;',c);
+ vm.runInNewContext(script('preloader.ts')+';globalThis.ready=preloaderReady;',c);
  assert.doesNotThrow(()=>c.document.dispatchEvent(new c.Event('DOMContentLoaded')));
  await c.ready;
  assert.equal(c.document.querySelector('.preloader').style.display,'none');
@@ -93,7 +93,7 @@ test('reduced motion leaves copy visible without waiting for fonts or preloader'
  c.prefersReducedMotion=()=>true;c.SplitText={};c.ScrollTrigger={};
  c.document.fonts={ready:new Promise(()=>{})};c.contentReady=new Promise(()=>{});c.preloaderReady=new Promise(()=>{});
  c.ensureCollectionsReadiness=()=>({promise:new Promise(()=>{})});
- vm.runInNewContext(script('animated-copy.js'),c);
+ vm.runInNewContext(script('animated-copy.ts'),c);
  c.document.dispatchEvent(new c.Event('DOMContentLoaded'));
  assert.notEqual(c.document.querySelector('h1').style.opacity,'0');
 });
@@ -183,11 +183,11 @@ test('reduced motion keeps native scrolling, a static hero and readable client r
  const c=harness('<section class="lab-hero"></section><div class="client-row"><p>A</p><p>B</p></div>');
  c.prefersReducedMotion=()=>true;c.appleHeroScrollMode=()=> 'standard';c.lenis=null;
  c.Lenis=class{constructor(){assert.fail('smooth scroll should not start');}};
- vm.runInNewContext(functions('lenis-scroll.js',['initLenisScroll'])+';initLenisScroll();',c);
+ vm.runInNewContext(functions('lenis-scroll.ts',['initLenisScroll'])+';initLenisScroll();',c);
  c.ScrollTrigger={};c.gsap.fromTo=()=>assert.fail('hero should not animate');c.gsap.to=()=>assert.fail('hero should not animate');
- vm.runInNewContext(script('lab.js'),c);
+ vm.runInNewContext(script('lab.ts'),c);
  c.clientTriggers=[];
- vm.runInNewContext(functions('clients.js',['initClientsAnimation'])+';initClientsAnimation();',c);
+ vm.runInNewContext(functions('clients.ts',['initClientsAnimation'])+';initClientsAnimation();',c);
  for(const p of c.document.querySelectorAll('p'))assert.equal(p.style.opacity,'1');
 });
 test('reduced motion pie keeps its heading visible without a pinned animation',()=>{
@@ -215,7 +215,7 @@ test('reduced motion contact keeps one finite set of readable rows without waiti
 test('reduced motion footer and gallery retain native content without distortion or parallax',()=>{
  const c=harness('<footer><div class="footer-container">Links</div></footer>');
  c.prefersReducedMotion=()=>true;c.ScrollTrigger={create:()=>assert.fail('parallax should not start')};
- vm.runInNewContext(functions('footer.js',['initFooterParallax'])+';initFooterParallax();',c);
+ vm.runInNewContext(functions('footer.ts',['initFooterParallax'])+';initFooterParallax();',c);
  c.window.requestAnimationFrame=()=>{};
  vm.runInNewContext(functions('project.js',['canStartProjectEffect'])+';globalThis.canStart=canStartProjectEffect(window,document);',c);
  assert.equal(c.canStart,false);

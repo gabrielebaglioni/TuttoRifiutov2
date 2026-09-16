@@ -29,3 +29,23 @@ Public asset graphs still exclude the Svelte admin island.
 Remaining: complex public controllers/hydration, full admin types, tools/tests
 migration, final bundle budgets and responsive browser verification. No push,
 merge or publication performed for this checkpoint.
+
+## Second checkpoint
+
+Converted content hydration (remote JSON remains unknown), preloader, animated
+copy, clients, navigation clock, Lenis initialization, footer, stats, lab,
+menu shader and lazy Three library wrappers. Shared content events are typed.
+The nav clock now tolerates absent optional markup (regression red then green).
+SplitText mask typing preserves the supported collections and existing timing.
+
+Independent review identified one test still feeding raw TypeScript to Acorn.
+The full suite reproduced this failure (379/380); switching that loader to the
+existing compiler helper restored all **380/380** tests without removing any
+assertions. Final strict check and Svelte check passed (zero errors/warnings),
+as did the 14-page production build. This second checkpoint was independently
+source-reviewed, not re-submitted to CodeRabbit.
+
+Still authored JavaScript under src/scripts: collection hydration, particle
+visual, work, menu, common/home entrypoints, pie transition, contact, skyline,
+project, menu-ring-grain and six admin modules. These remain explicit unfinished
+work; existing .ts files elsewhere are not proof of a complete strict migration.

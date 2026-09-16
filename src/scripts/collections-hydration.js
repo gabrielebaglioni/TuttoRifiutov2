@@ -1,4 +1,4 @@
-import { fetchJson, isAllowedLink } from "./content-hydration.js";
+import { fetchJson, isAllowedLink } from "./content-hydration.ts";
 import { validMediaSources } from "../data/media-source.ts";
 import { ensureCollectionsReadiness } from "./collections-readiness.ts";
 import { eventsForPublicGroup } from "../data/event-status.ts";
