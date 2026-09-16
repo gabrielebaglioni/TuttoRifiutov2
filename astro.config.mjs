@@ -7,6 +7,11 @@ export default defineConfig({
   output: "static",
   // Preserve v6 text spacing while upgrading the compiler independently.
   compressHTML: true,
+  vite: {
+    // Keep scroll timelines as longhands. Lightning CSS currently folds them
+    // into an animation shorthand rejected by browsers, exposing the hero mask.
+    build: { cssMinify: 'esbuild' },
+  },
   build: {
     format: "directory",
   },
