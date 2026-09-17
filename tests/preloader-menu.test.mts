@@ -5,6 +5,24 @@ import vm from 'node:vm';
 import { parse } from 'acorn';
 import { parseHTML } from 'linkedom';
 import { readBrowserScript } from './read-browser-script.mts';
+import { createHash } from 'node:crypto';
+import { loadPackagedWorker } from '../scripts/packaged-worker.ts';
+
+test('built HTML includes visible loader styling permitted by CSP before any script runs', async () => {
+  const worker = await loadPackagedWorker();
+  const response = await worker.fetch(new Request('https://site.test/'), { ASSETS: { fetch: async () => new Response('', { status: 404 }) } }, {});
+  const { document } = parseHTML(await response.text());
+  const css = [...document.querySelectorAll('style')].find(style => style.textContent.includes('.progress-bar'));
+  assert.ok(css, 'loading UI must not depend on downloading an external stylesheet');
+  const policy = document.querySelector('meta[http-equiv="content-security-policy"]')?.getAttribute('content') ?? '';
+  assert.ok(policy.includes(createHash('sha512').update(css.textContent).digest('base64')), 'critical loader CSS must not be blocked');
+  const { document: styles } = parseHTML(`<style>${css.textContent}</style>`);
+  const rules = styles.querySelector('style')?.sheet?.cssRules;
+  assert.ok(rules);
+  const progress = [...rules].find((rule): rule is CSSStyleRule => 'selectorText' in rule && rule.selectorText === '.progress-bar');
+  assert.equal(progress?.style.getPropertyValue('opacity'), '1');
+  assert.equal(document.querySelector('.progress-bar-copy p')?.textContent, 'Caricamento…');
+});
 
 test('loading progress waits for actual resource completion and renders one percentage symbol', async () => {
   const markup = readFileSync(new URL('../src/components/Preloader.astro', import.meta.url), 'utf8').split('---').slice(2).join('---');
@@ -21,6 +39,7 @@ test('loading progress waits for actual resource completion and renders one perc
   const pending = new Promise<{ status: string }>(resolve => { finish = resolve; });
   const progressCopy = document.querySelector('.progress-bar-copy p');
   assert.ok(progressCopy);
+  assert.equal(progressCopy.textContent, 'Caricamento…', 'HTML must show a truthful startup state before any application code arrives');
   vm.runInNewContext(functions + '\nstartSequence();', { document, Math, setTimeout: (fn: () => void) => fn(), complete() { completed = true; }, trackInitialLoad(callback: (value: number) => void) { report = callback; return pending; }, gsap: {
     set() {}, getProperty: () => progress,
     to(_: unknown, options: { '--progress'?: number; onUpdate?: () => void; onComplete?: () => void }) {

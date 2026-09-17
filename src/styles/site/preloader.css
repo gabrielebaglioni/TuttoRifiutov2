@@ -1,4 +1,6 @@
 .preloader {
+  /* Critical CSS is embedded in the HTML, independent of the JS module graph. */
+  isolation: isolate;
   position: fixed;
   top: 0;
   left: 0;
@@ -31,7 +33,9 @@
 }
 
 .preloader p {
-  color: var(--bg);
+  color: var(--bg, #fff000);
+  /* Never wait for a downloaded font to display loading feedback. */
+  font-family: ui-monospace, monospace;
 }
 
 .progress-bar {
@@ -39,7 +43,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  opacity: 0;
+  opacity: 1;
 }
 
 .progress-bar-indicator {

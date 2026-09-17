@@ -14,18 +14,9 @@ export const preloaderReady = new Promise<void>((resolve) => { resolvePreloader 
 document.addEventListener("DOMContentLoaded", init);
 
 function init() {
-  let hasSeenPreloader = false;
-  try { hasSeenPreloader = sessionStorage.getItem("preloaderSeen") === "true"; }
-  catch { /* Storage is optional in private/embedded browser contexts. */ }
   const preloader = document.querySelector<HTMLElement>(".preloader");
 
   if (!preloader) { resolvePreloader(); return; }
-
-  if (hasSeenPreloader || prefersReducedMotion()) {
-    preloader.style.display = "none";
-    resolvePreloader();
-    return;
-  }
 
   startSequence();
 }
@@ -43,7 +34,7 @@ function startSequence() {
   gsap.set(progressBar, { opacity: 1 });
   trackInitialLoad((percent) => {
     progressIndicator.style.setProperty("--progress", String(percent / 100));
-    progressText.textContent = String(percent);
+    progressText.textContent = `${percent}%`;
   }).then((result) => {
     document.querySelector(".preloader")?.setAttribute("data-loading-status", result.status);
     complete();
@@ -59,7 +50,7 @@ function complete() {
   if (!preloader) { resolvePreloader(); return; }
 
   try { sessionStorage.setItem("preloaderSeen", "true"); } catch { /* Continue revealing. */ }
-  if (!preloaderBlocks.length) {
+  if (!preloaderBlocks.length || prefersReducedMotion()) {
     preloader.style.display = "none";
     resolvePreloader();
     return;

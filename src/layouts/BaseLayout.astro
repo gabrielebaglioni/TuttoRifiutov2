@@ -4,7 +4,8 @@ import { Font } from "astro:assets";
 import { SITE_CONTENT } from "../data/site-content.ts";
 import { THEME_KEY, themeCss } from '../data/theme.ts';
 import "../styles/globals.css";
-import "../styles/site/preloader.css";
+import preloaderCss from "../styles/site/preloader.css?raw";
+import { createHash } from 'node:crypto';
 import "../styles/site/nav.css";
 import "../styles/site/menu.css";
 import "../styles/site/footer.css";
@@ -26,6 +27,11 @@ const {
 
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? Astro.url);
 const socialImageUrl = new URL("/og.webp", Astro.site ?? Astro.url);
+const noScriptCss = '.preloader { display: none !important; }';
+// Raw critical styles are not compiler-discovered; authorize their exact bytes.
+for (const css of [preloaderCss, noScriptCss]) {
+  Astro.csp?.insertStyleHash(`sha512-${createHash('sha512').update(css).digest('base64')}`);
+}
 ---
 
 <!doctype html>
@@ -33,6 +39,7 @@ const socialImageUrl = new URL("/og.webp", Astro.site ?? Astro.url);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style is:inline set:html={preloaderCss}></style>
     <title>{title}</title>
     <meta name="author" content={SITE_CONTENT["site.name"]} />
     <meta name="description" content={description} />
@@ -60,6 +67,7 @@ const socialImageUrl = new URL("/og.webp", Astro.site ?? Astro.url);
   <body class={bodyClass}>
     <svg class="theme-filter-defs" width="0" height="0" aria-hidden="true"><defs><filter id="theme-ink" color-interpolation-filters="sRGB"><feFlood /><feComposite in2="SourceAlpha" operator="in" /></filter></defs></svg>
     <Preloader />
+    <noscript><style is:inline set:html={noScriptCss}></style></noscript>
     <TransitionGrid />
     <Nav />
     <SiteLogo />
